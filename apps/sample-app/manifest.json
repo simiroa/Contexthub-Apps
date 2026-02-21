@@ -1,0 +1,10 @@
+{
+    "id": "sample-app",
+    "name": "Sample Marketplace App",
+    "description": "This is a sample app distributed via the GitHub Marketplace.",
+    "version": "1.0.0",
+    "author": "ContextHub",
+    "runtime": {
+        "category": "sys_basic"
+    }
+}
