@@ -1,0 +1,8 @@
+customtkinter
+numpy
+opencv-python
+pdf2docx
+Pillow
+pymupdf4llm
+pypdf
+rapidocr-onnxruntime

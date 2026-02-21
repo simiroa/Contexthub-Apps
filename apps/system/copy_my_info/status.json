@@ -1,0 +1,10 @@
+{
+  "status": "stopped",
+  "dynamic_tray_actions": [
+    {
+      "label": "📋 Copy mimi",
+      "command": "sonney noemie christele geraldine",
+      "target": "clipboard"
+    }
+  ]
+}

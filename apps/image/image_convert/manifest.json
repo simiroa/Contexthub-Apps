@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.2",
+  "id": "image_convert",
+  "name": "Image Convert",
+  "description": "Legacy Image tool.",
+  "author": "ContextHub Legacy",
+  "version": "1.0.0",
+  "icon": null,
+  "runtime": {
+    "category": "image",
+    "python_version": "3.11",
+    "required_binaries": []
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "gui",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": "image_convert",
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": false,
+    "quick_launcher": false,
+    "context_menu": {
+      "enabled": true,
+      "extensions": [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".tga",
+        ".bmp",
+        ".tif",
+        ".tiff",
+        ".exr",
+        ".webp",
+        ".ico",
+        ".dds",
+        ".heic",
+        ".avif",
+        ".ai",
+        ".svg",
+        ".pdf",
+        ".eps",
+        ".hdr",
+        ".psd",
+        ".psb",
+        ".cr2",
+        ".nef",
+        ".arw",
+        ".dng",
+        ".orf",
+        ".rw2",
+        ".sr2",
+        ".raf",
+        ".cr3",
+        ".srw",
+        ".pef",
+        ".erf",
+        ".mos",
+        ".mrw",
+        ".kdc",
+        ".3fr",
+        ".fff",
+        ".iiq"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "customtkinter",
+    "shared_theme": "contexthub"
+  }
+}

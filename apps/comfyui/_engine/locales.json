@@ -1,0 +1,73 @@
+{
+  "comfyui": {
+    "common": {
+      "connecting": "ComfyUI 연결 중...",
+      "server_started": "✅ 서버 시작됨 (:{port})",
+      "connected": "✅ 연결됨 (:{port})",
+      "not_available": "❌ 서버 사용 불가 (로그 확인)",
+      "conn_error": "❌ 연결 오류: {e}",
+      "success": "성공",
+      "error": "오류",
+      "synthesizing": "합성 중...",
+      "processing": "프로세싱 중...",
+      "copied": "클립보드에 복사됨!",
+      "ignite": "이그나이트 (Ignite)"
+    },
+    "dashboard": {
+        "title": "ComfyUI 대시보드",
+        "ready": "Z-Engine 준비 완료.",
+        "server_status": "서버 상태 확인 중..."
+    },
+    "creative_studio_z": {
+      "title": "ComfyUI 크리에이티브 스튜디오 (Z) [Pro]",
+      "prompt_layers": "프롬프트 레이어",
+      "engine_ready": "Z-Engine Prime 준비 완료.",
+      "config": "생성 설정",
+      "resolution": "해상도",
+      "steps": "단계 (Steps)",
+      "cfg": "매직 (CFG)",
+      "batch_size": "배치 사이즈",
+      "upscale": "업스케일 (2x)",
+      "rembg": "배경 제거",
+      "ignite": "이그나이트 (Z)",
+      "ai_polishing": "AI 다듬기 중...",
+      "ai_enhanced": "AI 강화 완료",
+      "ai_failed": "AI 강화 실패",
+      "igniting": "Z-Turbo 가동 중"
+    },
+    "ace_audio": {
+      "title": "크리에이티브 오디오 스튜디오 (ACE)",
+      "composition": "작곡/구성",
+      "preset_vocal": "ACE 보컬 송 (생성)",
+      "preset_inst": "ACE 인스트루멘탈 (생성)",
+      "preset_edit": "ACE 오디오 리페인트 (편집)",
+      "mixing_rack": "믹싱 랙",
+      "synth_btn": "오디오 합성 시작",
+      "ready": "녹음 준비 완료.",
+      "play": "재생",
+      "stop": "정지",
+      "mix_ready": "믹스 완료",
+      "engine_error": "엔진 오류",
+      "play_mix": "믹스 재생"
+    },
+    "creative_studio_advanced": {
+        "title": "크리에이티브 스튜디오 (Advanced)",
+        "workflow_engine": "워크플로우 엔진",
+        "ignite_btn": "Advanced 이그나이트",
+        "ready": "Wrapped 엔진 준비 완료."
+    },
+    "seedvr2": {
+        "title": "SeedVR2 업스케일러",
+        "open_file": "📂 미디어 파일 열기",
+        "no_file": "파일이 선택되지 않음",
+        "model": "업스케일 모델",
+        "res": "대상 해상도",
+        "start": "업스케일 시작",
+        "selected": "선택됨: {name}",
+        "processing": "처리 중",
+        "queued": "대기 중",
+        "done": "완료",
+        "complete_msg": "업스케일링이 완료되었습니다."
+    }
+  }
+}

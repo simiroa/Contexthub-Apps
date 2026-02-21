@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.2",
+  "id": "open_recent_system_C",
+  "name": "Open Recent (System)",
+  "description": "Quickly access recently used folders.",
+  "author": "ContextHub SystemC",
+  "version": "1.0.0",
+  "icon": "icon.png",
+  "runtime": {
+    "category": "system",
+    "python_version": "3.11",
+    "required_binaries": []
+  },
+  "execution": {
+    "entry_point": "${BIN}/ContextHub.SystemC.exe",
+    "arguments": "open_recent_system_C",
+    "mode": "gui",
+    "working_directory": "./",
+    "auto_start": true,
+    "run_as_admin": false,
+    "single_instance": true,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": true,
+    "type": "process",
+    "target": "open_recent",
+    "interval": 5000,
+    "on_active": {
+      "status_text": "Running",
+      "tray_actions": [
+        {
+          "label": "Open Recent Folders",
+          "command": "open_recent_C",
+          "target": "native",
+          "icon": "icon.png"
+        }
+      ]
+    },
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": true,
+    "quick_launcher": true,
+    "context_menu": {
+      "enabled": false,
+      "extensions": [],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "wpf",
+    "shared_theme": "dark"
+  }
+}

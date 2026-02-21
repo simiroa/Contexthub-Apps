@@ -1,0 +1,1 @@
+# RigReady Vectorizer Module

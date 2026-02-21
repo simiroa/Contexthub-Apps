@@ -18,3 +18,11 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Large Data & Caches
+**/resources/cache/
+**/_engine/resources/
+**/models/
+**/.cache/
+**/dist/
+**/build/

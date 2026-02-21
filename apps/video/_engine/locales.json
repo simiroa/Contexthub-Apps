@@ -1,0 +1,18 @@
+{
+  "video_convert_gui": {
+    "title": "Video Converter",
+    "no_video_selected": "No video files selected.",
+    "format_label": "Output Format",
+    "scale_label": "Rescale",
+    "width_placeholder": "Custom Width (px)",
+    "quality_crf": "Quality (CRF)",
+    "quality_hint": "Lower is better quality.",
+    "save_to_folder": "Save to 'Converted' folder",
+    "start_conversion": "Start Conversion",
+    "ready_to_convert": "Ready to convert.",
+    "cancelling": "Cancelling...",
+    "converting": "Converting",
+    "conversion_cancelled": "Conversion was cancelled.",
+    "conversion_complete": "Conversion complete!"
+  }
+}

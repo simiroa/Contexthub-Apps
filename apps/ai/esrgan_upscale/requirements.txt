@@ -1,0 +1,8 @@
+Pillow
+basicsr
+customtkinter
+gfpgan
+numpy
+opencv-python
+realesrgan
+torch

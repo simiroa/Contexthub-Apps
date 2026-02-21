@@ -1,0 +1,6 @@
+Pillow
+accelerate
+customtkinter
+diffusers
+numpy
+torch

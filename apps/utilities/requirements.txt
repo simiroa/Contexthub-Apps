@@ -1,0 +1,6 @@
+customtkinter
+deep-translator
+google-genai
+ollama
+Pillow
+yt-dlp

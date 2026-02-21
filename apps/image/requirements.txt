@@ -1,0 +1,10 @@
+customtkinter
+numpy
+opencv-python
+OpenEXR
+piexif
+Pillow
+psd-tools
+rembg
+scipy
+vtracer

@@ -1,0 +1,18 @@
+import os
+from pathlib import Path
+
+_shared_root = os.environ.get("CTX_SHARED_ROOT")
+if not _shared_root:
+    current = Path(__file__).resolve()
+    for parent in [current] + list(current.parents):
+        candidate = parent / "Runtimes" / "Shared" / "contexthub"
+        if candidate.exists():
+            _shared_root = str(candidate)
+            break
+
+if _shared_root:
+    shared_core = Path(_shared_root) / "core"
+    if shared_core.exists():
+        shared_path = str(shared_core)
+        if shared_path not in __path__:
+            __path__.append(shared_path)
