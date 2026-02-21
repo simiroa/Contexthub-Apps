@@ -1,28 +1,76 @@
-# .gitignore
-# .NET
-[Bb]in/
-[Oo]bj/
+# OS/Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# Build artifacts
+bin/
+obj/
+build/
+dist/
+*.egg-info/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
 .vs/
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-venv/
-.env
+# Runtime/temporary
+tmp/
+temp/
+.locks/
+*.tmp
 
-# OS
-.DS_Store
-Thumbs.db
+# Logs
+logs/
+*.log
 
-# Large Data & Caches
+# App runtime data
+userdata/
+*.db
+*.sqlite
+
+# ML/cache artifacts (필수 제외)
+hf/
+hub/
+blobs/
+snapshots/
+refs/
+models--*/
+datasets--*/
+transformers_modules/
+diffusers_modules/
+torch/
+realesrgan/
+whisper/
+demucs/
+BiRefNet/
+ZhengPeng7/
+text_encoder/
+tokenizer/
+unet/
+vae/
 **/resources/cache/
 **/_engine/resources/
 **/models/
 **/.cache/
-**/dist/
-**/build/
+
+# Generated media
+frames/
+outputs/
+checkpoints/
+weights/
