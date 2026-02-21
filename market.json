@@ -1,11 +1,506 @@
 [
     {
-        "id": "sample-app",
-        "name": "Sample Marketplace App",
-        "description": "This is a sample app distributed via the GitHub Marketplace.",
+        "id": "esrgan_upscale",
+        "name": "ESRGAN Upscale",
+        "description": "Legacy AI tool.",
         "version": "1.0.0",
-        "category": "sys_basic",
+        "category": "ai",
         "icon_url": "",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/sample-app.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/esrgan_upscale.zip"
+    },
+    {
+        "id": "whisper_subtitle",
+        "name": "Whisper Subtitle AI",
+        "description": "Legacy AI tool.",
+        "version": "1.0.0",
+        "category": "ai",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/whisper_subtitle.zip"
+    },
+    {
+        "id": "rmbg_background",
+        "name": "RMBG Background Removal",
+        "description": "Legacy AI tool.",
+        "version": "1.0.0",
+        "category": "ai",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/rmbg_background.zip"
+    },
+    {
+        "id": "demucs_stems",
+        "name": "Demucs Stem Separation",
+        "description": "Legacy AI tool.",
+        "version": "1.0.0",
+        "category": "ai",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/demucs_stems.zip"
+    },
+    {
+        "id": "marigold_pbr",
+        "name": "Marigold PBR Generator",
+        "description": "Legacy AI tool.",
+        "version": "1.0.0",
+        "category": "ai",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/marigold_pbr.zip"
+    },
+    {
+        "id": "prompt_master",
+        "name": "Prompt Master",
+        "description": "AI-powered prompt management and refinement tool.",
+        "version": "1.0.0",
+        "category": "utilities",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/prompt_master.zip"
+    },
+    {
+        "id": "ai_text_lab",
+        "name": "AI Text Lab",
+        "description": "Legacy Utilities tool.",
+        "version": "1.0.0",
+        "category": "utilities",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/ai_text_lab.zip"
+    },
+    {
+        "id": "doc_scan",
+        "name": "Document Scanner",
+        "description": "Scan and unwarp document images.",
+        "version": "1.0.0",
+        "category": "document",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/doc_scan.zip"
+    },
+    {
+        "id": "pdf_split",
+        "name": "PDF Split",
+        "description": "Legacy Document tool.",
+        "version": "1.0.0",
+        "category": "document",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/pdf_split.zip"
+    },
+    {
+        "id": "pdf_merge",
+        "name": "PDF Merge",
+        "description": "Legacy Document tool.",
+        "version": "1.0.0",
+        "category": "document",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/pdf_merge.zip"
+    },
+    {
+        "id": "doc_convert",
+        "name": "Convert Docs",
+        "description": "Legacy Document tool.",
+        "version": "1.0.0",
+        "category": "document",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/doc_convert.zip"
+    },
+    {
+        "id": "youtube_downloader",
+        "name": "Video Downloader",
+        "description": "Legacy Utilities tool.",
+        "version": "1.0.0",
+        "category": "utilities",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/youtube_downloader.zip"
+    },
+    {
+        "id": "leave_manager_C",
+        "name": "Leave Manager (C)",
+        "description": "Manage your vacation days and countdown to freedom.",
+        "version": "1.0.0",
+        "category": "native",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/leave_manager.zip"
+    },
+    {
+        "id": "extract_bgm",
+        "name": "Extract BGM",
+        "description": "Legacy Audio tool.",
+        "version": "1.0.0",
+        "category": "audio",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_bgm.zip"
+    },
+    {
+        "id": "normalize_volume",
+        "name": "Normalize Volume",
+        "description": "Legacy Audio tool.",
+        "version": "1.0.0",
+        "category": "audio",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normalize_volume.zip"
+    },
+    {
+        "id": "extract_voice",
+        "name": "Extract Voice",
+        "description": "Legacy Audio tool.",
+        "version": "1.0.0",
+        "category": "audio",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_voice.zip"
+    },
+    {
+        "id": "audio_convert",
+        "name": "Audio Convert",
+        "description": "Legacy Audio tool.",
+        "version": "1.0.0",
+        "category": "audio",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/audio_convert.zip"
+    },
+    {
+        "id": "open_with_mayo",
+        "name": "Open with Mayo",
+        "description": "Legacy 3D tool.",
+        "version": "1.0.0",
+        "category": "3d",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/open_with_mayo.zip"
+    },
+    {
+        "id": "mesh_convert",
+        "name": "Mesh Convert",
+        "description": "Legacy 3D tool.",
+        "version": "1.0.0",
+        "category": "3d",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/mesh_convert.zip"
+    },
+    {
+        "id": "blender_bake_gui",
+        "name": "Remesh & Bake",
+        "description": "Legacy 3D tool.",
+        "version": "1.0.0",
+        "category": "3d",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/blender_bake_gui.zip"
+    },
+    {
+        "id": "cad_to_obj",
+        "name": "CAD to OBJ",
+        "description": "Legacy 3D tool.",
+        "version": "1.0.0",
+        "category": "3d",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/cad_to_obj.zip"
+    },
+    {
+        "id": "extract_textures",
+        "name": "Extract Textures",
+        "description": "Legacy 3D tool.",
+        "version": "1.0.0",
+        "category": "3d",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_textures.zip"
+    },
+    {
+        "id": "auto_lod",
+        "name": "Auto LOD",
+        "description": "Legacy 3D tool.",
+        "version": "1.0.0",
+        "category": "3d",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/auto_lod.zip"
+    },
+    {
+        "id": "resize_power_of_2",
+        "name": "Resize Power of 2",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/resize_power_of_2.zip"
+    },
+    {
+        "id": "merge_to_exr",
+        "name": "Merge to EXR",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/merge_to_exr.zip"
+    },
+    {
+        "id": "normal_flip_green",
+        "name": "Normal Flip Green",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normal_flip_green.zip"
+    },
+    {
+        "id": "rigreader_vectorizer",
+        "name": "RigReady Vectorizer",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/rigreader_vectorizer.zip"
+    },
+    {
+        "id": "image_metadata",
+        "name": "Image Metadata Tool",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_metadata.zip"
+    },
+    {
+        "id": "image_compare",
+        "name": "Compare Images",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_compare.zip"
+    },
+    {
+        "id": "simple_normal_roughness",
+        "name": "Simple Normal Roughness",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/simple_normal_roughness.zip"
+    },
+    {
+        "id": "image_convert",
+        "name": "Image Convert",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_convert.zip"
+    },
+    {
+        "id": "texture_packer_orm",
+        "name": "Texture Packer ORM",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/texture_packer_orm.zip"
+    },
+    {
+        "id": "split_exr",
+        "name": "Split EXR",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/split_exr.zip"
+    },
+    {
+        "id": "creative_studio_advanced",
+        "name": "ComfyUI Creative Studio (Advanced)",
+        "description": "Professional workspace with Checkpoint, LoRA Stacking, FaceDetailer & SUPIR.",
+        "version": "1.0.0",
+        "category": "comfyui",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/creative_studio_advanced.zip"
+    },
+    {
+        "id": "creative_studio_z",
+        "name": "ComfyUI Creative Studio (Z)",
+        "description": "Unified workspace for prompt layers, icon generation, and asset creation (Z-Turbo).",
+        "version": "1.0.0",
+        "category": "comfyui",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/creative_studio_z.zip"
+    },
+    {
+        "id": "comfyui_dashboard",
+        "name": "Open Web UI",
+        "description": "Open ComfyUI Web UI (starts server if needed)",
+        "version": "1.0.0",
+        "category": "comfyui",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/comfyui_dashboard.zip"
+    },
+    {
+        "id": "ace_audio_editor",
+        "name": "Creative Audio Studio (ACE)",
+        "description": "AI Audio Generation & Editing using ACE Step",
+        "version": "1.0.0",
+        "category": "comfyui",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/ace_audio_editor.zip"
+    },
+    {
+        "id": "seedvr2_upscaler",
+        "name": "SeedVR2 Video Upscaler",
+        "description": "Upscale videos using SeedVR2 (ComfyUI)",
+        "version": "1.0.0",
+        "category": "comfyui",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/seedvr2_upscaler.zip"
+    },
+    {
+        "id": "copy_my_info_system_C",
+        "name": "Copy My Info (System)",
+        "description": "Information and preset copy manager.",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/copy_my_info.zip"
+    },
+    {
+        "id": "create_symlink_system_C",
+        "name": "Create Symlink (System)",
+        "description": "Create symbolic links easily.",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/create_symlink.zip"
+    },
+    {
+        "id": "unwrap_folder_system_C",
+        "name": "Unwrap Folder (System)",
+        "description": "Extract all files from a folder to its parent.",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/unwrap_folder.zip"
+    },
+    {
+        "id": "open_from_clipboard_system_C",
+        "name": "Open from Clipboard (System)",
+        "description": "Open path from clipboard.",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/open_from_clipboard.zip"
+    },
+    {
+        "id": "sequence_manager_system_C",
+        "name": "Sequence Manager (System)",
+        "description": "Unified sequence tools (analyze, missing, arrange, renumber, to video)",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/sequence_manager.zip"
+    },
+    {
+        "id": "move_to_new_folder_system_C",
+        "name": "Move to Folder (System)",
+        "description": "Move selected items to a new folder.",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/move_to_new_folder.zip"
+    },
+    {
+        "id": "duplicate_finder_system_C",
+        "name": "Duplicate Finder (System)",
+        "description": "Find and remove duplicate files.",
+        "version": "1.0.0",
+        "category": "native",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/duplicate_finder.zip"
+    },
+    {
+        "id": "batch_rename_system_C",
+        "name": "Batch Rename (System)",
+        "description": "Powerful file renaming tool.",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/batch_rename.zip"
+    },
+    {
+        "id": "copy_unc_path_system_C",
+        "name": "Copy UNC Path (System)",
+        "description": "Copy UNC path for network usage.",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/copy_unc_path.zip"
+    },
+    {
+        "id": "open_recent_system_C",
+        "name": "Open Recent (System)",
+        "description": "Quickly access recently used folders.",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/open_recent.zip"
+    },
+    {
+        "id": "clipboard_to_new_folder_system_C",
+        "name": "Clipboard (System)",
+        "description": "Create folder from clipboard content.",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/clipboard_to_new_folder.zip"
+    },
+    {
+        "id": "clean_empty_folders_system_C",
+        "name": "Clean Empty Folders (System)",
+        "description": "Remove recursive empty directories.",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/clean_empty_folders.zip"
+    },
+    {
+        "id": "save_clipboard_image_system_C",
+        "name": "Save Clipboard Content (System)",
+        "description": "Save clipboard image or text to disk.",
+        "version": "1.0.0",
+        "category": "system",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/save_clipboard_image.zip"
+    },
+    {
+        "id": "extract_audio",
+        "name": "Extract Audio",
+        "description": "Legacy Video tool.",
+        "version": "1.0.0",
+        "category": "video",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_audio.zip"
+    },
+    {
+        "id": "interpolate_30fps",
+        "name": "Interpolate 30fps",
+        "description": "Legacy Video tool.",
+        "version": "1.0.0",
+        "category": "video",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/interpolate_30fps.zip"
+    },
+    {
+        "id": "create_proxy",
+        "name": "Create Proxy",
+        "description": "Legacy Video tool.",
+        "version": "1.0.0",
+        "category": "video",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/create_proxy.zip"
+    },
+    {
+        "id": "remove_audio",
+        "name": "Remove Audio",
+        "description": "Legacy Video tool.",
+        "version": "1.0.0",
+        "category": "video",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/remove_audio.zip"
+    },
+    {
+        "id": "video_convert",
+        "name": "Video Convert",
+        "description": "Legacy Video tool.",
+        "version": "1.0.0",
+        "category": "video",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/video_convert.zip"
     }
 ]
