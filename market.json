@@ -1,0 +1,11 @@
+[
+    {
+        "id": "sample-app",
+        "name": "Sample Marketplace App",
+        "description": "This is a sample app distributed via the GitHub Marketplace.",
+        "version": "1.0.0",
+        "category": "sys_basic",
+        "icon_url": "",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/sample-app.zip"
+    }
+]
