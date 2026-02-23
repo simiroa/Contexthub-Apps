@@ -9,7 +9,7 @@ USE_MENU = False
 SCRIPT_REL = None
 
 ROOT = Path(__file__).resolve().parents[3]
-APP_ROOT = Path(__file__).resolve().parents[1]
+APP_ROOT = Path(__file__).resolve().parent
 LEGACY_ROOT = Path(__file__).resolve().parents[1] / "_engine"
 os.chdir(LEGACY_ROOT)
 sys.path.insert(0, str(LEGACY_ROOT))

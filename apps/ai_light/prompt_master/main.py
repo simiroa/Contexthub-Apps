@@ -21,7 +21,7 @@ def _capture_mode():
     return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
 
 def _pick_targets():
-    if LEGACY_SCOPE in {"background", "tray_only"}:
+    if LEGACY_SCOPE in {"background", "tray_only", "standalone"}:
         return []
 
     if _capture_mode():
@@ -86,7 +86,7 @@ def _run_menu(targets):
 
 def main():
     targets = _pick_targets()
-    if LEGACY_SCOPE not in {"background", "tray_only"} and not targets and not _capture_mode():
+    if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
         try:
             import tkinter as tk
             from tkinter import messagebox
