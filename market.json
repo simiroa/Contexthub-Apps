@@ -102,7 +102,7 @@
         "id": "youtube_downloader",
         "name": "Video Downloader",
         "description": "Legacy Utilities tool.",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "category": "utilities",
         "icon_url": "",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/youtube_downloader.zip"
