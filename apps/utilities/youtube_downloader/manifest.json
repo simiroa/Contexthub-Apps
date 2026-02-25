@@ -4,7 +4,7 @@
   "name": "Video Downloader",
   "description": "Legacy Utilities tool.",
   "author": "ContextHub Legacy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "icon": null,
   "runtime": {
     "category": "utilities",

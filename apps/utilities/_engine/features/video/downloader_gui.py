@@ -46,7 +46,7 @@ LEGACY_HISTORY_FILES = [
 
 from core.config import MenuConfig
 from utils.gui_lib import (
-    BaseWindow, THEME_BG, THEME_CARD, THEME_BORDER, THEME_BTN_PRIMARY, 
+    BaseWindow, THEME_BG, THEME_CARD, THEME_BORDER, THEME_BTN_PRIMARY,
     THEME_BTN_HOVER, THEME_DROPDOWN_FG, THEME_DROPDOWN_BTN, THEME_DROPDOWN_HOVER,
     THEME_TEXT_MAIN, THEME_TEXT_DIM, PremiumScrollableFrame
 )
@@ -55,7 +55,7 @@ from utils.i18n import t
 class VideoDownloaderGUI(BaseWindow):
     def __init__(self):
         super().__init__(title=t("youtube_downloader.title"), width=480, height=820, scrollable=True, icon_name="video")
-        
+
         # Data
         self.current_video_info = None
         self.settings = self.load_settings()
@@ -63,10 +63,10 @@ class VideoDownloaderGUI(BaseWindow):
         self.download_counter = 0
         self._history_lock = threading.Lock()
         self._migrate_download_history()
-        
+
         # Layout
         self.create_widgets()
-        
+
         # Protocol
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -142,43 +142,43 @@ class VideoDownloaderGUI(BaseWindow):
         # --- 1. Main Info & Settings Card (URL + Preview + Quality) ---
         main_card = ctk.CTkFrame(self.main_frame, fg_color=THEME_CARD, corner_radius=12, border_width=1, border_color=THEME_BORDER)
         main_card.pack(fill="x", padx=10, pady=(10, 5))
-        
+
         # URL Row
         ctk.CTkLabel(main_card, text=t("youtube_downloader.source_settings"), font=("Segoe UI", 11, "bold"), text_color=THEME_TEXT_MAIN, anchor="w").pack(fill="x", padx=15, pady=(12, 5))
-        
+
         url_row = ctk.CTkFrame(main_card, fg_color="transparent")
         url_row.pack(fill="x", padx=10, pady=(0, 10))
-        
+
         self.url_var = ctk.StringVar()
-        self.entry_url = ctk.CTkEntry(url_row, textvariable=self.url_var, placeholder_text=t("youtube_downloader.url_placeholder"), height=40, 
+        self.entry_url = ctk.CTkEntry(url_row, textvariable=self.url_var, placeholder_text=t("youtube_downloader.url_placeholder"), height=40,
                                       fg_color=THEME_DROPDOWN_FG, border_color=THEME_BORDER, corner_radius=8, text_color=THEME_TEXT_MAIN)
         self.entry_url.pack(side="left", fill="x", expand=True, padx=(0, 8))
         self.entry_url.bind("<Return>", lambda e: self.start_analysis())
-        
-        self.btn_analyze = ctk.CTkButton(url_row, text=t("youtube_downloader.search"), width=80, height=40, command=self.start_analysis, 
+
+        self.btn_analyze = ctk.CTkButton(url_row, text=t("youtube_downloader.search"), width=80, height=40, command=self.start_analysis,
                                         fg_color=THEME_BTN_PRIMARY, hover_color=THEME_BTN_HOVER, font=("Segoe UI", 12, "bold"), corner_radius=8)
         self.btn_analyze.pack(side="right")
 
         # Preview Area (Nested within main_card)
         self.preview_inner = ctk.CTkFrame(main_card, fg_color=THEME_BG, corner_radius=10, border_width=1, border_color=THEME_BORDER)
         self.preview_inner.pack(fill="x", padx=10, pady=5)
-        
+
         self.preview_inner.grid_columnconfigure(1, weight=1)
         self.lbl_thumb = ctk.CTkLabel(self.preview_inner, text=t("youtube_downloader.no_media"), width=120, height=68, fg_color=THEME_CARD, corner_radius=6)
         self.lbl_thumb.grid(row=0, column=0, rowspan=2, padx=10, pady=10)
-        
-        self.lbl_title = ctk.CTkLabel(self.preview_inner, text=t("youtube_downloader.title_placeholder"), font=("Segoe UI", 12, "bold"), 
+
+        self.lbl_title = ctk.CTkLabel(self.preview_inner, text=t("youtube_downloader.title_placeholder"), font=("Segoe UI", 12, "bold"),
                                       wraplength=250, anchor="nw", justify="left", text_color=THEME_TEXT_MAIN)
         self.lbl_title.grid(row=0, column=1, padx=(0, 10), pady=(12, 2), sticky="nsew")
-        
-        self.lbl_meta = ctk.CTkLabel(self.preview_inner, text=t("youtube_downloader.meta_placeholder"), text_color=THEME_TEXT_DIM, font=("Segoe UI", 11), 
+
+        self.lbl_meta = ctk.CTkLabel(self.preview_inner, text=t("youtube_downloader.meta_placeholder"), text_color=THEME_TEXT_DIM, font=("Segoe UI", 11),
                                      anchor="nw", justify="left")
         self.lbl_meta.grid(row=1, column=1, padx=(0, 10), pady=(0, 12), sticky="nsew")
 
         # Quality Row (Nested within main_card)
         q_row = ctk.CTkFrame(main_card, fg_color="transparent")
         q_row.pack(fill="x", padx=12, pady=(5, 12))
-        
+
         self.quality_map = {
             t("youtube_downloader.format_best"): "Best Video+Audio",
             t("youtube_downloader.format_4k"): "4K (2160p)",
@@ -190,55 +190,62 @@ class VideoDownloaderGUI(BaseWindow):
         self.var_quality = ctk.StringVar(value=t("youtube_downloader.format_best"))
         self.quality_menu = ctk.CTkOptionMenu(q_row, variable=self.var_quality, height=32,
                           values=list(self.quality_map.keys()),
-                          fg_color=THEME_DROPDOWN_FG, button_color=THEME_DROPDOWN_BTN, button_hover_color=THEME_DROPDOWN_HOVER, 
+                          fg_color=THEME_DROPDOWN_FG, button_color=THEME_DROPDOWN_BTN, button_hover_color=THEME_DROPDOWN_HOVER,
                           text_color=THEME_TEXT_MAIN, corner_radius=6, dropdown_fg_color=THEME_DROPDOWN_FG, dropdown_hover_color=THEME_DROPDOWN_HOVER, dropdown_text_color=THEME_TEXT_MAIN)
         self.quality_menu.pack(side="left", fill="x", expand=True, padx=(0, 10))
-        
+
         self.var_subs = ctk.BooleanVar(value=False)
-        self.check_subs = ctk.CTkCheckBox(q_row, text=t("youtube_downloader.subs"), variable=self.var_subs, font=("Segoe UI", 11), text_color=THEME_TEXT_DIM, 
+        self.check_subs = ctk.CTkCheckBox(q_row, text=t("youtube_downloader.subs"), variable=self.var_subs, font=("Segoe UI", 11), text_color=THEME_TEXT_DIM,
                                           checkbox_width=18, checkbox_height=18, corner_radius=6, hover_color=THEME_CARD)
         self.check_subs.pack(side="left")
 
         # --- 2. Save Path Card ---
         p_card = ctk.CTkFrame(self.main_frame, fg_color=THEME_CARD, corner_radius=12, border_width=1, border_color=THEME_BORDER)
         p_card.pack(fill="x", padx=10, pady=5)
-        
+
         ctk.CTkLabel(p_card, text=t("youtube_downloader.save_path"), font=("Segoe UI", 10, "bold"), text_color=THEME_TEXT_DIM, anchor="w").pack(fill="x", padx=15, pady=(8, 2))
-        
+
         p_input = ctk.CTkFrame(p_card, fg_color="transparent")
         p_input.pack(fill="x", padx=10, pady=(0, 10))
-        
+
         self.entry_path = ctk.CTkEntry(p_input, height=32, fg_color=THEME_DROPDOWN_FG, border_width=1, border_color=THEME_BORDER, corner_radius=6, text_color=THEME_TEXT_MAIN)
         self.entry_path.pack(side="left", fill="x", expand=True, padx=(0, 6))
         self.entry_path.insert(0, self.settings['download_path'])
-        
-        self.btn_browse = ctk.CTkButton(p_input, text="📂", width=36, height=32, command=self.browse_path, 
+
+        self.btn_browse = ctk.CTkButton(p_input, text="📂", width=36, height=32, command=self.browse_path,
                                         fg_color=THEME_DROPDOWN_BTN, hover_color=THEME_DROPDOWN_HOVER, text_color=THEME_TEXT_MAIN, corner_radius=6)
         self.btn_browse.pack(side="left", padx=2)
-        
-        self.btn_open_folder = ctk.CTkButton(p_input, text="↗", width=36, height=32, command=self.open_current_folder, 
+
+        self.btn_open_folder = ctk.CTkButton(p_input, text="↗", width=36, height=32, command=self.open_current_folder,
                                         fg_color=THEME_DROPDOWN_BTN, hover_color=THEME_DROPDOWN_HOVER, text_color=THEME_TEXT_MAIN, corner_radius=6)
         self.btn_open_folder.pack(side="left")
 
         # --- 3. Action Buttons ---
         btn_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         btn_frame.pack(fill="x", padx=10, pady=10)
-        
-        self.btn_queue = ctk.CTkButton(btn_frame, text=t("youtube_downloader.add_to_queue"), command=self.add_to_queue, state="disabled", height=45, 
+
+        self.btn_queue = ctk.CTkButton(btn_frame, text=t("youtube_downloader.add_to_queue"), command=self.add_to_queue, state="disabled", height=45,
                                       fg_color=THEME_CARD, hover_color=THEME_DROPDOWN_HOVER, text_color=THEME_TEXT_MAIN,
                                       font=("Segoe UI", 12, "bold"), corner_radius=10, border_width=1, border_color=THEME_BORDER)
         self.btn_queue.pack(side="left", fill="x", expand=True, padx=(0, 10))
-        
-        self.btn_download = ctk.CTkButton(btn_frame, text=t("youtube_downloader.download_now"), command=self.start_download, state="disabled", height=45, 
+
+        self.btn_download = ctk.CTkButton(btn_frame, text=t("youtube_downloader.download_now"), command=self.start_download, state="disabled", height=45,
                                          font=("Segoe UI", 13, "bold"), fg_color=THEME_BTN_PRIMARY, hover_color=THEME_BTN_HOVER, corner_radius=10)
         self.btn_download.pack(side="left", fill="x", expand=True)
 
+        # --- Update Button ---
+        update_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        update_frame.pack(fill="x", padx=10, pady=(0, 5))
+        self.btn_update = ctk.CTkButton(update_frame, text="Update Engine (Fix 403 Errors)", command=self.update_engine, height=30,
+                                        fg_color="transparent", border_width=1, border_color=THEME_BORDER, text_color=THEME_TEXT_DIM, hover_color=THEME_CARD)
+        self.btn_update.pack(side="right")
+
         # --- 4. Progress Section ---
         ctk.CTkLabel(self.main_frame, text=t("youtube_downloader.progress"), font=("Segoe UI", 11, "bold"), text_color=THEME_TEXT_DIM).pack(anchor="w", padx=20, pady=(5, 0))
-        
+
         self.downloads_frame = ctk.CTkFrame(self.main_frame, fg_color=THEME_CARD, corner_radius=12, border_width=1, border_color=THEME_BORDER)
         self.downloads_frame.pack(fill="both", expand=True, padx=10, pady=(5, 20))
-        
+
         # Internal scrollable frame for items
         self.scroll_list = PremiumScrollableFrame(self.downloads_frame, fg_color="transparent", height=180)
         self.scroll_list.pack(fill="both", expand=True, padx=2, pady=2)
@@ -252,7 +259,7 @@ class VideoDownloaderGUI(BaseWindow):
             path = str(Path.home() / "Desktop")
         else:
             path = str(Path.home() / "Downloads")
-        
+
         self.entry_path.delete(0, "end")
         self.entry_path.insert(0, path)
         self.settings['download_path'] = path
@@ -277,22 +284,22 @@ class VideoDownloaderGUI(BaseWindow):
     def add_to_queue(self):
         if not self.current_video_info:
             return
-        
+
         info = self.current_video_info.copy()
         options = {
             "quality": self.var_quality.get(),
             "subs": self.var_subs.get(),
             "path": self.entry_path.get()
         }
-        
+
         download_id = self.download_counter
         self.download_counter += 1
-        
+
         # Create row in "Pending" state
         self._create_download_row(download_id, info['title'], status=t("youtube_downloader.status_queued"))
-        
+
         self.queue.append((download_id, info, options))
-        
+
         if not self.is_downloading_queue:
             threading.Thread(target=self._process_queue_thread).start()
 
@@ -300,25 +307,38 @@ class VideoDownloaderGUI(BaseWindow):
         self.is_downloading_queue = True
         while self.queue:
             dl_id, info, opts = self.queue.pop(0)
-            self.after(0, lambda: self._update_status(dl_id, t("youtube_downloader.status_starting"), 0))
+            self.after(0, lambda id=dl_id: self._update_status(id, t("youtube_downloader.status_starting"), 0))
             self._download_thread(dl_id, info, opts) # Sync call inside thread
             time.sleep(1) # Small gap
         self.is_downloading_queue = False
 
+    def update_engine(self):
+        self.btn_update.configure(state="disabled", text="Updating yt-dlp...")
+        threading.Thread(target=self._update_thread).start()
+
+    def _update_thread(self):
+        try:
+            subprocess.run([sys.executable, "-m", "pip", "install", "-U", "yt-dlp"], check=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            self.after(0, lambda: messagebox.showinfo("Update", "Core engine (yt-dlp) updated successfully! You can try downloading again."))
+        except Exception as e:
+            self.after(0, lambda: messagebox.showerror("Update Failed", f"Could not update engine: {e}"))
+        finally:
+            self.after(0, lambda: self.btn_update.configure(state="normal", text="Update Engine (Fix 403 Errors)"))
+
     def start_download(self):
         if not self.current_video_info:
             return
-            
+
         download_id = self.download_counter
         self.download_counter += 1
-        
+
         info = self.current_video_info.copy()
         options = {
             "quality": self.var_quality.get(),
             "subs": self.var_subs.get(),
             "path": self.entry_path.get()
         }
-        
+
         self._create_download_row(download_id, info['title'])
         threading.Thread(target=self._download_thread, args=(download_id, info, options)).start()
 
@@ -326,20 +346,32 @@ class VideoDownloaderGUI(BaseWindow):
         url = self.url_var.get().strip()
         if not url:
             return
-        
+
         self.btn_analyze.configure(state="disabled", text="...")
         threading.Thread(target=self._analyze_thread, args=(url,)).start()
 
     def _analyze_thread(self, url):
         try:
-            ydl_opts = {'quiet': True, 'no_warnings': True}
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'legacyserver_connect': True,
+                'extractor_args': {'youtube': {'player_client': ['web', 'android']}}
+            }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
             self.after(0, lambda: self._update_ui_with_info(info))
         except Exception as e:
-            self.after(0, lambda: messagebox.showerror(t("common.error"), f"Could not analyze URL: {e}"))
+            err_msg = str(e)
+            self.after(0, lambda: messagebox.showerror(t("common.error"), f"Could not analyze URL: {err_msg}"))
+            if "403" in err_msg or "Forbidden" in err_msg or "Sign in" in err_msg:
+                self.after(0, lambda: self._prompt_update())
         finally:
             self.after(0, lambda: self.btn_analyze.configure(state="normal", text=t("youtube_downloader.search")))
+
+    def _prompt_update(self):
+        if messagebox.askyesno("Update Required", "YouTube bot protection (HTTP 403) detected.\nWould you like to force-update the core engine (yt-dlp) to fix this?"):
+            self.update_engine()
 
     def _update_ui_with_info(self, info):
         self.current_video_info = info
@@ -347,12 +379,12 @@ class VideoDownloaderGUI(BaseWindow):
         uploader = info.get('uploader', 'Unknown Uploader')
         duration = info.get('duration_string', '??:??')
         thumb_url = info.get('thumbnail')
-        
+
         self.lbl_title.configure(text=title)
         self.lbl_meta.configure(text=f"{uploader} | {duration}")
         self.btn_download.configure(state="normal")
         self.btn_queue.configure(state="normal")
-        
+
         # Load Thumbnail
         if thumb_url:
             threading.Thread(target=self._load_thumbnail, args=(thumb_url,)).start()
@@ -372,17 +404,17 @@ class VideoDownloaderGUI(BaseWindow):
         # Use scroll_list instead of downloads_frame
         frame = ctk.CTkFrame(self.scroll_list, fg_color=THEME_BG, corner_radius=8, border_width=1, border_color=THEME_BORDER)
         frame.pack(fill="x", pady=2, padx=5)
-        
+
         lbl_title = ctk.CTkLabel(frame, text=title, anchor="w", width=180, font=("Segoe UI", 11, "bold"), text_color=THEME_TEXT_MAIN)
         lbl_title.pack(side="left", padx=12, pady=8)
-        
+
         lbl_status = ctk.CTkLabel(frame, text=status, width=80, font=("Segoe UI", 10), text_color=THEME_BTN_PRIMARY)
         lbl_status.pack(side="right", padx=12)
-        
+
         progress = ctk.CTkProgressBar(frame, height=6, progress_color=THEME_BTN_PRIMARY, fg_color=THEME_CARD, corner_radius=3)
         progress.pack(side="right", fill="x", expand=True, padx=5)
         progress.set(0)
-        
+
         self.active_downloads[dl_id] = {
             "frame": frame,
             "status": lbl_status,
@@ -392,17 +424,19 @@ class VideoDownloaderGUI(BaseWindow):
     def _download_thread(self, dl_id, info, opts):
         url = info['webpage_url']
         path = opts['path']
-        
+
         ydl_opts = {
             'outtmpl': f'{path}/%(title)s.%(ext)s',
-            'progress_hooks': [lambda d: self._progress_hook(d, dl_id)],
+            'progress_hooks': [lambda d, id=dl_id: self._progress_hook(d, id)],
             'quiet': True,
+            'legacyserver_connect': True,
+            'extractor_args': {'youtube': {'player_client': ['web', 'android']}}
         }
-        
+
         # Quality Logic
         quality_label = opts['quality']
         quality = self.quality_map.get(quality_label, "Best Video+Audio")
-        
+
         if "Audio Only" in quality:
             ydl_opts['format'] = 'bestaudio/best'
             ydl_opts['postprocessors'] = [{
@@ -415,9 +449,9 @@ class VideoDownloaderGUI(BaseWindow):
             ydl_opts['format'] = 'bestvideo[height<=1080]+bestaudio/best[height<=1080]'
         elif "720p" in quality:
             ydl_opts['format'] = 'bestvideo[height<=720]+bestaudio/best[height<=720]'
-        else: 
+        else:
             ydl_opts['format'] = 'bestvideo+bestaudio/best'
-            
+
         if opts['subs']:
             ydl_opts['writesubtitles'] = True
             ydl_opts['subtitleslangs'] = ['en', 'ko', 'auto']
@@ -429,7 +463,10 @@ class VideoDownloaderGUI(BaseWindow):
             self.after(0, lambda: self._update_status(dl_id, t("youtube_downloader.status_complete"), 1.0, "green"))
         except Exception as e:
             print(e)
-            self.after(0, lambda: self._update_status(dl_id, t("youtube_downloader.status_failed"), 0.0, "red"))
+            err_msg = str(e)
+            self.after(0, lambda id=dl_id: self._update_status(id, t("youtube_downloader.status_failed"), 0.0, "red"))
+            if "403" in err_msg or "Forbidden" in err_msg or "Sign in" in err_msg:
+                self.after(0, lambda: self._prompt_update())
 
     def _progress_hook(self, d, dl_id):
         if d['status'] == 'downloading':
@@ -448,7 +485,7 @@ class VideoDownloaderGUI(BaseWindow):
                 widgets['status'].configure(text_color=color)
 
     def on_close(self):
-        # We should wait for threads or just kill app? 
+        # We should wait for threads or just kill app?
         # Standard behavior for simple tools: just exit.
         self.destroy()
         sys.exit(0)
