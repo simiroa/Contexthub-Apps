@@ -4,7 +4,17 @@ on:
   push:
     branches: [main]
     paths:
-      - "apps/**"
+      - "3d/**"
+      - "ai/**"
+      - "ai_light/**"
+      - "audio/**"
+      - "comfyui/**"
+      - "document/**"
+      - "image/**"
+      - "native/**"
+      - "system/**"
+      - "utilities/**"
+      - "video/**"
   workflow_dispatch: # Allow manual trigger
 
 permissions:

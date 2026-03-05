@@ -1,50 +1,128 @@
-# Contexthub Apps Git Guide
+# Apps Market Release Guide
 
-이 가이드는 Contexthub Apps 프로젝트의 Git 워크플로우와 자동 릴리즈 시스템을 설명합니다.
+`apps_market`(= `Apps_market`)를 GitHub Actions로 릴리즈/배포할 때 따라야 하는 단일 규칙 문서입니다.
 
-## 1. 기본 워크플로우
+## 1. 목표
 
-프로젝트의 변경 사항을 반영할 때는 항상 다음 순서를 권장합니다.
+- Hub 설치 시 `404`/메타 불일치/아이콘·매뉴얼 누락을 방지한다.
+- `market.json` + 릴리즈 ZIP + raw 리소스(icon/manual) 경로를 항상 일치시킨다.
 
-```powershell
-# 1. 변경 사항 스테이징
-git add .
+## 2. 현재 Hub 동작 기준 (필수 반영)
 
-# 2. 커밋 메시지 작성 (예시)
-git commit -m "feat: 새로운 앱 추가 및 로직 업데이트"
+- 앱 설치 ZIP URL은 `market.json`의 `zip_url`을 그대로 사용한다.
+- 아이콘은 `market.json`의 `icon_url`을 그대로 사용한다.
+- 매뉴얼은 `market.json` 값이 아니라 아래 규칙으로 고정 생성된다.
+  - `https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/{category}/{id}/manual.md`
+- 따라서 `manual.md`는 반드시 `main` 브랜치의 앱 폴더에 존재해야 한다.
 
-# 3. 원격 저장소의 최신 상태 반영 (Conflict 방지)
-git pull origin main
+## 3. 리포 구조 규칙
 
-# 4. 최종 Push
-git push origin main
+- 루트:
+  - `market.json`
+  - 카테고리 폴더(`ai`, `ai_light`, `image`, ...)
+- 앱 폴더:
+  - `{category}/{app_id}/manifest.json` (필수)
+  - `{category}/{app_id}/main.py` 또는 엔트리 파일 (필수)
+  - `{category}/{app_id}/icon.png` 또는 `icon.ico` (강력 권장)
+  - `{category}/{app_id}/manual.md` (강력 권장, 사실상 필수)
+
+## 4. market.json 스키마 규칙
+
+각 항목 필수 필드:
+
+- `id`
+- `name`
+- `description`
+- `version`
+- `category`
+- `zip_url`
+- `icon_url`
+
+예시:
+
+```json
+{
+  "id": "ai_text_lab",
+  "name": "AI Text Lab",
+  "description": "Text utility",
+  "version": "1.0.1",
+  "category": "ai_light",
+  "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/ai_text_lab.zip",
+  "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai_light/ai_text_lab/icon.png"
+}
 ```
 
-## 2. 자동 릴리즈 시스템 (GitHub Actions)
+## 5. ZIP 릴리즈 규칙
 
-저장소에는 GitHub Actions가 설정되어 있어, 특정 변경 사항이 `main` 브랜치에 push되면 자동으로 후속 작업이 진행됩니다.
+- ZIP 파일명: `{id}.zip`
+- ZIP 내부 구조:
+  - 권장: 루트에 바로 `manifest.json` 포함
+  - 허용: 1-depth 하위 폴더 안에 `manifest.json` 포함
+- 금지:
+  - 2-depth 이상 중첩으로 `manifest.json`을 찾기 어려운 구조
+  - 앱 루트 외 런타임 캐시/로그/가상환경 포함
 
-### 동작 조건
-- `apps/**` 경로 내의 파일 변경이 감지될 때.
-- 수동으로 Workflow를 실행할 때.
+## 6. URL 검증 규칙 (Actions에서 실패 처리)
 
-### 수행 작업
-1. **패키징**: `apps/` 아래의 각 앱 폴더를 개별 `.zip` 파일로 묶습니다.
-2. **레지스트리 갱신**: 각 앱의 메타데이터를 기반으로 `market.json` 파일을 업데이트하고 자동으로 커밋합니다.
-3. **릴리즈 업로드**: `marketplace-latest`라는 태그 이름의 Release 섹션에 최신 `.zip` 파일들을 업로드합니다.
+`zip_url`:
 
-> [!IMPORTANT]
-> GitHub Action이 `market.json`을 직접 커밋하므로, 로컬에서 작업하기 전 반드시 `git pull`을 수행하여 충돌을 방지하십시오.
+- `http/https` 절대 URL이어야 함
+- `.zip`으로 끝나야 함
+- `github.com/user/repo` 같은 플레이스홀더 문자열 금지
 
-## 3. 주요 파일 가이드
+`icon_url`:
 
-- `apps/`: 모든 개별 앱 코드가 들어있는 폴더입니다.
-- `market.json`: 마켓플레이스 앱 목록을 담고 있는 중앙 레지스트리 파일입니다. (자동 관리됨)
-- `git_push.bat`: `add`, `commit`, `pull`, `push` 과정을 자동화한 배치 파일입니다. 필요한 경우 이 파일을 실행하여 한번에 처리할 수 있습니다.
+- raw GitHub 절대 URL 권장
+- 실제 접근 시 `200` 확인
 
-## 4. 커밋 메시지 규칙 (권장)
+`manual`:
 
-- `feat:` : 새로운 기능이나 앱 추가
-- `fix:` : 버그 수정
-- `chore:` : 빌드 시스템 수정, 문서 수정 등 단순 관리 작업
-- `refactor:` : 코드 리팩토링
+- `{category}/{id}/manual.md` 파일 존재 확인
+- raw URL `200` 확인
+
+## 7. GitHub Actions 권장 플로우
+
+1. 앱 폴더 스캔 (`*/ */manifest.json`)
+2. 앱별 ZIP 생성 (`{id}.zip`)
+3. `marketplace-latest` 태그 릴리즈 생성/갱신 후 ZIP 업로드
+4. `market.json` 생성
+5. `zip_url`/`icon_url`/`manual.md` 유효성 검사
+6. 검증 통과 시 `market.json`을 `main`에 반영
+
+핵심 원칙:
+
+- 릴리즈 ZIP 업로드가 먼저, `market.json` 공개가 나중
+- 하나라도 검증 실패하면 `market.json` 배포 금지
+
+## 8. 변경 시 주의사항
+
+- `id` 또는 `category` 변경 시:
+  - ZIP 파일명
+  - `zip_url`
+  - `icon_url`
+  - `manual.md` 경로
+  - 모두 함께 변경
+- `manual.md`/`icon.png`만 바꾼 경우에도 `main` 반영이 필요 (릴리즈 ZIP만 갱신하면 반영 안 됨)
+
+## 9. 릴리즈 전 체크리스트
+
+- [ ] `market.json`에 placeholder URL 없음 (`user/repo`)
+- [ ] 모든 `zip_url` HTTP 200
+- [ ] 모든 `icon_url` HTTP 200
+- [ ] 모든 `{category}/{id}/manual.md` 존재
+- [ ] ZIP 내부에 `manifest.json` 존재
+- [ ] `market.json`의 `id/category/version`과 앱 `manifest.json` 일치
+
+## 10. 장애 대응 표준
+
+- 증상: 설치 시 `404`
+- 1차 확인:
+  - Hub 로그의 `Downloading app bundle from ...` 실제 URL
+  - 해당 URL 직접 GET
+- 원인 분류:
+  - `market.json` URL 오타/placeholder
+  - 릴리즈 자산 누락
+  - 태그(`marketplace-latest`) 갱신 실패
+- 조치:
+  - 잘못된 `market.json` 즉시 롤백 또는 핫픽스
+  - 릴리즈 자산 재업로드 후 검증 완료 뒤 다시 배포

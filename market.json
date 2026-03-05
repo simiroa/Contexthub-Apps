@@ -5,8 +5,8 @@
         "description": "Legacy 3D tool.",
         "version": "1.0.0",
         "category": "3d",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/auto_lod.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/auto_lod/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/auto_lod.zip"
     },
     {
         "id": "blender_bake_gui",
@@ -14,8 +14,8 @@
         "description": "Legacy 3D tool.",
         "version": "1.0.0",
         "category": "3d",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/blender_bake_gui.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/blender_bake_gui/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/blender_bake_gui.zip"
     },
     {
         "id": "cad_to_obj",
@@ -23,8 +23,8 @@
         "description": "Legacy 3D tool.",
         "version": "1.0.0",
         "category": "3d",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/cad_to_obj.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/cad_to_obj/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/cad_to_obj.zip"
     },
     {
         "id": "extract_textures",
@@ -32,8 +32,8 @@
         "description": "Legacy 3D tool.",
         "version": "1.0.0",
         "category": "3d",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/extract_textures.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/extract_textures/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_textures.zip"
     },
     {
         "id": "mesh_convert",
@@ -41,8 +41,8 @@
         "description": "Legacy 3D tool.",
         "version": "1.0.0",
         "category": "3d",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/mesh_convert.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/mesh_convert/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/mesh_convert.zip"
     },
     {
         "id": "open_with_mayo",
@@ -50,8 +50,8 @@
         "description": "Legacy 3D tool.",
         "version": "1.0.0",
         "category": "3d",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/open_with_mayo.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/open_with_mayo/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/open_with_mayo.zip"
     },
     {
         "id": "demucs_stems",
@@ -59,8 +59,8 @@
         "description": "Legacy AI tool.",
         "version": "1.0.0",
         "category": "ai",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/demucs_stems.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/demucs_stems/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/demucs_stems.zip"
     },
     {
         "id": "esrgan_upscale",
@@ -68,8 +68,8 @@
         "description": "Legacy AI tool.",
         "version": "1.0.0",
         "category": "ai",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/esrgan_upscale.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/esrgan_upscale/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/esrgan_upscale.zip"
     },
     {
         "id": "marigold_pbr",
@@ -77,8 +77,8 @@
         "description": "Legacy AI tool.",
         "version": "1.0.0",
         "category": "ai",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/marigold_pbr.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/marigold_pbr/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/marigold_pbr.zip"
     },
     {
         "id": "rmbg_background",
@@ -86,8 +86,8 @@
         "description": "Legacy AI tool.",
         "version": "1.0.0",
         "category": "ai",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/rmbg_background.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/rmbg_background/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/rmbg_background.zip"
     },
     {
         "id": "whisper_subtitle",
@@ -95,8 +95,8 @@
         "description": "Legacy AI tool.",
         "version": "1.0.0",
         "category": "ai",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/whisper_subtitle.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/whisper_subtitle/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/whisper_subtitle.zip"
     },
     {
         "id": "ai_text_lab",
@@ -104,8 +104,8 @@
         "description": "Legacy Utilities tool.",
         "version": "1.0.0",
         "category": "ai_light",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/ai_text_lab.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai_light/ai_text_lab/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/ai_text_lab.zip"
     },
     {
         "id": "prompt_master",
@@ -113,8 +113,8 @@
         "description": "AI-powered prompt management and refinement tool.",
         "version": "1.0.0",
         "category": "ai_light",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/prompt_master.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai_light/prompt_master/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/prompt_master.zip"
     },
     {
         "id": "audio_convert",
@@ -122,8 +122,8 @@
         "description": "Legacy Audio tool.",
         "version": "1.0.0",
         "category": "audio",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/audio_convert.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/audio_convert/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/audio_convert.zip"
     },
     {
         "id": "extract_bgm",
@@ -131,8 +131,8 @@
         "description": "Legacy Audio tool.",
         "version": "1.0.0",
         "category": "audio",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/extract_bgm.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_bgm/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_bgm.zip"
     },
     {
         "id": "extract_voice",
@@ -140,8 +140,8 @@
         "description": "Legacy Audio tool.",
         "version": "1.0.0",
         "category": "audio",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/extract_voice.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_voice/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_voice.zip"
     },
     {
         "id": "normalize_volume",
@@ -149,8 +149,8 @@
         "description": "Legacy Audio tool.",
         "version": "1.0.0",
         "category": "audio",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/normalize_volume.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/normalize_volume/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normalize_volume.zip"
     },
     {
         "id": "ace_audio_editor",
@@ -158,8 +158,8 @@
         "description": "AI Audio Generation & Editing using ACE Step",
         "version": "1.0.0",
         "category": "comfyui",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/ace_audio_editor.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/ace_audio_editor/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/ace_audio_editor.zip"
     },
     {
         "id": "comfyui_dashboard",
@@ -167,8 +167,8 @@
         "description": "Open ComfyUI Web UI (starts server if needed)",
         "version": "1.0.0",
         "category": "comfyui",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/comfyui_dashboard.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/comfyui_dashboard/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/comfyui_dashboard.zip"
     },
     {
         "id": "creative_studio_advanced",
@@ -176,8 +176,8 @@
         "description": "Professional workspace with Checkpoint, LoRA Stacking, FaceDetailer & SUPIR.",
         "version": "1.0.0",
         "category": "comfyui",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/creative_studio_advanced.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/creative_studio_advanced/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/creative_studio_advanced.zip"
     },
     {
         "id": "creative_studio_z",
@@ -185,8 +185,8 @@
         "description": "Unified workspace for prompt layers, icon generation, and asset creation (Z-Turbo).",
         "version": "1.0.0",
         "category": "comfyui",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/creative_studio_z.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/creative_studio_z/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/creative_studio_z.zip"
     },
     {
         "id": "seedvr2_upscaler",
@@ -194,8 +194,8 @@
         "description": "Upscale videos using SeedVR2 (ComfyUI)",
         "version": "1.0.0",
         "category": "comfyui",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/seedvr2_upscaler.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/seedvr2_upscaler/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/seedvr2_upscaler.zip"
     },
     {
         "id": "doc_convert",
@@ -203,8 +203,8 @@
         "description": "Legacy Document tool.",
         "version": "1.0.0",
         "category": "document",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/doc_convert.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/doc_convert/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/doc_convert.zip"
     },
     {
         "id": "doc_scan",
@@ -212,8 +212,8 @@
         "description": "Scan and unwarp document images.",
         "version": "1.0.0",
         "category": "document",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/doc_scan.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/doc_scan/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/doc_scan.zip"
     },
     {
         "id": "pdf_merge",
@@ -221,8 +221,8 @@
         "description": "Legacy Document tool.",
         "version": "1.0.0",
         "category": "document",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/pdf_merge.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/pdf_merge/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/pdf_merge.zip"
     },
     {
         "id": "pdf_split",
@@ -230,8 +230,8 @@
         "description": "Legacy Document tool.",
         "version": "1.0.0",
         "category": "document",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/pdf_split.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/pdf_split/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/pdf_split.zip"
     },
     {
         "id": "image_compare",
@@ -239,8 +239,8 @@
         "description": "Legacy Image tool.",
         "version": "1.0.0",
         "category": "image",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/image_compare.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_compare/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_compare.zip"
     },
     {
         "id": "image_convert",
@@ -248,8 +248,8 @@
         "description": "Legacy Image tool.",
         "version": "1.0.0",
         "category": "image",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/image_convert.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_convert/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_convert.zip"
     },
     {
         "id": "image_metadata",
@@ -257,8 +257,8 @@
         "description": "Legacy Image tool.",
         "version": "1.0.0",
         "category": "image",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/image_metadata.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_metadata/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_metadata.zip"
     },
     {
         "id": "merge_to_exr",
@@ -266,8 +266,8 @@
         "description": "Legacy Image tool.",
         "version": "1.0.0",
         "category": "image",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/merge_to_exr.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/merge_to_exr/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/merge_to_exr.zip"
     },
     {
         "id": "normal_flip_green",
@@ -275,8 +275,8 @@
         "description": "Legacy Image tool.",
         "version": "1.0.0",
         "category": "image",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/normal_flip_green.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/normal_flip_green/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normal_flip_green.zip"
     },
     {
         "id": "resize_power_of_2",
@@ -284,8 +284,8 @@
         "description": "Legacy Image tool.",
         "version": "1.0.0",
         "category": "image",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/resize_power_of_2.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/resize_power_of_2/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/resize_power_of_2.zip"
     },
     {
         "id": "rigreader_vectorizer",
@@ -293,8 +293,8 @@
         "description": "Legacy Image tool.",
         "version": "1.0.0",
         "category": "image",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/rigreader_vectorizer.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/rigreader_vectorizer/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/rigreader_vectorizer.zip"
     },
     {
         "id": "simple_normal_roughness",
@@ -302,8 +302,8 @@
         "description": "Legacy Image tool.",
         "version": "1.0.0",
         "category": "image",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/simple_normal_roughness.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/simple_normal_roughness/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/simple_normal_roughness.zip"
     },
     {
         "id": "split_exr",
@@ -311,8 +311,8 @@
         "description": "Legacy Image tool.",
         "version": "1.0.0",
         "category": "image",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/split_exr.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/split_exr/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/split_exr.zip"
     },
     {
         "id": "texture_packer_orm",
@@ -320,17 +320,17 @@
         "description": "Legacy Image tool.",
         "version": "1.0.0",
         "category": "image",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/texture_packer_orm.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/texture_packer_orm/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/texture_packer_orm.zip"
     },
     {
         "id": "leave_manager_C",
         "name": "Leave Manager (C)",
         "description": "Manage your vacation days and countdown to freedom.",
         "version": "1.0.0",
-        "category": "native",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/leave_manager.zip"
+        "category": "utilities",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/utilities/leave_manager/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/leave_manager_C.zip"
     },
     {
         "id": "youtube_downloader",
@@ -338,8 +338,8 @@
         "description": "Legacy Utilities tool.",
         "version": "1.0.1",
         "category": "utilities",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/youtube_downloader.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/utilities/youtube_downloader/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/youtube_downloader.zip"
     },
     {
         "id": "create_proxy",
@@ -347,8 +347,8 @@
         "description": "Legacy Video tool.",
         "version": "1.0.0",
         "category": "video",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/create_proxy.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/create_proxy/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/create_proxy.zip"
     },
     {
         "id": "extract_audio",
@@ -356,8 +356,8 @@
         "description": "Legacy Video tool.",
         "version": "1.0.0",
         "category": "video",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/extract_audio.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/extract_audio/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_audio.zip"
     },
     {
         "id": "interpolate_30fps",
@@ -365,8 +365,8 @@
         "description": "Legacy Video tool.",
         "version": "1.0.0",
         "category": "video",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/interpolate_30fps.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/interpolate_30fps/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/interpolate_30fps.zip"
     },
     {
         "id": "remove_audio",
@@ -374,8 +374,8 @@
         "description": "Legacy Video tool.",
         "version": "1.0.0",
         "category": "video",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/remove_audio.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/remove_audio/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/remove_audio.zip"
     },
     {
         "id": "video_convert",
@@ -383,7 +383,7 @@
         "description": "Legacy Video tool.",
         "version": "1.0.0",
         "category": "video",
-        "icon_url": "",
-        "zip_url": "https://github.com/user/repo/releases/download/marketplace-latest/video_convert.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/video_convert/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/video_convert.zip"
     }
 ]
