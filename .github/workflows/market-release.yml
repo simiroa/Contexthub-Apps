@@ -48,6 +48,14 @@ jobs:
           git commit -m "chore: update market.json registry [skip ci]" || echo "No changes to commit"
           git push
 
+      - name: Purge Old Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete marketplace-latest --yes || echo "Old release not found"
+          git push origin :refs/tags/marketplace-latest || echo "Old tag not found"
+        continue-on-error: true
+
       - name: Create/Update Release
         uses: softprops/action-gh-release@v1
         with:
