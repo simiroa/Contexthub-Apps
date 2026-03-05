@@ -1,0 +1,14 @@
+accelerate
+basicsr
+customtkinter
+demucs
+diffusers
+faster-whisper
+gfpgan
+kornia
+numpy
+opencv-python
+Pillow
+realesrgan
+torch
+transformers

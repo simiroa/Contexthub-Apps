@@ -1,0 +1,16 @@
+{
+  "audio_separate_gui": {
+    "title": "Audio Separator (Demucs)",
+    "header_sep": "Audio Separator - {} files",
+    "header_default": "Audio Separator",
+    "select_files": "Select Audio Files",
+    "extraction_settings": "Extraction Settings",
+    "model": "Demucs Model",
+    "output_format": "Output Format",
+    "separation_mode": "Separation Mode",
+    "start_separation": "Start Separation",
+    "cancelled": "Separation Cancelled",
+    "processing": "Processing: {}",
+    "all_completed": "All files processed successfully."
+  }
+}

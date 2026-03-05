@@ -1,0 +1,4 @@
+Pillow
+customtkinter
+numpy
+scipy

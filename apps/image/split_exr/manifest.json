@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.2",
+  "id": "split_exr",
+  "name": "Split EXR",
+  "description": "Legacy Image tool.",
+  "author": "ContextHub Legacy",
+  "version": "1.0.0",
+  "icon": null,
+  "runtime": {
+    "category": "image",
+    "python_version": "3.11",
+    "required_binaries": []
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "gui",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": "split_exr",
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": false,
+    "quick_launcher": false,
+    "context_menu": {
+      "enabled": true,
+      "extensions": [
+        ".exr"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "customtkinter",
+    "shared_theme": "contexthub"
+  }
+}

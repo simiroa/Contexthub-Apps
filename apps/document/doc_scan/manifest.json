@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.2",
+  "id": "doc_scan",
+  "name": "Document Scanner",
+  "description": "Scan and unwarp document images.",
+  "author": "ContextHub",
+  "version": "1.0.0",
+  "icon": null,
+  "runtime": {
+    "category": "document",
+    "python_version": "3.11",
+    "required_binaries": []
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "gui",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": "doc_scan",
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": false,
+    "quick_launcher": false,
+    "context_menu": {
+      "enabled": true,
+      "extensions": [
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".bmp",
+        ".webp"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "customtkinter",
+    "shared_theme": "contexthub"
+  }
+}

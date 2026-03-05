@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.2",
+  "id": "ace_audio_editor",
+  "name": "Creative Audio Studio (ACE)",
+  "description": "AI Audio Generation \u0026 Editing using ACE Step",
+  "author": "ContextHub Legacy",
+  "version": "1.0.0",
+  "icon": null,
+  "runtime": {
+    "category": "comfyui",
+    "python_version": "3.11",
+    "required_binaries": [
+      "ComfyUI"
+    ]
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "console",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": "ace_audio_editor",
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": true,
+    "quick_launcher": false,
+    "context_menu": {
+      "enabled": false,
+      "extensions": [
+        ".mp3",
+        ".wav",
+        ".flac",
+        ".ogg",
+        ".m4a"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": false,
+    "framework": "",
+    "shared_theme": ""
+  }
+}

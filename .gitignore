@@ -1,0 +1,76 @@
+# OS/Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# Build artifacts
+bin/
+obj/
+build/
+dist/
+*.egg-info/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# Runtime/temporary
+tmp/
+temp/
+.locks/
+*.tmp
+
+# Logs
+logs/
+*.log
+
+# App runtime data
+userdata/
+*.db
+*.sqlite
+
+# ML/cache artifacts (필수 제외)
+hf/
+hub/
+blobs/
+snapshots/
+refs/
+models--*/
+datasets--*/
+transformers_modules/
+diffusers_modules/
+torch/
+realesrgan/
+whisper/
+demucs/
+BiRefNet/
+ZhengPeng7/
+text_encoder/
+tokenizer/
+unet/
+vae/
+**/resources/cache/
+**/_engine/resources/
+**/models/
+**/.cache/
+
+# Generated media
+frames/
+outputs/
+checkpoints/
+weights/

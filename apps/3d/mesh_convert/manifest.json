@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.2",
+  "id": "mesh_convert",
+  "name": "Mesh Convert",
+  "description": "Legacy 3D tool.",
+  "author": "ContextHub Legacy",
+  "version": "1.0.0",
+  "icon": null,
+  "runtime": {
+    "category": "3d",
+    "python_version": "3.11",
+    "required_binaries": [
+      "blender"
+    ]
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "gui",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": "mesh_convert",
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": false,
+    "quick_launcher": false,
+    "context_menu": {
+      "enabled": true,
+      "extensions": [
+        ".fbx",
+        ".obj",
+        ".gltf",
+        ".glb",
+        ".usd",
+        ".abc",
+        ".ply",
+        ".stl"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "customtkinter",
+    "shared_theme": "contexthub"
+  }
+}

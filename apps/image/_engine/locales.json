@@ -1,0 +1,92 @@
+{
+  "image_common": {
+    "add_image": "이미지 추가",
+    "reset_zoom": "배율 초기화",
+    "format": "형식",
+    "resize": "크기 조절",
+    "open_folder": "폴더 열기",
+    "processing": "처리 중...",
+    "completed": "처리 완료",
+    "no_images_loaded": "이미지가 로드되지 않았습니다.",
+    "images_loaded": "개의 이미지가 로드되었습니다."
+  },
+  "image_compare_gui": {
+    "title": "ContextUp 이미지 비교",
+    "add_image": "+ 이미지 추가",
+    "mode_single": "단일 보기",
+    "mode_side": "나란히 보기",
+    "mode_slider": "슬라이더",
+    "mode_diff": "차이점 추출",
+    "mode_grid": "그리드 보기",
+    "channel_rgb": "RGB",
+    "slot_a": "슬롯 A",
+    "slot_b": "슬롯 B",
+    "diff_result": "차이점 추출 결과",
+    "ssim": "SSIM (유사도)",
+    "diff_pixels": "차이 픽셀 수",
+    "outside_image": "이미지 외부",
+    "pos": "위치",
+    "val": "값",
+    "help_text": "[클릭] A/B 전환 (단일) | [드래그] 이동 | [중앙 드래그] 슬라이더"
+  },
+  "image_convert_gui": {
+    "header": "이미지 변환 도구",
+    "format_label": "출력 형식",
+    "resize_label": "크기 조절 (px):",
+    "save_to_folder": "Converted_Images 폴더에 저장",
+    "delete_original": "원본 파일 삭제",
+    "convert_all": "모두 변환하기",
+    "no_valid_images": "유효한 이미지 파일을 찾을 수 없습니다.",
+    "conversion_cancelled": "변환이 취소되었습니다."
+  },
+  "image_metadata_gui": {
+    "title": "이미지 메타데이터 확인",
+    "header": "이미지 메타데이터 뷰어",
+    "basic_info": "기본 정보",
+    "exif_info": "EXIF / 비공개 데이터",
+    "exif_data": "EXIF 데이터",
+    "no_metadata": "메타데이터가 없습니다.",
+    "strip_metadata": "비공개 데이터 제거 (보안)",
+    "stripping": "제거 중...",
+    "strip_success": "메타데이터가 성공적으로 제거되었습니다.",
+    "strip_error": "메타데이터 제거에 실패했습니다."
+  },
+  "image_resize_gui": {
+    "title": "ContextUp 이미지 크기 조절 (POT)",
+    "no_valid_images": "유효한 이미지를 찾을 수 없습니다.",
+    "target_resolution": "대상 해상도",
+    "force_square": "정사각형 강제 (패딩)",
+    "resize_method": "크기 조절 방법",
+    "standard_lanczos": "표준 (Lanczos)",
+    "ai_upscale": "AI 업스케일 (Real-ESRGAN)",
+    "start_resize": "크기 조절 시작"
+  },
+  "merge_exr": {
+    "header": "EXR 채널 관리자",
+    "add_custom": "+ 커스텀 패스",
+    "col_use": "사용",
+    "col_source": "소스 파일",
+    "col_target": "대상 레이어 이름",
+    "col_mode": "모드",
+    "col_options": "옵션",
+    "col_del": "삭제",
+    "export_btn": "멀티레이어 EXR 내보내기",
+    "ready": "준비됨",
+    "loading": "참조 로드 중...",
+    "processing": "처지 중 {}...",
+    "saving": "저장 중 {}...",
+    "done": "완료",
+    "success_msg": "저장 완료:\n{}\n\n포함된 채널:\n{}"
+  },
+  "dialogs": {
+    "confirm": "동작 확인",
+    "are_you_sure": "정말로 진행하시겠습니까?"
+  },
+  "common": {
+    "error": "오류",
+    "success": "성공",
+    "warning": "경고",
+    "cancel": "취소",
+    "ready": "준비"
+  }
+}

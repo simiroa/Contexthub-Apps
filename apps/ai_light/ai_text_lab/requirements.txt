@@ -1,0 +1,4 @@
+customtkinter
+deep-translator
+google-genai
+ollama

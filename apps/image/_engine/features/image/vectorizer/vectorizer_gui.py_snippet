@@ -1,0 +1,51 @@
+    def show_guide(self):
+        """Show User Guide popup."""
+        guide = ctk.CTkToplevel(self)
+        guide.title("RigReady Vectorizer 가이드")
+        guide.geometry("500x600")
+        
+        # Center popup
+        x = self.winfo_x() + (self.winfo_width()//2) - 250
+        y = self.winfo_y() + (self.winfo_height()//2) - 300
+        guide.geometry(f"+{x}+{y}")
+        
+        textbox = ctk.CTkTextbox(guide, wrap="word")
+        textbox.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        msg = """# RigReady Vectorizer 사용 가이드
+
+## ⚠️ 스마트 오브젝트 주의사항
+스마트 오브젝트(.ai 파일 등)는 자동으로 벡터 변환이 되지 않습니다 (래스터화 후 트레이싱됨).
+**완벽한 1:1 벡터 품질을 원하신다면:**
+1. 포토샵에서 스마트 오브젝트를 더블 클릭해 Ai로 엽니다.
+2. 벡터 패스를 복사하여 포토샵에 **'모양 레이어(Shape Layer)'**로 붙여넣으세요.
+3. 이 Shape Layer는 자동으로 인식되어 완벽하게 추출됩니다.
+
+---
+
+## ⚙️ 설정값 설명
+
+### 1. 노이즈 필터 (Filter Speckle)
+작은 점이나 먼지를 제거합니다.
+- **기본값 (4)**: 일반적인 그림에 적합
+- **낮음 (1~2)**: 아주 작은 디테일도 살림 (노이즈 증가)
+- **높음 (10+)**: 깔끔하게 정리 (눈동자 등 사라질 수 있음)
+
+### 2. 색상 정밀도 (Color Precision)
+색상을 얼마나 세밀하게 구분할지 결정합니다.
+- **기본값 (6)**: 밸런스형
+- **낮음 (2~4)**: 포스터 효과 (비슷한 색 합침)
+- **높음 (8)**: 미세한 색 차이도 구분
+
+### 3. 곡선 부드러움 (Corner Threshold)
+- **기본값 (60)**: 자연스러운 곡선
+- **낮음 (30)**: 각진 부분을 정확히 표현 (계단 현상 주의)
+- **높음 (90)**: 둥글둥글하게 처리
+
+## 💡 팁: 저해상도 이미지 살리기
+작은 이미지의 디테일을 살리려면 다음 조합을 추천합니다:
+- **노이즈 필터**: 2 (낮춤)
+- **곡선 부드러움**: 45 (약간 낮춤)
+"""
+        textbox.insert("1.0", msg)
+        textbox.configure(state="disabled")

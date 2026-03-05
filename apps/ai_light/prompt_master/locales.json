@@ -1,0 +1,18 @@
+{
+  "prompt_master": {
+    "header": "Prompt Master",
+    "select_preset": "Select a Preset",
+    "custom_template": "Custom Template",
+    "tag_library": "🏷️ Tag Library / User Context",
+    "placeholder_search": "🔍",
+    "tooltip_search": "Search Presets",
+    "tooltip_folder": "Open Presets Folder",
+    "tooltip_guide": "Add New Preset Guide",
+    "tooltip_optimize": "Optimize Prompt",
+    "tooltip_copy": "Copy to Clipboard",
+    "tooltip_clear": "Clear All",
+    "status_ready": "Ready",
+    "status_optimizing": "Optimizing...",
+    "copy_success": "Prompt copied!"
+  }
+}
