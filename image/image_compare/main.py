@@ -8,11 +8,16 @@ LEGACY_SCOPE = 'items'
 USE_MENU = False
 SCRIPT_REL = "features/image/compare_gui.py"
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[2]
 APP_ROOT = Path(__file__).resolve().parent
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
+SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
+SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
 os.chdir(LEGACY_ROOT)
-sys.path.insert(0, str(LEGACY_ROOT))
+for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    path_str = str(path)
+    if path.exists() and path_str not in sys.path:
+        sys.path.insert(0, path_str)
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
@@ -55,16 +60,13 @@ def _pick_targets():
 
 
 def _run_script(script_rel, targets):
-    script_path = LEGACY_ROOT / script_rel
-    if not script_path.exists():
-        raise FileNotFoundError("Missing script: " + str(script_path))
-    argv = [str(script_path)] + targets
-    old_argv = sys.argv
+    # For Flet migration, we import the start_app from the specific feature folder
+    # Instead of raw runpy, we use the structured flet_app.py
     try:
-        sys.argv = argv
-        runpy.run_path(str(script_path), run_name="__main__")
-    finally:
-        sys.argv = old_argv
+        from features.image.image_compare.flet_app import start_app
+        start_app(targets)
+    except ImportError as e:
+        raise e
 
 
 def _run_menu(targets):

@@ -1,18 +1,20 @@
 import os
 import sys
 from pathlib import Path
-import runpy
 
-LEGACY_ID = 'esrgan_upscale'
-LEGACY_SCOPE = 'file'
-USE_MENU = False
-SCRIPT_REL = None
+LEGACY_ID = "esrgan_upscale"
+LEGACY_SCOPE = "file"
 
 ROOT = Path(__file__).resolve().parents[3]
 APP_ROOT = Path(__file__).resolve().parent
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
+SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
+SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
 os.chdir(LEGACY_ROOT)
-sys.path.insert(0, str(LEGACY_ROOT))
+for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    path_str = str(path)
+    if path.exists() and path_str not in sys.path:
+        sys.path.insert(0, path_str)
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
@@ -52,37 +54,11 @@ def _pick_targets():
         return [path] if path else []
     except Exception:
         return []
-
-
-def _run_function(targets):
-    # Refactored to use the new GUI application
-    from features.ai.standalone.upscale_app import UpscaleGUI
-    target = targets[0] if targets else None
-    try:
-        app = UpscaleGUI(target)
-        app.mainloop()
-    except Exception as e:
-        import tkinter as tk
-        from tkinter import messagebox
-        root = tk.Tk()
-        root.withdraw()
-        messagebox.showerror("ContextHub Error", f"Failed to launch Upscale GUI: {e}")
-
-
 def main():
     targets = _pick_targets()
-    if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
-        try:
-            import tkinter as tk
-            from tkinter import messagebox
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showwarning("ContextHub", "No target selected.")
-        except Exception:
-            pass
-        return
+    from features.ai.standalone.upscale_flet_app import open_upscale_flet
 
-    _run_function(targets)
+    open_upscale_flet(targets)
 
 
 if __name__ == "__main__":

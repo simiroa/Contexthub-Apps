@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "name": "English",
+    "description": "Default System Language"
+  },
+  "common": {
+    "error": "Error",
+    "warning": "Warning",
+    "success": "Success",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "close": "Close",
+    "ready": "Ready",
+    "processing": "Processing...",
+    "complete": "Complete",
+    "cancelled": "Cancelled",
+    "save": "Save",
+    "delete": "Delete",
+    "add": "Add",
+    "remove": "Remove",
+    "browse": "Browse",
+    "settings": "Settings",
+    "help": "Help"
+  },
+  "menu": {
+    "context_error_title": "Context Menu Error",
+    "open_manager_failed": "Failed to launch Manager: {error}",
+    "an_error_occurred": "An error occurred:\n{error}",
+    "access_denied_title": "Access Denied",
+    "access_denied_prompt": "This action requires Administrator privileges.\n\nDo you want to retry as Administrator?",
+    "elevation_failed": "Elevation failed or cancelled.",
+    "elevation_failed_with_error": "Failed to elevate: {error}"
+  }
+}

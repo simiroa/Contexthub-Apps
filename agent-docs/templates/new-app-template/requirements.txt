@@ -1,0 +1,2 @@
+# Add app-specific packages only when they are not already provided
+# by the category-level requirements.txt.

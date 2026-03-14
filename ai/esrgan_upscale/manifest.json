@@ -48,7 +48,7 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "",
-    "shared_theme": ""
+    "framework": "flet",
+    "shared_theme": "contexthub"
   }
 }

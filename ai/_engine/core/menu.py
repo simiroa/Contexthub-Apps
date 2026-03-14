@@ -1,6 +1,7 @@
 import sys
 import os
 import traceback
+import shutil
 from pathlib import Path
 from tkinter import messagebox
 import importlib
@@ -23,7 +24,59 @@ from contexthub.utils.i18n import t
 logger = setup_logger("menu_dispatcher")
 
 def resolve_python():
-    """Resolve Python interpreter - prioritize embedded Python."""
+    """Resolve Python interpreter - prefer Conda for AI when configured."""
+    try:
+        settings = load_settings()
+    except Exception:
+        settings = {}
+
+    def find_conda_exe():
+        candidates = [
+            settings.get("AI_CONDA_EXE"),
+            os.environ.get("CTX_AI_CONDA_EXE"),
+            os.environ.get("CONDA_EXE"),
+            shutil.which("conda"),
+            shutil.which("conda.exe"),
+        ]
+        for candidate in candidates:
+            if candidate and Path(candidate).exists():
+                return Path(candidate)
+        return None
+
+    if settings.get("AI_ENV_MODE", "prefer_conda") != "disabled":
+        env_path = settings.get("AI_CONDA_ENV_PATH") or os.environ.get("CTX_AI_CONDA_ENV_PATH")
+        if env_path:
+            candidate = Path(env_path) / "python.exe"
+            if candidate.exists():
+                return str(candidate)
+
+        conda_exe = find_conda_exe()
+        env_name = settings.get("AI_CONDA_ENV_NAME") or os.environ.get("CTX_AI_CONDA_ENV_NAME") or "contexthub-ai"
+        if conda_exe:
+            try:
+                result = subprocess.run(
+                    [str(conda_exe), "info", "--base"],
+                    capture_output=True,
+                    text=True,
+                    creationflags=CREATE_NO_WINDOW,
+                )
+                base_path = Path((result.stdout or "").strip())
+                candidate = base_path / "envs" / env_name / "python.exe"
+                if candidate.exists():
+                    return str(candidate)
+            except Exception:
+                pass
+        elif os.environ.get("CTX_CAPTURE_MODE") != "1" and os.environ.get("CTX_HEADLESS") != "1":
+            try:
+                messagebox.showwarning(
+                    "AI Conda Recommended",
+                    "AI tools prefer a Conda environment.\n\n"
+                    "Install Conda and configure the AI env to use the recommended setup.\n\n"
+                    "Falling back to the current Python environment for now.",
+                )
+            except Exception:
+                pass
+
     # Always check embedded Python first
     embedded = Path(__file__).parent.parent.parent / "tools" / "python" / "python.exe"
     if embedded.exists():
@@ -149,7 +202,6 @@ def build_handler_map():
         "normal_flip_green": _lazy("features.image.normal", "flip_normal_green"),
         "simple_normal_roughness": _lazy("features.image.normal", "generate_simple_normal_roughness"),
         "image_compare": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "compare_gui.py"), *( [str(i) for i in s] if s else [str(p)] )]),
-        "image_metadata": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "metadata_gui.py"), str(p)]),
         "rigreader_vectorizer": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "vectorizer" / "vectorizer_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
         "noise_master": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "tools" / "noise_master" / "main.py")]),
 
@@ -158,7 +210,6 @@ def build_handler_map():
         "esrgan_upscale": _lazy("features.ai.standalone.upscale", "upscale_image"),
         "rmbg_background": _lazy("features.ai.tools", "remove_background"),
         "marigold_pbr": _lazy("features.ai.marigold_gui", "run_marigold_gui"),
-        "prompt_master": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "prompt_master" / "main.py")]),
         "gemini_image_tool": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "ai" / "standalone" / "gemini_img_tools.py"), *([str(i) for i in s] if s else [str(p)])]),
         "demucs_stems": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "audio" / "separate_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
 

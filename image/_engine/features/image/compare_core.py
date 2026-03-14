@@ -40,6 +40,7 @@ def _load_standard(path: Path, channel: str) -> Optional[np.ndarray]:
     """Load standard image formats via Pillow."""
     try:
         img = Image.open(path)
+        img.load()
         
         # Convert to RGBA if has alpha
         if img.mode == "RGBA":
@@ -52,6 +53,9 @@ def _load_standard(path: Path, channel: str) -> Optional[np.ndarray]:
         else:
             img = img.convert("RGBA")
             arr = np.array(img).astype(np.float32) / 255.0
+
+        if arr.ndim == 2:
+            arr = arr[:, :, np.newaxis]
         
         # Extract channel
         if channel == "RGB":

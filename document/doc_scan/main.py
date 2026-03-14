@@ -1,13 +1,9 @@
 import os
 import sys
 from pathlib import Path
-import runpy
 
 LEGACY_ID = 'doc_scan'
 LEGACY_SCOPE = 'file'
-USE_MENU = False
-SCRIPT_REL = "features/document/scan_gui.py"
-
 ROOT = Path(__file__).resolve().parents[3]
 APP_ROOT = Path(__file__).resolve().parent
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
@@ -15,6 +11,9 @@ os.chdir(LEGACY_ROOT)
 sys.path.insert(0, str(LEGACY_ROOT))
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
+SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
+if SHARED_ROOT.exists() and str(SHARED_ROOT) not in sys.path:
+    sys.path.insert(0, str(SHARED_ROOT))
 
 def _capture_mode():
     return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
@@ -46,17 +45,9 @@ def _pick_targets():
     except Exception:
         return []
 
-def _run_script(script_rel, targets):
-    script_path = LEGACY_ROOT / script_rel
-    if not script_path.exists():
-        raise FileNotFoundError("Missing script: " + str(script_path))
-    argv = [str(script_path)] + targets
-    old_argv = sys.argv
-    try:
-        sys.argv = argv
-        runpy.run_path(str(script_path), run_name="__main__")
-    finally:
-        sys.argv = old_argv
+def _run_flet(targets):
+    from features.document.doc_scan_flet_app import start_app
+    start_app(targets)
 
 def main():
     try:
@@ -78,7 +69,7 @@ def main():
             pass
         return
 
-    _run_script(SCRIPT_REL, targets)
+    _run_flet(targets)
 
 if __name__ == "__main__":
     main()

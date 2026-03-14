@@ -89,7 +89,7 @@ class VectorizerGUI(BaseWindow):
         except:
             pass
         
-        super().__init__(title=t("rigready_vectorizer_gui.title", self.tool_name), width=900, height=800, scrollable=False, icon_name="vectorizer")
+        super().__init__(title=t("rigready_vectorizer_gui.title", self.tool_name), width=1040, height=800, scrollable=False, icon_name="vectorizer")
         
         self.layers = []
         self.layer_checkboxes = {}
@@ -106,7 +106,7 @@ class VectorizerGUI(BaseWindow):
             else:
                 self.load_file(initial_path)
         
-        self.after(100, self.adjust_window_size)
+        self.minsize(1040, 800)
     
     def create_widgets(self):
         # Header
@@ -121,6 +121,8 @@ class VectorizerGUI(BaseWindow):
         # Header Toolbar (File Loading)
         toolbar = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         toolbar.pack(fill="x", padx=20, pady=(0, 10))
+        toolbar.grid_columnconfigure(0, weight=1)
+        toolbar.grid_columnconfigure(1, weight=0)
         
         self.btn_load = ctk.CTkButton(
             toolbar,
@@ -131,15 +133,16 @@ class VectorizerGUI(BaseWindow):
             hover_color=THEME_BTN_HOVER,
             command=self.browse_file
         )
-        self.btn_load.pack(side="right")
+        self.btn_load.grid(row=0, column=1, sticky="e")
         
         self.lbl_file = ctk.CTkLabel(
             toolbar,
             text=t("rigready_vectorizer_gui.no_file_selected"),
             text_color=THEME_TEXT_DIM,
-            font=("", 12)
+            font=("", 12),
+            anchor="w"
         )
-        self.lbl_file.pack(side="left", padx=5)
+        self.lbl_file.grid(row=0, column=0, sticky="ew", padx=(5, 12))
         
         # Main content area (2 columns)
         content = ctk.CTkFrame(self.main_frame, fg_color="transparent")
@@ -311,17 +314,19 @@ class VectorizerGUI(BaseWindow):
         
         out_row = ctk.CTkFrame(out_frame, fg_color="transparent")
         out_row.pack(fill="x", pady=(5, 0))
+        out_row.grid_columnconfigure(0, weight=1)
+        out_row.grid_columnconfigure(1, weight=0)
         
         self.var_output = ctk.StringVar(value="")
         self.entry_output = ctk.CTkEntry(out_row, textvariable=self.var_output, placeholder_text="...")
-        self.entry_output.pack(side="left", fill="x", expand=True)
+        self.entry_output.grid(row=0, column=0, sticky="ew")
         
         ctk.CTkButton(
             out_row, text="📁", width=40,
             fg_color=THEME_BTN_PRIMARY,
             hover_color=THEME_BTN_HOVER,
             command=self.browse_output
-        ).pack(side="left", padx=(5, 0))
+        ).grid(row=0, column=1, padx=(5, 0), sticky="e")
         
         # Progress
         self.progress = ctk.CTkProgressBar(right_frame, height=10, progress_color=THEME_BTN_PRIMARY)

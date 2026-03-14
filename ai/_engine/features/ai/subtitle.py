@@ -30,7 +30,7 @@ class SubtitleGUI(BaseWindow):
         except Exception as e:
              print(f"Config load error: {e}")
 
-        super().__init__(title=self.tool_name, width=640, height=750, icon_name="video_generate_subtitle")
+        super().__init__(title=self.tool_name, width=860, height=900, scrollable=True, icon_name="video_generate_subtitle")
         
         self.files = []
         if target_path:
@@ -54,7 +54,7 @@ class SubtitleGUI(BaseWindow):
         
         # 2. File List
         from utils.gui_lib import FileListFrame
-        self.file_scroll = FileListFrame(self.main_frame, self.files, height=180)
+        self.file_scroll = FileListFrame(self.main_frame, self.files, height=96)
         self.file_scroll.pack(fill="x", padx=20, pady=(0, 10))
         
         # 3. Parameters (2-Column Grid)
@@ -113,12 +113,12 @@ class SubtitleGUI(BaseWindow):
         self.log_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.log_frame.pack(fill="both", padx=15, pady=5) # Default visible
         
-        self.log_area = ctk.CTkTextbox(self.log_frame, font=("Consolas", 10), height=120)
+        self.log_area = ctk.CTkTextbox(self.log_frame, font=("Consolas", 10), height=96)
         self.log_area.pack(fill="both", expand=True)
 
         # 5. Footer (Pack Bottom)
-        footer_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        footer_frame.pack(side="bottom", fill="x", padx=20, pady=20)
+        footer_frame = ctk.CTkFrame(self.footer_frame, fg_color="transparent")
+        footer_frame.pack(fill="x", padx=20, pady=20)
 
         self.progress_bar = ctk.CTkProgressBar(footer_frame, height=10)
         self.progress_bar.pack(fill="x", pady=(0, 15))
@@ -141,8 +141,8 @@ class SubtitleGUI(BaseWindow):
         self.btn_run = ctk.CTkButton(btn_row, text=t("subtitle_gui.generate_btn"), height=45, font=ctk.CTkFont(size=14, weight="bold"), fg_color=THEME_BTN_PRIMARY, hover_color=THEME_BTN_HOVER, command=self.start_generation)
         self.btn_run.pack(side="left", fill="x", expand=True, padx=(0, 0))
         
-        self.status_label = ctk.CTkLabel(self.main_frame, text=t("common.ready"), anchor="w", font=ctk.CTkFont(size=11), text_color="gray")
-        self.status_label.pack(side="bottom", pady=(0, 5))
+        self.status_label = ctk.CTkLabel(self.footer_frame, text=t("common.ready"), anchor="w", font=ctk.CTkFont(size=11), text_color="gray")
+        self.status_label.pack(fill="x", padx=20, pady=(0, 5))
 
     def create_compact_setting(self, parent, label, values, default, var_name):
         frame = ctk.CTkFrame(parent, fg_color="transparent")

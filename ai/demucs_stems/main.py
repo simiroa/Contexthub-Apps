@@ -1,18 +1,19 @@
 import os
 import sys
 from pathlib import Path
-import runpy
 
 LEGACY_ID = 'demucs_stems'
 LEGACY_SCOPE = 'file'
-USE_MENU = False
-SCRIPT_REL = "features/audio/separate_gui.py"
-
 ROOT = Path(__file__).resolve().parents[3]
 APP_ROOT = Path(__file__).resolve().parent
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
+SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
+SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
 os.chdir(LEGACY_ROOT)
-sys.path.insert(0, str(LEGACY_ROOT))
+for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    path_str = str(path)
+    if path.exists() and path_str not in sys.path:
+        sys.path.insert(0, path_str)
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
@@ -52,36 +53,9 @@ def _pick_targets():
         return [path] if path else []
     except Exception:
         return []
-
-
-def _run_script(script_rel, targets):
-    script_path = LEGACY_ROOT / script_rel
-    if not script_path.exists():
-        raise FileNotFoundError("Missing script: " + str(script_path))
-    argv = [str(script_path)] + targets
-    old_argv = sys.argv
-    try:
-        sys.argv = argv
-        runpy.run_path(str(script_path), run_name="__main__")
-    finally:
-        sys.argv = old_argv
-
-
-def _run_menu(targets):
-    from core import menu as legacy_menu
-    handler = legacy_menu.build_handler_map().get(LEGACY_ID)
-    if handler is None:
-        raise RuntimeError("Missing legacy handler: " + LEGACY_ID)
-
-    target = targets[0] if targets else str(LEGACY_ROOT)
-    selection = targets if len(targets) > 1 else None
-    try:
-        if selection:
-            handler(target, selection)
-        else:
-            handler(target)
-    except TypeError:
-        handler(target)
+def _run_flet(targets):
+    from features.audio.demucs_flet_app import start_app
+    start_app(targets)
 
 
 def main():
@@ -97,10 +71,7 @@ def main():
             pass
         return
 
-    if USE_MENU:
-        _run_menu(targets)
-    else:
-        _run_script(SCRIPT_REL, targets)
+    _run_flet(targets)
 
 
 if __name__ == "__main__":

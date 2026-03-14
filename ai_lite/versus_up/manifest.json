@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.2",
+  "id": "versus_up",
+  "name": "VersusUp",
+  "description": "Product comparison and decision history management tool.",
+  "author": "Antigravity",
+  "version": "1.0.0",
+  "icon": "icon.png",
+  "runtime": {
+    "category": "ai_lite",
+    "python_version": "3.11",
+    "required_binaries": []
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "gui",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": true,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false
+  },
+  "triggers": {
+    "tray": false,
+    "quick_launcher": true,
+    "context_menu": {
+      "enabled": false,
+      "extensions": [],
+      "scopes": []
+    }
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "flet",
+    "shared_theme": "contexthub"
+  }
+}

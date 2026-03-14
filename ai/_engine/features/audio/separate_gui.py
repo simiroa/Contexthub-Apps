@@ -25,7 +25,7 @@ def _is_headless():
 
 class AudioSeparateGUI(BaseWindow):
     def __init__(self, target_path=None, demo=False):
-        super().__init__(title=t("audio_separate_gui.title"), width=650, height=620, icon_name="audio_separate_stems")
+        super().__init__(title=t("audio_separate_gui.title"), width=760, height=760, icon_name="audio_separate_stems")
         
         self.demo_mode = demo or _is_headless()
         self.target_path = target_path
@@ -58,7 +58,7 @@ class AudioSeparateGUI(BaseWindow):
         
         # 0. File List (TOP - Fixed)
         file_list_container = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        file_list_container.pack(fill="x", padx=20, pady=(0, 10))
+        file_list_container.pack(fill="x", padx=20, pady=(0, 8))
         
         if not self.files:
             ctk.CTkButton(file_list_container, text=t("audio_separate_gui.select_files"), command=self.select_files).pack(pady=10)
@@ -76,13 +76,15 @@ class AudioSeparateGUI(BaseWindow):
 
         # Options Container
         opt_frame = ctk.CTkFrame(self.scroll_frame, fg_color=THEME_CARD, border_width=1, border_color=THEME_BORDER)
-        opt_frame.pack(fill="x", padx=5, pady=5)
+        opt_frame.pack(fill="x", padx=5, pady=4)
         
         ctk.CTkLabel(opt_frame, text=t("audio_separate_gui.extraction_settings"), font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=15, pady=(10, 5))
         
         # Grid layout for options
         grid = ctk.CTkFrame(opt_frame, fg_color="transparent")
         grid.pack(fill="x", padx=15, pady=5)
+        grid.grid_columnconfigure(0, weight=0)
+        grid.grid_columnconfigure(1, weight=1)
         
         # Model
         ctk.CTkLabel(grid, text=t("audio_separate_gui.model")).grid(row=0, column=0, sticky="w", pady=5, padx=5)
@@ -103,12 +105,16 @@ class AudioSeparateGUI(BaseWindow):
                         fg_color=THEME_DROPDOWN_FG, button_color=THEME_DROPDOWN_BTN, button_hover_color=THEME_DROPDOWN_HOVER).grid(row=2, column=1, sticky="e", pady=5, padx=5)
 
         # Progress & Log
-        self.log_area = ctk.CTkTextbox(self.scroll_frame, height=100)
-        self.log_area.pack(fill="x", padx=10, pady=10)
-        
+        ctk.CTkLabel(self.scroll_frame, text=t("audio_separate_gui.processing"), text_color="gray", font=ctk.CTkFont(size=11)).pack(anchor="w", padx=12, pady=(8, 4))
+        self.log_area = ctk.CTkTextbox(self.scroll_frame, height=88)
+        self.log_area.pack(fill="x", padx=10, pady=(0, 8))
+
         self.progress = ctk.CTkProgressBar(self.main_frame)
         self.progress.pack(fill="x", padx=20, pady=5)
         self.progress.set(0)
+
+        self.status_label = ctk.CTkLabel(self.main_frame, text=t("common.ready"), text_color="gray")
+        self.status_label.pack(anchor="w", padx=22, pady=(0, 4))
         
         btn_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         btn_frame.pack(fill="x", side="bottom", padx=20, pady=10)
@@ -127,6 +133,7 @@ class AudioSeparateGUI(BaseWindow):
     def log(self, msg):
         self.log_area.insert("end", msg + "\n")
         self.log_area.see("end")
+        self.status_label.configure(text=msg)
 
     def cancel_or_close(self):
         if self.is_running and self.process:
@@ -184,6 +191,7 @@ class AudioSeparateGUI(BaseWindow):
             self.log(f"Error: {e}")
         self.is_running = False
         self.after(0, lambda: self.btn_run.configure(state="normal"))
+        self.after(0, lambda: self.status_label.configure(text=t("audio_separate_gui.all_completed")))
 
     def on_closing(self):
         if self.process:

@@ -14,6 +14,8 @@ WHISPER_DIR = AI_MODELS_DIR / "whisper"
 DEMUCS_DIR = AI_MODELS_DIR / "demucs"
 REALESRGAN_DIR = AI_MODELS_DIR / "realesrgan"
 BIREFNET_DIR = AI_MODELS_DIR / "BiRefNet"
+STABLE_AUDIO_DIR = AI_MODELS_DIR / "stable_audio_open"
+QWEN_TTS_DIR = AI_MODELS_DIR / "qwen3_tts"
 
 
 def ensure_dirs() -> None:
@@ -24,6 +26,8 @@ def ensure_dirs() -> None:
     DEMUCS_DIR.mkdir(parents=True, exist_ok=True)
     REALESRGAN_DIR.mkdir(parents=True, exist_ok=True)
     BIREFNET_DIR.mkdir(parents=True, exist_ok=True)
+    STABLE_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    QWEN_TTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _set_cache_env(var_name: str, value: Path) -> None:

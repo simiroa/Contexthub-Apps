@@ -1,0 +1,48 @@
+﻿{
+  "jobs": [
+    {
+      "mode": "custom_voice",
+      "device": "cuda",
+      "language": "English",
+      "speaker": "Ryan",
+      "instruct": "Dynamic male voice with strong rhythmic drive.",
+      "text": "Batch line one uses the preset voice path.",
+      "file_name": "001_preset.wav"
+    },
+    {
+      "mode": "voice_design",
+      "device": "cuda",
+      "language": "Korean",
+      "instruct": "A polished Korean female announcer with warm authority and crisp pacing.",
+      "text": "배치 두 번째 줄은 보이스 디자인 경로를 검증합니다.",
+      "file_name": "002_design.wav"
+    },
+    {
+      "mode": "voice_clone",
+      "device": "cuda",
+      "language": "English",
+      "ref_audio": "C:\\Users\\HG\\Documents\\Contexthub-Apps\\Diagnostics\\generated\\qwen3_tts_test.wav",
+      "ref_text": "Hello from ContextHub. This is a quick voice test.",
+      "text": "Batch line three uses the clone prompt for the first time.",
+      "file_name": "003_clone_a.wav"
+    },
+    {
+      "mode": "voice_clone",
+      "device": "cuda",
+      "language": "English",
+      "ref_audio": "C:\\Users\\HG\\Documents\\Contexthub-Apps\\Diagnostics\\generated\\qwen3_tts_test.wav",
+      "ref_text": "Hello from ContextHub. This is a quick voice test.",
+      "text": "Batch line four reuses the same clone prompt and should avoid recomputing reference features.",
+      "file_name": "004_clone_b.wav"
+    },
+    {
+      "mode": "custom_voice",
+      "device": "cuda",
+      "language": "Korean",
+      "speaker": "Sohee",
+      "instruct": "Warm Korean female voice with rich emotion.",
+      "text": "마지막 줄은 다른 기본 화자로 배치 마무리를 확인합니다.",
+      "file_name": "005_preset_ko.wav"
+    }
+  ]
+}

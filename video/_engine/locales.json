@@ -14,5 +14,29 @@
     "converting": "Converting",
     "conversion_cancelled": "Conversion was cancelled.",
     "conversion_complete": "Conversion complete!"
+  },
+  "video_audio_gui": {
+    "title_extract": "Extract Audio",
+    "title_remove": "Remove Audio",
+    "title_separate": "Separate Audio Stems",
+    "no_video_selected": "No video files selected.",
+    "extract_tab": "Extract",
+    "remove_tab": "Remove",
+    "separate_tab": "Separate (AI)",
+    "format_label": "Audio Format",
+    "start_process": "Start Processing",
+    "converting": "Converting...",
+    "done": "Done",
+    "error": "Error: {}"
+  },
+  "video_interp_gui": {
+    "title": "Video Frame Interpolation",
+    "input_video": "Input Video",
+    "options": "Interpolation Options",
+    "start": "Start Interpolation",
+    "ready": "Ready",
+    "processing": "Processing...",
+    "complete": "Interpolation finished.",
+    "cancelled": "Operation cancelled."
   }
 }

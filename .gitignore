@@ -38,6 +38,7 @@ temp/
 # Logs
 logs/
 *.log
+Diagnostics/gui_captures/logs/
 
 # App runtime data
 userdata/

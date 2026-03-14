@@ -19,7 +19,7 @@ from utils.i18n import t
 
 class UpscaleGUI(BaseWindow):
     def __init__(self, target_path=None):
-        super().__init__(title=t("upscale_gui.header"), width=640, height=720, icon_name="image_upscale_ai")
+        super().__init__(title="upscale_gui.header", width=780, height=860, scrollable=True, icon_name="image_upscale_ai")
         
         self.target_path = target_path
         self.files = []
@@ -37,9 +37,9 @@ class UpscaleGUI(BaseWindow):
         
         # 1. File List Preview (Prominent at top)
         ctk.CTkLabel(self.main_frame, text=t("upscale_gui.files_label"), font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=25, pady=(10, 5))
-        
-        self.file_list = FileListFrame(self.main_frame, self.files, height=130)
-        self.file_list.pack(fill="x", padx=25, pady=(0, 10))
+
+        self.file_list = FileListFrame(self.main_frame, self.files, height=84)
+        self.file_list.pack(fill="x", padx=25, pady=(0, 8))
         
         if not self.files:
             ctk.CTkButton(self.main_frame, text=t("upscale_gui.select_btn"), command=self.select_files).pack(pady=5)
@@ -56,7 +56,7 @@ class UpscaleGUI(BaseWindow):
         
         # Scale Row
         scale_frame = ctk.CTkFrame(settings_card, fg_color="transparent")
-        scale_frame.pack(fill="x", padx=15, pady=15)
+        scale_frame.pack(fill="x", padx=15, pady=12)
         
         ctk.CTkLabel(scale_frame, text=t("upscale_gui.upscale_factor") + ":", font=ctk.CTkFont(weight="bold")).pack(side="left")
         radio_frame = ctk.CTkFrame(scale_frame, fg_color="transparent")
@@ -69,12 +69,18 @@ class UpscaleGUI(BaseWindow):
         
         # Options Row
         opts_frame = ctk.CTkFrame(settings_card, fg_color="transparent")
-        opts_frame.pack(fill="x", padx=15, pady=15)
+        opts_frame.pack(fill="x", padx=15, pady=12)
         
         ctk.CTkCheckBox(opts_frame, text=t("upscale_gui.face_enhance"), variable=self.var_face).pack(anchor="w")
         ctk.CTkLabel(opts_frame, text="   " + t("upscale_gui.face_hint"), text_color="gray", font=("", 11)).pack(anchor="w")
         
         ctk.CTkCheckBox(opts_frame, text=t("upscale_gui.use_tiling"), variable=self.var_tile, onvalue=512, offvalue=0).pack(anchor="w", pady=(15, 0))
+        ctk.CTkLabel(
+            opts_frame,
+            text="   Output files are saved next to the original image.",
+            text_color="gray",
+            font=("", 11),
+        ).pack(anchor="w", pady=(10, 0))
 
         # 3. Model Manager
         from utils import paths
@@ -83,8 +89,8 @@ class UpscaleGUI(BaseWindow):
         self.model_mgr.pack(fill="x", padx=25, pady=10)
 
         # 4. Progress & Status
-        self.progress_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.progress_frame.pack(fill="x", padx=25, pady=(20, 0))
+        self.progress_frame = ctk.CTkFrame(self.footer_frame, fg_color="transparent")
+        self.progress_frame.pack(fill="x", padx=25, pady=(16, 0))
         
         self.lbl_status = ctk.CTkLabel(self.progress_frame, text=t("upscale_gui.ready"), text_color="gray")
         self.lbl_status.pack(anchor="w")
@@ -94,8 +100,8 @@ class UpscaleGUI(BaseWindow):
         self.progress.set(0)
         
         # 5. Buttons Row
-        btn_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        btn_frame.pack(fill="x", side="bottom", padx=25, pady=25)
+        btn_frame = ctk.CTkFrame(self.footer_frame, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=25, pady=16)
         
         self.btn_cancel = ctk.CTkButton(btn_frame, text=t("common.cancel"), command=self.destroy, 
                                         height=45, fg_color="transparent", border_width=1, border_color=THEME_BORDER, text_color=("gray10", "gray90"))

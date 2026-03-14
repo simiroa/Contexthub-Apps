@@ -1,0 +1,32 @@
+[
+  {
+    "id": "narrator",
+    "name": "Narrator",
+    "mode": "custom_voice",
+    "speaker": "Vivian",
+    "instruct": "Speak naturally with clear pacing and a calm, confident tone.",
+    "ref_audio": "",
+    "ref_text": "",
+    "x_vector_only": false
+  },
+  {
+    "id": "warm_host",
+    "name": "Warm Host",
+    "mode": "custom_voice",
+    "speaker": "Serena",
+    "instruct": "Use a warm, friendly tone with gentle emphasis and smooth phrasing.",
+    "ref_audio": "",
+    "ref_text": "",
+    "x_vector_only": false
+  },
+  {
+    "id": "voice_design",
+    "name": "Designed Voice",
+    "mode": "voice_design",
+    "speaker": "Vivian",
+    "instruct": "A clear, modern Korean female voice in her late twenties with soft warmth, clean diction, and steady confidence.",
+    "ref_audio": "",
+    "ref_text": "",
+    "x_vector_only": false
+  }
+]

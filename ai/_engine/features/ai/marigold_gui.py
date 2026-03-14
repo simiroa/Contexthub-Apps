@@ -48,7 +48,7 @@ class CTkToolTip:
 
 class MarigoldGUI(BaseWindow):
     def __init__(self, target_path):
-        super().__init__(title=t("marigold_gui.title"), width=420, height=920, icon_name="ai_pbr")
+        super().__init__(title=t("marigold_gui.title"), width=560, height=940, icon_name="ai_pbr")
         
         if target_path is None:
             self.target_path = None
@@ -137,14 +137,15 @@ class MarigoldGUI(BaseWindow):
         # 0. Title & Header
         title_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         title_frame.pack(fill="x", padx=10, pady=(10, 5))
-        ctk.CTkLabel(title_frame, text=t("marigold_gui.pbr_material_generator"), font=("Arial", 18, "bold")).pack(side="left")
+        title_frame.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(title_frame, text=t("marigold_gui.pbr_material_generator"), font=("Arial", 18, "bold")).grid(row=0, column=0, sticky="w")
 
         # Model Manager (Integrated)
         from utils import paths
         model_root = paths.MARIGOLD_DIR
         
         self.model_mgr = ModelManagerFrame(title_frame, "Marigold", model_root, download_command=self.download_models, check_callback=self._has_marigold_cache)
-        self.model_mgr.pack(side="right")
+        self.model_mgr.grid(row=1, column=0, sticky="ew", pady=(8, 0))
         
         # Remove old check button if present (we replaced it)
         

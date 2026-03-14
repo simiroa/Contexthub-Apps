@@ -7,6 +7,14 @@
     "importing": "가져오기 중...",
     "exporting": "내보내기 중..."
   },
+  "3d_mesh_gui": {
+    "title_convert": "Mesh Format Converter",
+    "title_cad": "CAD to OBJ Converter",
+    "title_bake": "Blender Texture Baker",
+    "title_extract": "Texture Extractor",
+    "title_lod": "Auto LOD Generator",
+    "title_mayo": "Open with Mayo Viewer"
+  },
   "blender_bake": {
     "title": "블렌더 텍스처 베이커 (Blender Baker)",
     "header": "Remesh & Bake",

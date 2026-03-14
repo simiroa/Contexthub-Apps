@@ -3,21 +3,28 @@ import os
 from pathlib import Path
 
 def _setup_shims():
-    # Find repository root (where Runtimes folder lives)
-    current = Path(__file__).resolve()
-    repo_root = None
-    for parent in [current] + list(current.parents):
-        if (parent / "Runtimes").exists() and (parent / "Apps_installed").exists():
-            repo_root = parent
-            break
-    
-    if not repo_root:
-        return
+    candidates = []
 
-    # Add Runtimes/Shared to sys.path
-    shared_root = repo_root / "Runtimes" / "Shared"
-    if shared_root.exists() and str(shared_root) not in sys.path:
-        sys.path.insert(0, str(shared_root))
+    env_shared_root = os.environ.get("CTX_SHARED_ROOT")
+    if env_shared_root:
+        candidates.append(Path(env_shared_root))
+
+    current = Path(__file__).resolve()
+    for parent in [current] + list(current.parents):
+        candidates.append(parent / "dev-tools" / "runtime" / "Shared" / "contexthub")
+        candidates.append(parent / "Runtimes" / "Shared" / "contexthub")
+
+    for package_root in candidates:
+        if not package_root.exists():
+            continue
+        package_parent = package_root.parent
+        package_root_str = str(package_root)
+        package_parent_str = str(package_parent)
+        if package_parent_str not in sys.path:
+            sys.path.insert(0, package_parent_str)
+        if package_root_str not in sys.path:
+            sys.path.insert(0, package_root_str)
+        return
 
 _setup_shims()
 

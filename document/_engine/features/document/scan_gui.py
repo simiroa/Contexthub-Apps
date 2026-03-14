@@ -17,7 +17,18 @@ if str(engine_dir) not in sys.path:
     sys.path.insert(0, str(engine_dir))
 
 from core.logger import setup_logger
-from utils.i18n import _
+from utils.gui_lib import (
+    BaseWindow,
+    THEME_BG,
+    THEME_BORDER,
+    THEME_BTN_PRIMARY,
+    THEME_BTN_HOVER,
+    THEME_BTN_WARNING,
+    THEME_BTN_WARNING_HOVER,
+    THEME_BTN_SUCCESS,
+    THEME_BTN_SUCCESS_HOVER,
+)
+from utils.i18n import t as _
 
 logger = setup_logger("doc_scan_gui")
 
@@ -151,15 +162,10 @@ def deskew_image(image):
     rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
     return rotated
 
-class DocScanGUI(ctk.CTk):
+class DocScanGUI(BaseWindow):
     def __init__(self, targets):
-        super().__init__()
-
-        self.title(_("doc_scan.title"))
-        self.geometry("1100x750")
-
-        ctk.set_appearance_mode("System")
-        ctk.set_default_color_theme("blue")
+        super().__init__(title="doc_scan.title", width=1100, height=750, scrollable=False, icon_name="doc_scan")
+        self.minsize(1000, 720)
 
         self.items: List[ImageItem] = []
         self.current_idx = -1
@@ -186,13 +192,11 @@ class DocScanGUI(ctk.CTk):
         self.rapid_ocr = None
         
         self.setup_ui()
-        self.bind("<Configure>", self.on_resize)
-        
         self.load_images(targets)
 
     def setup_ui(self):
         # Header
-        header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        header_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         header_frame.pack(fill="x", padx=10, pady=5)
         
         lbl_header = ctk.CTkLabel(
@@ -203,21 +207,22 @@ class DocScanGUI(ctk.CTk):
         lbl_header.pack(side="left")
 
         # Main Layout
-        main_frame = ctk.CTkFrame(self, fg_color="transparent")
-        main_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        content_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
         # Thumbnail Scroll Frame (Left)
-        self.thumb_frame = ctk.CTkScrollableFrame(main_frame, width=150)
+        self.thumb_frame = ctk.CTkScrollableFrame(content_frame, width=150)
         self.thumb_frame.pack(side="left", fill="y", padx=(0, 10))
 
         # Canvas Frame (Middle)
-        self.canvas_frame = ctk.CTkFrame(main_frame)
+        self.canvas_frame = ctk.CTkFrame(content_frame, fg_color=THEME_BG, border_width=1, border_color=THEME_BORDER)
         self.canvas_frame.pack(side="left", fill="both", expand=True, padx=0)
 
         import tkinter as tk
         bg_col = "#EBEBEB" if ctk.get_appearance_mode() == "Light" else "#2b2b2b"
         self.canvas = tk.Canvas(self.canvas_frame, bg=bg_col, highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
+        self.canvas.bind("<Configure>", self.on_resize)
         
         self.canvas.bind("<ButtonPress-1>", self.on_press_left)
         self.canvas.bind("<B1-Motion>", self.on_drag_left)
@@ -231,7 +236,7 @@ class DocScanGUI(ctk.CTk):
         self.canvas.bind("<MouseWheel>", self.on_mouse_wheel)
 
         # Controls Frame (Right)
-        control_frame = ctk.CTkFrame(main_frame, width=240)
+        control_frame = ctk.CTkFrame(content_frame, width=240, border_width=1, border_color=THEME_BORDER)
         control_frame.pack(side="right", fill="y", padx=(10, 0))
         
         # Tools
@@ -262,10 +267,22 @@ class DocScanGUI(ctk.CTk):
         self.rad_magic = ctk.CTkRadioButton(control_frame, text=_("doc_scan.filter_magic"), variable=self.filter_var, value="magic", command=self.on_filter_changed)
         self.rad_magic.pack(padx=20, pady=5, anchor="w")
         
-        self.btn_deskew = ctk.CTkButton(control_frame, text=_("doc_scan.deskew_btn"), command=self.apply_deskew, fg_color="#E67E22", hover_color="#D35400")
+        self.btn_deskew = ctk.CTkButton(
+            control_frame,
+            text=_("doc_scan.deskew_btn"),
+            command=self.apply_deskew,
+            fg_color=THEME_BTN_WARNING,
+            hover_color=THEME_BTN_WARNING_HOVER,
+        )
         self.btn_deskew.pack(fill="x", padx=10, pady=10)
         
-        self.btn_ocr = ctk.CTkButton(control_frame, text=_("doc_scan.ocr_btn"), command=self.run_ocr, fg_color="#8E44AD", hover_color="#732D91")
+        self.btn_ocr = ctk.CTkButton(
+            control_frame,
+            text=_("doc_scan.ocr_btn"),
+            command=self.run_ocr,
+            fg_color=THEME_BTN_PRIMARY,
+            hover_color=THEME_BTN_HOVER,
+        )
         self.btn_ocr.pack(fill="x", padx=10, pady=5)
         
         # Saving
@@ -282,7 +299,13 @@ class DocScanGUI(ctk.CTk):
         self.btn_save_png = ctk.CTkButton(control_frame, text=_("doc_scan.save_png"), command=lambda: self.save_result("png"))
         self.btn_save_png.pack(fill="x", padx=10, pady=5)
         
-        self.btn_save_pdf = ctk.CTkButton(control_frame, text=_("doc_scan.save_pdf").format(count=0), command=lambda: self.save_result("pdf"), fg_color="#27AE60", hover_color="#2ECC71")
+        self.btn_save_pdf = ctk.CTkButton(
+            control_frame,
+            text=_("doc_scan.save_pdf").format(count=0),
+            command=lambda: self.save_result("pdf"),
+            fg_color=THEME_BTN_SUCCESS,
+            hover_color=THEME_BTN_SUCCESS_HOVER,
+        )
         self.btn_save_pdf.pack(fill="x", padx=10, pady=10)
 
     def load_images(self, targets):

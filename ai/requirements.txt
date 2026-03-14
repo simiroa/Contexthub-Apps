@@ -4,6 +4,7 @@ customtkinter
 demucs
 diffusers
 faster-whisper
+flet
 gfpgan
 kornia
 numpy

@@ -49,8 +49,8 @@
     "sidebar_widget": null
   },
   "ui": {
-    "enabled": false,
-    "framework": "customtkinter",
+    "enabled": true,
+    "framework": "flet",
     "shared_theme": "contexthub"
   }
 }

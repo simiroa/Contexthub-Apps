@@ -147,7 +147,6 @@ def build_handler_map():
         "normal_flip_green": _lazy("features.image.normal", "flip_normal_green"),
         "simple_normal_roughness": _lazy("features.image.normal", "generate_simple_normal_roughness"),
         "image_compare": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "compare_gui.py"), *( [str(i) for i in s] if s else [str(p)] )]),
-        "image_metadata": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "metadata_gui.py"), str(p)]),
         "rigreader_vectorizer": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "vectorizer" / "vectorizer_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
         "noise_master": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "tools" / "noise_master" / "main.py")]),
 
@@ -156,7 +155,6 @@ def build_handler_map():
         "esrgan_upscale": _lazy("features.image.upscale", "upscale_image"),
         "rmbg_background": _lazy("features.ai.tools", "remove_background"),
         "marigold_pbr": _lazy("features.ai.marigold_gui", "run_marigold_gui"),
-        "prompt_master": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "prompt_master" / "main.py")]),
         "gemini_image_tool": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "ai" / "standalone" / "gemini_img_tools.py"), *([str(i) for i in s] if s else [str(p)])]),
         "demucs_stems": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "audio" / "separate_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
 

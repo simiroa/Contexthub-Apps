@@ -11,7 +11,6 @@ IMAGE_IDS = {
     "split_exr",
     "texture_packer_orm",
     "image_compare",
-    "image_metadata",
     "rigreader_vectorizer",
     "normal_flip_green",
     "simple_normal_roughness",

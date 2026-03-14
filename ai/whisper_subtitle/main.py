@@ -1,18 +1,19 @@
 import os
 import sys
 from pathlib import Path
-import runpy
 
 LEGACY_ID = 'whisper_subtitle'
 LEGACY_SCOPE = 'file'
-USE_MENU = False
-SCRIPT_REL = None
-
 ROOT = Path(__file__).resolve().parents[3]
 APP_ROOT = Path(__file__).resolve().parent
 LEGACY_ROOT = Path(__file__).resolve().parents[1] / "_engine"
+SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
+SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
 os.chdir(LEGACY_ROOT)
-sys.path.insert(0, str(LEGACY_ROOT))
+for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    path_str = str(path)
+    if path.exists() and path_str not in sys.path:
+        sys.path.insert(0, path_str)
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
@@ -52,33 +53,9 @@ def _pick_targets():
         return [path] if path else []
     except Exception:
         return []
-
-
-def _run_script(script_rel, targets):
-    script_path = LEGACY_ROOT / script_rel
-    if not script_path.exists():
-        raise FileNotFoundError("Missing script: " + str(script_path))
-    argv = [str(script_path)] + targets
-    old_argv = sys.argv
-    try:
-        sys.argv = argv
-        runpy.run_path(str(script_path), run_name="__main__")
-    finally:
-        sys.argv = old_argv
-
-
-
-def _run_gui_processing(targets):
-    try:
-        from features.ai import subtitle
-        # Just launch the main GUI directly
-        subtitle.generate_subtitles(targets[0] if targets else None)
-    except Exception as e:
-        import tkinter as tk
-        from tkinter import messagebox
-        root = tk.Tk()
-        root.withdraw()
-        messagebox.showerror("ContextHub Error", f"Failed to launch Subtitle GUI: {e}")
+def _run_flet(targets):
+    from features.ai.whisper_flet_app import start_app
+    start_app(targets)
 
 def main():
     targets = _pick_targets()
@@ -92,9 +69,7 @@ def main():
             if t: targets = list(t)
         except: pass
         
-    if not targets: return
-
-    _run_gui_processing(targets)
+    _run_flet(targets)
 
 
 if __name__ == "__main__":

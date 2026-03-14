@@ -1,108 +1,42 @@
 import os
 import sys
+import flet as ft
 from pathlib import Path
-import runpy
 
-LEGACY_ID = 'video_convert'
-LEGACY_SCOPE = 'file'
-USE_MENU = False
-SCRIPT_REL = "features/video/convert_gui.py"
+# Setup paths
+ROOT = Path(__file__).resolve().parents[2]
+ENGINE_ROOT = ROOT / "video" / "_engine"
+SHARED_PATH = ROOT / "dev-tools" / "runtime" / "Shared"
 
-ROOT = Path(__file__).resolve().parents[3]
-APP_ROOT = Path(__file__).resolve().parent
-LEGACY_ROOT = Path(__file__).resolve().parents[1] / "_engine"
-os.chdir(LEGACY_ROOT)
-sys.path.insert(0, str(LEGACY_ROOT))
-if not os.environ.get("CTX_APP_ROOT"):
-    os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
+sys.path.insert(0, str(ENGINE_ROOT))
+sys.path.insert(0, str(ROOT / "dev-tools" / "runtime" / "Shared" / "src"))
 
+from features.video.video_convert_state import VideoConvertState
+from features.video.video_convert_flet import create_video_convert_app
 
-def _capture_mode():
-    return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
-
-def _pick_targets():
-    if LEGACY_SCOPE in {"background", "tray_only", "standalone"}:
-        return []
-
-    if _capture_mode():
-        try:
-            from utils.headless_inputs import get_headless_targets
-            return get_headless_targets(LEGACY_ID, LEGACY_SCOPE, LEGACY_ROOT)
-        except Exception:
-            return []
-
+def get_targets():
+    # Basic target picking logic
     args = [a for a in sys.argv[1:] if a]
     if args:
-        return args
-
-    try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-
-        if LEGACY_SCOPE in {"items"}:
-            paths = filedialog.askopenfilenames(title=LEGACY_ID)
-            return list(paths)
-        if LEGACY_SCOPE in {"directory"}:
-            path = filedialog.askdirectory(title=LEGACY_ID)
-            return [path] if path else []
-        path = filedialog.askopenfilename(title=LEGACY_ID)
-        return [path] if path else []
-    except Exception:
-        return []
-
-
-def _run_script(script_rel, targets):
-    script_path = LEGACY_ROOT / script_rel
-    if not script_path.exists():
-        raise FileNotFoundError("Missing script: " + str(script_path))
-    argv = [str(script_path)] + targets
-    old_argv = sys.argv
-    try:
-        sys.argv = argv
-        runpy.run_path(str(script_path), run_name="__main__")
-    finally:
-        sys.argv = old_argv
-
-
-def _run_menu(targets):
-    from core import menu as legacy_menu
-    handler = legacy_menu.build_handler_map().get(LEGACY_ID)
-    if handler is None:
-        raise RuntimeError("Missing legacy handler: " + LEGACY_ID)
-
-    target = targets[0] if targets else str(LEGACY_ROOT)
-    selection = targets if len(targets) > 1 else None
-    try:
-        if selection:
-            handler(target, selection)
-        else:
-            handler(target)
-    except TypeError:
-        handler(target)
-
+        return [Path(a) for a in args if Path(a).exists()]
+    
+    # In a real environment, this might use a file picker if no args
+    return []
 
 def main():
-    targets = _pick_targets()
-    if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
-        try:
-            import tkinter as tk
-            from tkinter import messagebox
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showwarning("ContextHub", "No target selected.")
-        except Exception:
-            pass
-        return
+    targets = get_targets()
+    if not targets:
+        # If no targets, we could show a file picker or just exit
+        # For porting, we assume targets are passed or we show an empty list
+        pass
 
-    if USE_MENU:
-        _run_menu(targets)
-    else:
-        _run_script(SCRIPT_REL, targets)
-
+    # Filter video files
+    video_exts = {'.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'}
+    files = [p for p in targets if p.suffix.lower() in video_exts]
+    
+    state = VideoConvertState(files=files)
+    app = create_video_convert_app(state)
+    ft.app(target=app)
 
 if __name__ == "__main__":
     main()
-

@@ -2,6 +2,7 @@ import os
 import subprocess
 import wave
 from pathlib import Path
+from PIL import Image
 
 
 IMAGE_IDS = {
@@ -11,7 +12,6 @@ IMAGE_IDS = {
     "split_exr",
     "texture_packer_orm",
     "image_compare",
-    "image_metadata",
     "rigreader_vectorizer",
     "normal_flip_green",
     "simple_normal_roughness",
@@ -82,13 +82,17 @@ def _headless_root(legacy_root: Path) -> Path:
 
 def _write_png(path: Path) -> None:
     if path.exists():
-        return
-    png_bytes = (
-        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
-        b"\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc``\x00"
-        b"\x00\x00\x02\x00\x01\xe2!\xbc3\x00\x00\x00\x00IEND\xaeB`\x82"
-    )
-    path.write_bytes(png_bytes)
+        try:
+            with Image.open(path) as image:
+                image.verify()
+            return
+        except Exception:
+            pass
+    image = Image.new("RGBA", (512, 320), (33, 37, 48, 255))
+    for x in range(64, 448):
+        for y in range(72, 248):
+            image.putpixel((x, y), (181, 181, 181, 255))
+    image.save(path, format="PNG")
 
 
 def _write_pdf(path: Path) -> None:

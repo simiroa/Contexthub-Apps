@@ -9,8 +9,8 @@ USE_MENU = False
 SCRIPT_REL = 'features/comfyui/ace_audio_edit_gui.py'
 
 ROOT = Path(__file__).resolve().parents[3]
-APP_ROOT = Path(__file__).resolve().parents[1]
-LEGACY_ROOT = Path(__file__).resolve().parents[1] / "_engine"
+APP_ROOT = Path(__file__).resolve().parent
+LEGACY_ROOT = APP_ROOT.parent / "_engine"
 os.chdir(LEGACY_ROOT)
 sys.path.insert(0, str(LEGACY_ROOT))
 if not os.environ.get("CTX_APP_ROOT"):

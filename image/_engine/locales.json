@@ -31,6 +31,8 @@
   },
   "image_convert_gui": {
     "header": "이미지 변환 도구",
+    "add_files": "파일 추가",
+    "convert_button": "이미지 변환",
     "format_label": "출력 형식",
     "resize_label": "크기 조절 (px):",
     "save_to_folder": "Converted_Images 폴더에 저장",
@@ -38,18 +40,6 @@
     "convert_all": "모두 변환하기",
     "no_valid_images": "유효한 이미지 파일을 찾을 수 없습니다.",
     "conversion_cancelled": "변환이 취소되었습니다."
-  },
-  "image_metadata_gui": {
-    "title": "이미지 메타데이터 확인",
-    "header": "이미지 메타데이터 뷰어",
-    "basic_info": "기본 정보",
-    "exif_info": "EXIF / 비공개 데이터",
-    "exif_data": "EXIF 데이터",
-    "no_metadata": "메타데이터가 없습니다.",
-    "strip_metadata": "비공개 데이터 제거 (보안)",
-    "stripping": "제거 중...",
-    "strip_success": "메타데이터가 성공적으로 제거되었습니다.",
-    "strip_error": "메타데이터 제거에 실패했습니다."
   },
   "image_resize_gui": {
     "title": "ContextUp 이미지 크기 조절 (POT)",
@@ -60,6 +50,24 @@
     "standard_lanczos": "표준 (Lanczos)",
     "ai_upscale": "AI 업스케일 (Real-ESRGAN)",
     "start_resize": "크기 조절 시작"
+  },
+  "image_split_exr": {
+    "title": "이미지 채널 분리"
+  },
+  "image_simple_pbr": {
+    "title": "간이 PBR 맵 생성기"
+  },
+  "texture_packer_gui": {
+    "title": "텍스처 패커"
+  },
+  "rigready_vectorizer_gui": {
+    "title": "리그레디 벡터라이저"
+  },
+  "normal_flip": {
+    "header": "노멀맵 그린 채널 반전",
+    "desc": "DirectX/OpenGL 노멀맵 그린 채널을 반전합니다.",
+    "ready": "실행 준비",
+    "run_btn": "그린 채널 반전"
   },
   "merge_exr": {
     "header": "EXR 채널 관리자",

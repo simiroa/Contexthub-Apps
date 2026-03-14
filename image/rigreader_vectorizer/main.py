@@ -1,18 +1,22 @@
 import os
 import sys
 from pathlib import Path
-import runpy
 
 LEGACY_ID = 'rigreader_vectorizer'
 LEGACY_SCOPE = 'file'
 USE_MENU = False
 SCRIPT_REL = "features/image/vectorizer/vectorizer_gui.py"
 
-ROOT = Path(__file__).resolve().parents[3]
-APP_ROOT = Path(__file__).resolve().parents[1]
-LEGACY_ROOT = Path(__file__).resolve().parents[1] / "_engine"
+ROOT = Path(__file__).resolve().parents[2]
+APP_ROOT = Path(__file__).resolve().parent
+LEGACY_ROOT = APP_ROOT.parent / "_engine"
+SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
+SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
 os.chdir(LEGACY_ROOT)
-sys.path.insert(0, str(LEGACY_ROOT))
+for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    path_str = str(path)
+    if path.exists() and path_str not in sys.path:
+        sys.path.insert(0, path_str)
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
@@ -38,10 +42,8 @@ def _pick_targets():
     try:
         import tkinter as tk
         from tkinter import filedialog
-
         root = tk.Tk()
         root.withdraw()
-
         if LEGACY_SCOPE in {"items"}:
             paths = filedialog.askopenfilenames(title=LEGACY_ID)
             return list(paths)
@@ -54,55 +56,21 @@ def _pick_targets():
         return []
 
 
-def _run_script(script_rel, targets):
-    script_path = LEGACY_ROOT / script_rel
-    if not script_path.exists():
-        raise FileNotFoundError("Missing script: " + str(script_path))
-    argv = [str(script_path)] + targets
-    old_argv = sys.argv
+def _run_flet(targets):
     try:
-        sys.argv = argv
-        runpy.run_path(str(script_path), run_name="__main__")
-    finally:
-        sys.argv = old_argv
-
-
-def _run_menu(targets):
-    from core import menu as legacy_menu
-    handler = legacy_menu.build_handler_map().get(LEGACY_ID)
-    if handler is None:
-        raise RuntimeError("Missing legacy handler: " + LEGACY_ID)
-
-    target = targets[0] if targets else str(LEGACY_ROOT)
-    selection = targets if len(targets) > 1 else None
-    try:
-        if selection:
-            handler(target, selection)
-        else:
-            handler(target)
-    except TypeError:
-        handler(target)
+        from features.image.vectorizer.flet_app import start_app
+        start_app(targets)
+    except ImportError as e:
+        print(f"Failed to load Flet app: {e}")
+        raise e
 
 
 def main():
     targets = _pick_targets()
     if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
-        try:
-            import tkinter as tk
-            from tkinter import messagebox
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showwarning("ContextHub", "No target selected.")
-        except Exception:
-            pass
         return
-
-    if USE_MENU:
-        _run_menu(targets)
-    else:
-        _run_script(SCRIPT_REL, targets)
+    _run_flet(targets)
 
 
 if __name__ == "__main__":
     main()
-

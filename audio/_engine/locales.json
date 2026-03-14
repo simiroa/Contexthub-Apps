@@ -1,4 +1,16 @@
 {
+  "audio_convert_gui": {
+    "title": "Audio Converter",
+    "format_label": "Output Format",
+    "quality_label": "Quality",
+    "copy_metadata": "Copy Metadata",
+    "save_to_folder": "Save to New Folder",
+    "delete_original": "Delete Original",
+    "convert": "Convert Audio",
+    "converting": "Converting...",
+    "conversion_cancelled": "Conversion cancelled.",
+    "no_audio_selected": "No valid audio files selected."
+  },
   "audio_separate_gui": {
     "title": "Audio Separator (Demucs)",
     "header_sep": "Audio Separator - {} files",
@@ -12,5 +24,13 @@
     "cancelled": "Separation Cancelled",
     "processing": "Processing: {}",
     "all_completed": "All files processed successfully."
+  },
+  "audio_normalize_gui": {
+    "title": "Normalize Volume",
+    "target_loudness": "Target Loudness (LUFS)",
+    "true_peak": "True Peak (dBTP)",
+    "normalize": "Normalize Volume",
+    "processing": "Processing: {}",
+    "complete": "Normalized {} files."
   }
 }
