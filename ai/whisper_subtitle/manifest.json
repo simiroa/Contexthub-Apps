@@ -1,8 +1,8 @@
 {
   "schema_version": "1.2",
   "id": "whisper_subtitle",
-  "name": "Whisper Subtitle AI",
-  "description": "Legacy AI tool.",
+  "name": "Whisper Subtitle AI (Qt)",
+  "description": "Queue-based subtitle generation with editable SRT/VTT/TXT/JSON outputs and per-asset session recovery.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,
@@ -39,7 +39,13 @@
         ".mp4",
         ".mov",
         ".avi",
-        ".mkv"
+        ".mkv",
+        ".webm",
+        ".mp3",
+        ".wav",
+        ".m4a",
+        ".flac",
+        ".ogg"
       ],
       "scopes": []
     },
@@ -47,7 +53,7 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "flet",
+    "framework": "qt",
     "shared_theme": "contexthub"
   }
 }

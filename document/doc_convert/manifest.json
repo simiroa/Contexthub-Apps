@@ -44,7 +44,7 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "flet",
+    "framework": "qt",
     "shared_theme": "contexthub"
   }
 }

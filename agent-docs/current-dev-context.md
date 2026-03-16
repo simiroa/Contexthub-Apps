@@ -11,6 +11,11 @@ Flet 작업은 이 문서만 단독으로 읽지 말고, 먼저 `agent-docs/flet
 ## 현재 상태 요약
 
 - Python GUI 공통 규격 정리가 진행된 상태다.
+- Qt 공용 규격은 `dev-tools/runtime/Shared/contexthub/ui/qt/` 기준으로 승격되었다.
+- Qt 공용 규칙은 이제 `comfyui`뿐 아니라 `video/video_convert`까지 실제 적용 사례가 생겼다.
+- shared Qt manual dialog는 markdown viewer 기준으로 재디자인되었고, 표/목록/코드블록/링크 스타일을 포함한다.
+- `creative_studio_advanced`, `creative_studio_z`는 최근 compact form 규칙에 맞게 `QGroupBox title` 기반 파라미터 카드에서 내부 eyebrow 라벨 구조로 정리되었다.
+- shared `ExportRunPanel`은 최근 `collapsed action bar / expanded detail panel` 규격으로 정리되었다.
 - `prompt_master`, `rigreader_vectorizer`, `doc_scan`는 최근 세션에서 직접 수정되었다.
 - `ai` 카테고리 일부는 모델 카드 잘림과 하단 액션 버튼 미노출 문제를 수정했다.
 - `ai/qwen3_tts` 초안 앱이 추가되었고, 실제 RTX 생성 검증까지 끝난 상태다.
@@ -21,6 +26,8 @@ Flet 작업은 이 문서만 단독으로 읽지 말고, 먼저 `agent-docs/flet
 ### 1. GUI 규격
 
 - Python GUI는 가능하면 `BaseWindow`를 사용한다.
+- Qt 공용 shell/panel은 `dev-tools/runtime/Shared/contexthub/ui/qt/`를 우선 사용한다.
+- Qt 범용 규칙은 `agent-docs/qt-shared-runtime-guidelines.md`를 함께 본다.
 - locale 로딩은 `CTX_APP_ROOT` 기준 체인을 따른다.
 - 푸터 액션 버튼과 진행 바는 가능하면 `footer_frame`에 둔다.
 - 공통 버튼/카드 색상은 `gui_lib.py` 상수를 우선한다.
@@ -36,8 +43,11 @@ Flet 작업은 이 문서만 단독으로 읽지 말고, 먼저 `agent-docs/flet
 ### 3. 로컬 테스트
 
 - 공유 런타임 테스트 기준 경로: `dev-tools/runtime/Shared`
+- Qt shared shell/panel 기준 경로: `dev-tools/runtime/Shared/contexthub/ui/qt/`
 - GUI 실행 도구: `dev-tools/run-app-local.ps1`
 - GUI 캡처 도구: `dev-tools/capture-python-gui-apps.ps1`
+- Qt 캡처는 앱별 fixture target과 상세 stderr/stdout tail 로그를 남기도록 보강되었다.
+- Qt 캡처는 category env의 `PySide6` import 실패 시 fallback python까지 시도하고, dependency dialog와 실제 앱 창을 구분해 기록한다.
 - 진단 산출물: `Diagnostics/gui_captures`, `Diagnostics/gui_capture_log.md`
 
 ## 최근에 해결된 대표 이슈

@@ -1,5 +1,4 @@
 Pillow
-customtkinter
 numpy
 pdf2docx
 pymupdf4llm

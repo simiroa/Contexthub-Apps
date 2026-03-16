@@ -2,74 +2,61 @@ import os
 import sys
 from pathlib import Path
 
-LEGACY_ID = 'split_exr'
-LEGACY_SCOPE = 'file'
-USE_MENU = False
 
-ROOT = Path(__file__).resolve().parents[2]
 APP_ROOT = Path(__file__).resolve().parent
-LEGACY_ROOT = APP_ROOT.parent / "_engine"
-SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
-SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
-os.chdir(LEGACY_ROOT)
-for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
-    path_str = str(path)
-    if path.exists() and path_str not in sys.path:
-        sys.path.insert(0, path_str)
+ENGINE_ROOT = APP_ROOT.parent / "_engine"
+REPO_ROOT = APP_ROOT.parents[1]
+
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from runtime_bootstrap import resolve_shared_runtime
+
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
+for entry in (ENGINE_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    if entry.exists():
+        sys.path.insert(0, str(entry))
+
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
 
-def _capture_mode():
+def _capture_mode() -> bool:
     return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
 
-def _pick_targets():
-    if LEGACY_SCOPE in {"background", "tray_only", "standalone"}:
-        return []
 
-    if _capture_mode():
-        try:
-            from utils.headless_inputs import get_headless_targets
-            return get_headless_targets(LEGACY_ID, LEGACY_SCOPE, LEGACY_ROOT)
-        except Exception:
-            return []
-
-    args = [a for a in sys.argv[1:] if a]
-    if args:
-        return args
-
-    try:
-        import tkinter as tk
-        from tkinter import filedialog
-        root = tk.Tk()
-        root.withdraw()
-        if LEGACY_SCOPE in {"items"}:
-            paths = filedialog.askopenfilenames(title=LEGACY_ID)
-            return list(paths)
-        if LEGACY_SCOPE in {"directory"}:
-            path = filedialog.askdirectory(title=LEGACY_ID)
-            return [path] if path else []
-        path = filedialog.askopenfilename(title=LEGACY_ID)
-        return [path] if path else []
-    except Exception:
-        return []
+def _pick_targets() -> list[Path]:
+    return [Path(arg) for arg in sys.argv[1:] if arg and Path(arg).exists()]
 
 
-def _run_flet(targets):
-    try:
-        from features.image.split_exr.flet_app import start_app
-        start_app(targets)
-    except ImportError as e:
-        print(f"Failed to load Flet app: {e}")
-        raise e
+def _show_confirm(targets: list[Path]) -> bool:
+    from contexthub.ui.qt.confirm_dialog import ConfirmRequest, run_confirm_dialog
+
+    request = ConfirmRequest(
+        app_root=APP_ROOT,
+        title="Split EXR",
+        subtitle="Confirm the selected EXR files, then continue in a console progress flow.",
+        item_count=len(targets),
+        item_label="files",
+        output_rule="Creates a <name>_split folder and writes PNG layers by default.",
+        confirm_label="Split",
+    )
+    return run_confirm_dialog(request) is not None
 
 
-def main():
+def main() -> int:
     targets = _pick_targets()
-    if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
-        return
-    _run_flet(targets)
+    if not targets and not _capture_mode():
+        return 0
+    if not _show_confirm(targets):
+        return 0
+    if _capture_mode():
+        return 0
+
+    from features.image.split_exr_console import run_split_exr_console
+
+    return run_split_exr_console(targets, output_format="png")
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

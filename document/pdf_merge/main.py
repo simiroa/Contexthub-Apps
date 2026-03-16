@@ -42,21 +42,7 @@ def _pick_targets():
     args = [a for a in sys.argv[1:] if a]
     if args:
         return args
-
-    try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-
-        paths = filedialog.askopenfilenames(
-            title=LEGACY_ID,
-            filetypes=[("PDF files", "*.pdf")],
-        )
-        return list(paths)
-    except Exception:
-        return []
+    return []
 
 
 def _run_flet(targets):

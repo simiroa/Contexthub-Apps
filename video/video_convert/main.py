@@ -1,42 +1,67 @@
 import os
 import sys
-import flet as ft
 from pathlib import Path
 
-# Setup paths
-ROOT = Path(__file__).resolve().parents[2]
-ENGINE_ROOT = ROOT / "video" / "_engine"
-SHARED_PATH = ROOT / "dev-tools" / "runtime" / "Shared"
 
-sys.path.insert(0, str(ENGINE_ROOT))
-sys.path.insert(0, str(ROOT / "dev-tools" / "runtime" / "Shared" / "src"))
+APP_ID = "video_convert"
+APP_TITLE = "Video Convert"
+APP_ROOT = Path(__file__).resolve().parent
+ENGINE_ROOT = APP_ROOT.parent / "_engine"
+REPO_ROOT = APP_ROOT.parents[1]
 
-from features.video.video_convert_state import VideoConvertState
-from features.video.video_convert_flet import create_video_convert_app
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-def get_targets():
-    # Basic target picking logic
-    args = [a for a in sys.argv[1:] if a]
-    if args:
-        return [Path(a) for a in args if Path(a).exists()]
-    
-    # In a real environment, this might use a file picker if no args
-    return []
+from runtime_bootstrap import resolve_shared_runtime
 
-def main():
-    targets = get_targets()
-    if not targets:
-        # If no targets, we could show a file picker or just exit
-        # For porting, we assume targets are passed or we show an empty list
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
+
+for entry in (REPO_ROOT, ENGINE_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    if entry.exists():
+        sys.path.insert(0, str(entry))
+
+if not os.environ.get("CTX_APP_ROOT"):
+    os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
+
+
+def _capture_mode() -> bool:
+    return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
+
+
+def _pick_targets() -> list[Path]:
+    if _capture_mode():
+        try:
+            from utils.headless_inputs import get_headless_targets
+
+            return [Path(path) for path in get_headless_targets(APP_ID, "", ENGINE_ROOT)]
+        except Exception:
+            return []
+
+    return [Path(arg) for arg in sys.argv[1:] if arg and Path(arg).exists()]
+
+
+def _show_dependency_error(message: str) -> None:
+    print(message, file=sys.stderr)
+
+
+def main() -> None:
+    try:
+        from utils.i18n import load_extra_strings
+
+        loc_file = ENGINE_ROOT / "locales.json"
+        if loc_file.exists():
+            load_extra_strings(loc_file)
+    except Exception:
         pass
 
-    # Filter video files
-    video_exts = {'.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'}
-    files = [p for p in targets if p.suffix.lower() in video_exts]
-    
-    state = VideoConvertState(files=files)
-    app = create_video_convert_app(state)
-    ft.app(target=app)
+    try:
+        from features.video.video_convert_qt_app import start_app
+    except ImportError as exc:
+        _show_dependency_error(f"PySide6 is required to run this app.\n\n{exc}")
+        return
+
+    start_app(_pick_targets(), APP_ROOT)
+
 
 if __name__ == "__main__":
     main()

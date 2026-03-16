@@ -5,7 +5,7 @@
   "description": "Professional workspace with Checkpoint, LoRA Stacking, FaceDetailer \u0026 SUPIR.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
-  "icon": null,
+  "icon": "icon.png",
   "runtime": {
     "category": "comfyui",
     "python_version": "3.11",
@@ -45,8 +45,8 @@
     "sidebar_widget": null
   },
   "ui": {
-    "enabled": false,
-    "framework": "",
-    "shared_theme": ""
+    "enabled": true,
+    "framework": "pyside6",
+    "shared_theme": "creative_studio_qt_pilot"
   }
 }

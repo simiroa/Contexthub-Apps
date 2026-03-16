@@ -16,17 +16,23 @@ class LayerStateEntry:
     visible: bool = True
 
 @dataclass
+class OutputOptions:
+    output_dir: str = ""
+    file_prefix: str = "vect_"
+    open_folder_after_run: bool = True
+    export_session_json: bool = True
+
+@dataclass
 class VectorizerState:
-    # Files and Layers
-    source_files: List[Path] = field(default_factory=list)
-    layers: List[LayerStateEntry] = field(default_factory=list)
-    
-    # VTracer Settings
-    speckle: int = 4
-    color_precision: int = 6
-    corner_threshold: int = 60
+    # Assets (Matches Qt template pattern)
+    source_path: Optional[Path] = None
+    input_assets: List[LayerStateEntry] = field(default_factory=list)
+    output_assets: List[LayerStateEntry] = field(default_factory=list)
+    preview_uid: Optional[str] = None
+    current_mode: str = "input" # "input" or "output"
     
     # Options
+    show_comparison: bool = False
     remove_bg: bool = True
     gen_jsx: bool = True
     split_paths: bool = False
@@ -34,14 +40,25 @@ class VectorizerState:
     skip_text: bool = False
     skip_smart: bool = False
     
-    # Path
-    output_dir: str = ""
+    # VTracer Settings
+    speckle: int = 4
+    color_precision: int = 6
+    corner_threshold: int = 60
+    
+    # Output (Matches Qt template pattern)
+    output_options: OutputOptions = field(default_factory=OutputOptions)
     
     # UI status
     is_processing: bool = False
     progress: float = 0.0
     status_text: str = "Ready"
+    workflow_name: str = "Default"
+    workflow_description: str = "Convert raster layers to rigged SVG paths."
     
+    @property
+    def preview_path(self) -> Optional[Path]:
+        return self.source_path
+
     def update_layer_visibility(self):
         for layer in self.layers:
             if self.skip_text and layer.is_text:

@@ -7,6 +7,9 @@
 - `new-app-template/`: 기존 카테고리 안에 새 앱을 추가할 때 사용하는 기본 템플릿
 - `new-category-template/`: 새 카테고리를 만들 때 사용하는 최소 골격
 - `flet-porting-template.md`: 기존 GUI 앱을 Flet으로 옮길 때 사용하는 구조/체크리스트 템플릿
+- `qt-template/`: shared Qt runtime 기반 패널형 앱을 복제해서 시작하는 템플릿
+
+Qt 템플릿을 쓸 때는 먼저 `agent-docs/qt-shared-runtime-guidelines.md`를 읽는다.
 
 ## 사용 원칙
 

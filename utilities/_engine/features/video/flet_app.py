@@ -7,33 +7,29 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import flet as ft
 
-from contexthub.ui.flet.tokens import COLORS, SPACING, RADII, WINDOWS
+from contexthub.ui.flet.layout import (
+    action_bar,
+    apply_button_sizing,
+    compact_meta_strip,
+    icon_action_button,
+    integrated_title_bar,
+    section_card,
+    status_badge,
+)
 from contexthub.ui.flet.theme import configure_page
+from contexthub.ui.flet.tokens import COLORS, RADII, SPACING
+from contexthub.ui.flet.window import reveal_desktop_window
 from utils.i18n import t
 
-from features.video.state import VideoDownloaderState, DownloadItem
 from features.video import service
+from features.video.state import DownloadItem, VideoDownloaderState
 
-
-# ── window helper ──
-
-def _apply_compact_window(page: ft.Page, title: str):
-    configure_page(page, title)
-    preset = WINDOWS["compact"]
-    page.window_width = preset["width"]
-    page.window_height = 680  # slightly taller for download list
-    page.window_min_width = preset["min_width"]
-    page.window_min_height = 560
-
-
-# ── quality label mapping (locale-aware) ──
 
 def _quality_options() -> list[tuple[str, str]]:
-    """Returns list of (display_label, quality_key) tuples."""
     return [
         (t("youtube_downloader.format_best"), "Best Video+Audio"),
         (t("youtube_downloader.format_4k"), "4K (2160p)"),
@@ -44,136 +40,78 @@ def _quality_options() -> list[tuple[str, str]]:
     ]
 
 
-# ── entry point ──
+def _quality_label(value: str, options: list[tuple[str, str]]) -> str:
+    for label, key in options:
+        if key == value:
+            return label
+    return value
+
 
 def start_app(targets: List[str] | None = None):
-    """Entry point called from main.py."""
-
     service.migrate_download_history()
 
-    def main(page: ft.Page):
+    async def main(page: ft.Page):
         capture_mode = os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
+
         state = VideoDownloaderState()
         settings = service.load_settings()
-        state.download_path = settings.get("download_path", str(Path.home() / "Downloads"))
+        state.download_path = settings.get("download_path") or str(Path.home() / "Downloads")
 
-        _apply_compact_window(page, t("youtube_downloader.title"))
+        configure_page(page, t("youtube_downloader.title"), window_profile="form")
+        page.bgcolor = COLORS["app_bg"]
 
         quality_opts = _quality_options()
-        quality_label_to_key = {label: key for label, key in quality_opts}
+        state.quality = quality_opts[0][1]
 
-        # ── controls ──
+        # header/status
+        queue_badge = status_badge("0 queued", "muted")
+        quality_badge = status_badge(_quality_label(state.quality, quality_opts), "accent")
+        path_badge = status_badge(Path(state.download_path).name or "Downloads", "muted")
+        status_text = ft.Text(t("common.ready", "Ready"), size=12, color=COLORS["text_muted"])
+        detail_text = ft.Text("", size=11, color=COLORS["text_soft"], no_wrap=True)
+        progress_bar = ft.ProgressBar(value=0, visible=False, color=COLORS["accent"], bgcolor=COLORS["line"])
+
+        # input controls
         url_field = ft.TextField(
+            label="URL",
             hint_text=t("youtube_downloader.url_placeholder"),
-            border_color=COLORS["line"],
             bgcolor=COLORS["field_bg"],
+            border_color=COLORS["line"],
             color=COLORS["text"],
-            height=42,
-            border_radius=RADII["sm"],
             expand=True,
-            text_size=13,
-            on_submit=lambda e: _on_analyze(e),
+            on_submit=lambda e: on_analyze(),
         )
-
-        btn_analyze = ft.ElevatedButton(
-            content=ft.Text(
+        analyze_btn = apply_button_sizing(
+            ft.ElevatedButton(
                 t("youtube_downloader.search_btn"),
-                weight=ft.FontWeight.BOLD,
+                on_click=lambda e: on_analyze(),
+                bgcolor=COLORS["accent"],
                 color=COLORS["text"],
             ),
-            bgcolor=COLORS["accent"],
-            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=RADII["sm"])),
-            height=42,
-            width=90,
-            on_click=lambda e: _on_analyze(e),
+            "compact",
         )
 
-        # preview
-        thumb_image = ft.Image(
-            src="",
-            width=120,
-            height=68,
-            fit=ft.BoxFit.COVER,
-            border_radius=RADII["sm"],
-            visible=False,
-        )
-        thumb_placeholder = ft.Container(
-            content=ft.Text(
-                t("youtube_downloader.no_media"),
-                size=10,
-                color=COLORS["text_soft"],
-                text_align=ft.TextAlign.CENTER,
-            ),
-            width=120,
-            height=68,
-            bgcolor=COLORS["surface"],
-            border_radius=RADII["sm"],
-            alignment=ft.alignment.Alignment(0, 0),
-        )
-        lbl_title = ft.Text(
-            t("youtube_downloader.title_placeholder"),
-            size=13,
-            weight=ft.FontWeight.BOLD,
-            color=COLORS["text"],
-            max_lines=2,
-            overflow=ft.TextOverflow.ELLIPSIS,
-            expand=True,
-        )
-        lbl_meta = ft.Text(
-            t("youtube_downloader.meta_placeholder"),
-            size=11,
-            color=COLORS["text_muted"],
-        )
-
-        preview_card = ft.Container(
-            content=ft.Row(
-                controls=[
-                    ft.Stack(controls=[thumb_placeholder, thumb_image]),
-                    ft.Column(
-                        controls=[lbl_title, lbl_meta],
-                        spacing=4,
-                        expand=True,
-                        alignment=ft.MainAxisAlignment.CENTER,
-                    ),
-                ],
-                spacing=SPACING["sm"],
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
-            bgcolor=COLORS["surface"],
-            border_radius=RADII["md"],
-            border=ft.border.all(1, COLORS["line"]),
-            padding=SPACING["sm"],
-        )
-
-        # quality
         quality_dropdown = ft.Dropdown(
+            label=t("youtube_downloader.format_label", "Format"),
+            value=state.quality,
             options=[ft.dropdown.Option(key=key, text=label) for label, key in quality_opts],
-            value="Best Video+Audio",
-            border_color=COLORS["line"],
             bgcolor=COLORS["field_bg"],
-            color=COLORS["text"],
-            height=38,
-            text_size=12,
-            border_radius=8,
+            border_color=COLORS["line"],
+            dense=True,
             expand=True,
         )
-        subs_check = ft.Checkbox(
-            label=t("youtube_downloader.subs"),
-            value=False,
-            active_color=COLORS["accent"],
-            label_style=ft.TextStyle(size=11, color=COLORS["text_muted"]),
-        )
+        subs_check = ft.Checkbox(label=t("youtube_downloader.subs"), value=False, scale=0.95)
+        quality_dropdown.on_change = lambda e: sync_meta()
+        subs_check.on_change = lambda e: sync_meta()
 
-        # path
         path_field = ft.TextField(
+            label=t("youtube_downloader.save_path"),
             value=state.download_path,
-            border_color=COLORS["line"],
             bgcolor=COLORS["field_bg"],
+            border_color=COLORS["line"],
             color=COLORS["text"],
-            height=36,
-            text_size=12,
-            border_radius=8,
             expand=True,
+            on_change=lambda e: on_path_change(e.control.value),
         )
 
         folder_picker = None
@@ -181,395 +119,380 @@ def start_app(targets: List[str] | None = None):
             folder_picker = ft.FilePicker()
             page.overlay.append(folder_picker)
 
-        def _on_folder_result(e: ft.FilePickerResultEvent):
+        def on_folder_result(e: ft.FilePickerResultEvent):
             if e.path:
                 path_field.value = e.path
-                state.download_path = e.path
-                settings["download_path"] = e.path
-                service.save_settings(settings)
+                on_path_change(e.path)
                 page.update()
 
         if folder_picker is not None:
-            folder_picker.on_result = _on_folder_result
+            folder_picker.on_result = on_folder_result
 
-        def _on_browse(e):
-            if folder_picker is not None:
-                folder_picker.get_directory_path(
-                    dialog_title=t("youtube_downloader.save_path"),
-                    initial_directory=state.download_path,
-                )
-
-        def _on_open_folder(e):
-            import os
-            p = path_field.value
-            if p and Path(p).exists():
-                os.startfile(p)
-
-        btn_browse = ft.IconButton(
-            icon=ft.Icons.FOLDER_OPEN,
-            icon_color=COLORS["text_muted"],
-            icon_size=18,
+        browse_btn = icon_action_button(
+            ft.Icons.FOLDER_OPEN,
             tooltip=t("youtube_downloader.save_path"),
-            on_click=_on_browse,
-            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
+            on_click=lambda e: folder_picker.get_directory_path(dialog_title=t("youtube_downloader.save_path"), initial_directory=state.download_path) if folder_picker else None,
         )
-        btn_open = ft.IconButton(
-            icon=ft.Icons.OPEN_IN_NEW,
-            icon_color=COLORS["text_muted"],
-            icon_size=18,
-            tooltip=t("utilities_common.open_folder"),
-            on_click=_on_open_folder,
-            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
+        open_btn = icon_action_button(
+            ft.Icons.OPEN_IN_NEW,
+            tooltip=t("common.open", "Open"),
+            on_click=lambda e: os.startfile(path_field.value) if path_field.value and Path(path_field.value).exists() else None,
         )
 
-        # action buttons
-        btn_queue = ft.ElevatedButton(
-            content=ft.Text(
-                t("youtube_downloader.add_to_queue"),
-                weight=ft.FontWeight.BOLD,
-                color=COLORS["text"],
-                size=12,
+        # preview
+        thumb_placeholder = ft.Container(
+            width=160,
+            height=90,
+            border_radius=RADII["sm"],
+            bgcolor=COLORS["surface_alt"],
+            alignment=ft.alignment.Alignment(0, 0),
+            content=ft.Text(t("youtube_downloader.no_media"), size=11, color=COLORS["text_soft"], text_align=ft.TextAlign.CENTER),
+        )
+        thumb_image = ft.Image(src="", width=160, height=90, fit=ft.BoxFit.COVER, border_radius=RADII["sm"])
+        thumb_host = ft.Container(width=160, height=90, border_radius=RADII["sm"], clip_behavior=ft.ClipBehavior.ANTI_ALIAS, content=thumb_placeholder)
+        title_text = ft.Text(t("youtube_downloader.title_placeholder"), size=14, weight=ft.FontWeight.BOLD, color=COLORS["text"], max_lines=2, overflow=ft.TextOverflow.ELLIPSIS)
+        meta_text = ft.Text(t("youtube_downloader.meta_placeholder"), size=11, color=COLORS["text_muted"])
+
+        preview_card = ft.Container(
+            bgcolor=COLORS["surface_alt"],
+            border=ft.border.all(1, COLORS["line"]),
+            border_radius=RADII["md"],
+            padding=SPACING["md"],
+            content=ft.Row(
+                [
+                    thumb_host,
+                    ft.Column(
+                        [
+                            title_text,
+                            meta_text,
+                            ft.Text("Analyze a link to preview title, channel, duration, and thumbnail.", size=11, color=COLORS["text_soft"]),
+                        ],
+                        spacing=SPACING["xs"],
+                        expand=True,
+                    ),
+                ],
+                spacing=SPACING["sm"],
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            bgcolor=COLORS["surface"],
-            style=ft.ButtonStyle(
-                side=ft.BorderSide(1, COLORS["line"]),
-                shape=ft.RoundedRectangleBorder(radius=RADII["sm"]),
-            ),
-            height=42,
-            expand=True,
-            disabled=True,
-            on_click=lambda e: _on_add_queue(e),
-        )
-        btn_download = ft.ElevatedButton(
-            content=ft.Text(
-                t("youtube_downloader.download_now"),
-                weight=ft.FontWeight.BOLD,
-                color=COLORS["text"],
-                size=13,
-            ),
-            bgcolor=COLORS["accent"],
-            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=RADII["sm"])),
-            height=42,
-            expand=True,
-            disabled=True,
-            on_click=lambda e: _on_download(e),
         )
 
-        # downloads list
-        downloads_column = ft.Column(
-            controls=[],
-            spacing=4,
-            scroll=ft.ScrollMode.AUTO,
-        )
+        # queue
+        queue_column = ft.Column(spacing=SPACING["xs"], scroll=ft.ScrollMode.ADAPTIVE)
+        queue_widgets: dict[int, dict[str, ft.Control]] = {}
 
-        btn_update = ft.TextButton(
-            content=ft.Text(
-                "Update Engine (Fix 403)",
-                size=10,
-                color=COLORS["text_soft"],
-            ),
-            on_click=lambda e: _on_update_engine(e),
-        )
-
-        # ── widget refs for download rows ──
-        dl_widgets: dict = {}  # dl_id -> {row, status_lbl, progress}
-
-        # ── handlers ──
-
-        def _refresh_page():
-            try:
-                page.update()
-            except Exception:
-                pass
-
-        def _on_analyze(e):
-            url = url_field.value.strip() if url_field.value else ""
-            if not url:
+        def add_queue_hint():
+            if queue_column.controls:
                 return
-            state.is_analyzing = True
-            btn_analyze.disabled = True
-            btn_analyze.content = ft.Text("...", color=COLORS["text"])
-            _refresh_page()
-
-            def _worker():
-                try:
-                    info = service.analyze_url(url)
-                    state.video_info = info
-
-                    # update preview
-                    lbl_title.value = info.get("title", "Unknown")
-                    uploader = info.get("uploader", "Unknown")
-                    duration = info.get("duration_string", "??:??")
-                    lbl_meta.value = f"{uploader} | {duration}"
-
-                    # thumbnail
-                    thumb_url = info.get("thumbnail")
-                    if thumb_url:
-                        raw = service.fetch_thumbnail_bytes(thumb_url)
-                        if raw:
-                            b64 = base64.b64encode(raw).decode()
-                            thumb_image.src_base64 = b64
-                            thumb_image.visible = True
-
-                    btn_download.disabled = False
-                    btn_queue.disabled = False
-                except Exception as exc:
-                    err = str(exc)
-                    lbl_title.value = f"Error: {err[:80]}"
-                    lbl_meta.value = ""
-                    state.video_info = None
-                finally:
-                    state.is_analyzing = False
-                    btn_analyze.disabled = False
-                    btn_analyze.content = ft.Text(
-                        t("youtube_downloader.search_btn"),
-                        weight=ft.FontWeight.BOLD,
-                        color=COLORS["text"],
-                    )
-                    page.run_thread(_refresh_page)
-
-            threading.Thread(target=_worker, daemon=True).start()
-
-        def _create_dl_row(dl_id: int, title: str, status_text: str = ""):
-            status_lbl = ft.Text(
-                status_text or t("youtube_downloader.status_queued"),
-                size=10,
-                color=COLORS["accent"],
-                width=80,
-                text_align=ft.TextAlign.RIGHT,
+            queue_column.controls.append(
+                ft.Container(
+                    padding=SPACING["md"],
+                    bgcolor=COLORS["surface_alt"],
+                    border=ft.border.all(1, COLORS["line"]),
+                    border_radius=RADII["sm"],
+                    content=ft.Text("Add a URL and queue a download to see progress here.", color=COLORS["text_muted"]),
+                )
             )
-            progress = ft.ProgressBar(
-                value=0,
-                height=4,
-                color=COLORS["accent"],
-                bgcolor=COLORS["line"],
-                border_radius=2,
-                expand=True,
-            )
+
+        def remove_queue_hint():
+            queue_column.controls = [c for c in queue_column.controls if getattr(c, "data", None) != "queue_hint"]
+
+        def make_queue_row(item: DownloadItem, status_value: str):
+            status_label = ft.Text(status_value, size=10, color=COLORS["accent"], width=90, text_align=ft.TextAlign.RIGHT)
+            progress = ft.ProgressBar(value=item.progress, color=COLORS["accent"], bgcolor=COLORS["line"], height=4)
             row = ft.Container(
+                bgcolor=COLORS["surface_alt"],
+                border=ft.border.all(1, COLORS["line"]),
+                border_radius=RADII["sm"],
+                padding=ft.padding.symmetric(horizontal=SPACING["sm"], vertical=8),
                 content=ft.Column(
-                    controls=[
+                    [
                         ft.Row(
-                            controls=[
-                                ft.Text(
-                                    title,
-                                    size=11,
-                                    weight=ft.FontWeight.BOLD,
-                                    color=COLORS["text"],
-                                    expand=True,
-                                    max_lines=1,
-                                    overflow=ft.TextOverflow.ELLIPSIS,
-                                ),
-                                status_lbl,
-                            ],
+                            [
+                                ft.Text(item.title or t("youtube_downloader.title_placeholder"), expand=True, size=12, weight=ft.FontWeight.BOLD, color=COLORS["text"], max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                                status_label,
+                            ]
                         ),
+                        ft.Text(f"{item.quality} | {'subs' if item.subs else 'no subs'}", size=10, color=COLORS["text_soft"]),
                         progress,
                     ],
                     spacing=4,
                 ),
-                bgcolor=COLORS["surface"],
-                border_radius=RADII["sm"],
-                border=ft.border.all(1, COLORS["line"]),
-                padding=ft.padding.symmetric(horizontal=SPACING["sm"], vertical=6),
             )
-            dl_widgets[dl_id] = {
-                "row": row,
-                "status_lbl": status_lbl,
-                "progress": progress,
-            }
-            downloads_column.controls.append(row)
-            _refresh_page()
+            queue_widgets[item.id] = {"status": status_label, "progress": progress}
+            queue_column.controls.append(row)
 
-        def _update_dl_status(dl_id: int, text: str, progress_val: float, color: str | None = None):
-            w = dl_widgets.get(dl_id)
-            if not w:
+        def update_queue_row(item_id: int, text: str, progress_value: float, color: str | None = None):
+            widgets = queue_widgets.get(item_id)
+            if not widgets:
                 return
-            w["status_lbl"].value = text
-            w["progress"].value = progress_val
+            widgets["status"].value = text
+            widgets["progress"].value = progress_value
             if color:
-                w["status_lbl"].color = color
-            page.run_thread(_refresh_page)
+                widgets["status"].color = color
+            page.run_thread(page.update)
 
-        def _get_current_opts() -> dict:
+        # actions
+        queue_btn = icon_action_button(
+            ft.Icons.ADD,
+            tooltip=t("youtube_downloader.add_to_queue"),
+            disabled=True,
+        )
+        download_btn = apply_button_sizing(ft.ElevatedButton(t("youtube_downloader.download_now"), disabled=True, bgcolor=COLORS["accent"], color=COLORS["text"]), "primary")
+        update_btn = icon_action_button(
+            ft.Icons.SYSTEM_UPDATE_ALT,
+            tooltip="Update engine",
+        )
+
+        def sync_meta():
+            count = len(queue_widgets)
+            queue_badge.content.value = f"{count} queued"
+            quality_badge.content.value = _quality_label(quality_dropdown.value or state.quality, quality_opts)
+            path_badge.content.value = Path(path_field.value or state.download_path).name or "Downloads"
+            page.update()
+
+        def set_preview_empty():
+            thumb_host.content = thumb_placeholder
+
+        def on_path_change(value: str):
+            state.download_path = value.strip() or str(Path.home() / "Downloads")
+            settings["download_path"] = state.download_path
+            service.save_settings(settings)
+            sync_meta()
+
+        def current_opts() -> dict:
             return {
-                "quality": quality_dropdown.value or "Best Video+Audio",
-                "subs": subs_check.value or False,
-                "path": path_field.value or state.download_path,
+                "quality": quality_dropdown.value or state.quality,
+                "subs": bool(subs_check.value),
+                "path": path_field.value.strip() or state.download_path,
             }
 
-        def _do_download(dl_id: int, info: dict, opts: dict):
-            """Run a single download (called in worker thread)."""
-            _update_dl_status(dl_id, t("youtube_downloader.status_starting"), 0.0)
-
-            url = info.get("webpage_url") or info.get("original_url", "")
-
-            def _hook(d, _id=dl_id):
-                if d.get("status") == "downloading":
-                    try:
-                        ps = d.get("_percent_str", "0%").replace("%", "")
-                        val = float(ps) / 100
-                        _update_dl_status(_id, f"{d.get('_percent_str')}", val)
-                    except Exception:
-                        pass
-
-            ydl_opts = service.build_ydl_opts(
-                quality_key=opts["quality"],
+        def build_item() -> DownloadItem | None:
+            if not state.video_info:
+                return None
+            info = state.video_info
+            opts = current_opts()
+            item = DownloadItem(
+                id=state.download_counter,
+                title=info.get("title") or t("youtube_downloader.title_placeholder"),
+                webpage_url=info.get("webpage_url") or info.get("original_url") or "",
+                quality=opts["quality"],
                 subs=opts["subs"],
-                download_path=opts["path"],
-                progress_hook=_hook,
+                path=opts["path"],
             )
+            state.download_counter += 1
+            return item
 
+        def update_overall_progress(value: float, visible: bool):
+            progress_bar.visible = visible
+            progress_bar.value = value
+            page.run_thread(page.update)
+
+        def do_download(item: DownloadItem):
+            def hook(data):
+                if data.get("status") != "downloading":
+                    return
+                try:
+                    percent = float(str(data.get("_percent_str", "0")).replace("%", ""))
+                except Exception:
+                    percent = 0.0
+                update_queue_row(item.id, data.get("_percent_str", "0%"), percent / 100.0)
+                update_overall_progress(percent / 100.0, True)
+
+            update_queue_row(item.id, t("youtube_downloader.status_starting"), 0.0)
+            opts = service.build_ydl_opts(item.quality, item.subs, item.path, progress_hook=hook)
             try:
-                service.download_video(url, ydl_opts)
-                service.record_download_history(info, opts)
-                _update_dl_status(dl_id, t("youtube_downloader.status_complete"), 1.0, COLORS["success"])
-            except Exception:
-                _update_dl_status(dl_id, t("youtube_downloader.status_failed"), 0.0, COLORS["danger"])
+                service.download_video(item.webpage_url, opts)
+                service.record_download_history(
+                    {"title": item.title, "webpage_url": item.webpage_url, "original_url": item.webpage_url},
+                    {"quality": item.quality, "subs": item.subs, "path": item.path},
+                )
+                update_queue_row(item.id, t("youtube_downloader.status_complete"), 1.0, COLORS["success"])
+            except Exception as exc:
+                update_queue_row(item.id, f"{t('youtube_downloader.status_failed')}: {str(exc)[:80]}", 0.0, COLORS["danger"])
+            finally:
+                update_overall_progress(0.0, False)
 
-        def _on_download(e):
-            if not state.video_info:
+        def on_download_now():
+            item = build_item()
+            if item is None or not item.webpage_url:
+                status_text.value = "No analyzed URL to download."
+                page.update()
                 return
-            dl_id = state.download_counter
-            state.download_counter += 1
-            info = state.video_info.copy()
-            opts = _get_current_opts()
-            _create_dl_row(dl_id, info.get("title", "Unknown"))
-            threading.Thread(target=_do_download, args=(dl_id, info, opts), daemon=True).start()
+            if queue_column.controls and getattr(queue_column.controls[0], "data", None) == "queue_hint":
+                queue_column.controls.clear()
+            make_queue_row(item, t("youtube_downloader.status_starting"))
+            sync_meta()
+            threading.Thread(target=lambda: do_download(item), daemon=True).start()
 
-        def _on_add_queue(e):
-            if not state.video_info:
+        def on_queue():
+            item = build_item()
+            if item is None or not item.webpage_url:
                 return
-            dl_id = state.download_counter
-            state.download_counter += 1
-            info = state.video_info.copy()
-            opts = _get_current_opts()
-            _create_dl_row(dl_id, info.get("title", "Unknown"), t("youtube_downloader.status_queued"))
+            if queue_column.controls and getattr(queue_column.controls[0], "data", None) == "queue_hint":
+                queue_column.controls.clear()
+            make_queue_row(item, t("youtube_downloader.status_queued"))
+            state.downloads.append(item)
+            sync_meta()
 
-            dl_item = DownloadItem(id=dl_id, title=info.get("title", ""))
-            state.downloads.append(dl_item)
+            if state.is_queue_running:
+                return
 
-            if not state.is_queue_running:
-                def _queue_worker():
-                    state.is_queue_running = True
-                    while state.downloads:
-                        item = state.downloads.pop(0)
-                        _do_download(item.id, info, opts)
-                        time.sleep(1)
-                    state.is_queue_running = False
+            def queue_worker():
+                state.is_queue_running = True
+                while state.downloads:
+                    queued = state.downloads.pop(0)
+                    do_download(queued)
+                    time.sleep(0.5)
+                state.is_queue_running = False
 
-                threading.Thread(target=_queue_worker, daemon=True).start()
+            threading.Thread(target=queue_worker, daemon=True).start()
 
-        def _on_update_engine(e):
-            btn_update.disabled = True
-            btn_update.content = ft.Text("Updating...", size=10, color=COLORS["text_soft"])
-            _refresh_page()
+        def on_update_engine():
+            update_btn.disabled = True
+            update_btn.tooltip = "Updating engine..."
+            status_text.value = "Updating engine..."
+            page.update()
 
-            def _worker():
+            def worker():
                 try:
                     service.update_engine()
-                    btn_update.content = ft.Text("Updated ✓", size=10, color=COLORS["success"])
+                    update_btn.tooltip = "Engine updated"
+                    status_text.value = "Engine updated"
                 except Exception as exc:
-                    btn_update.content = ft.Text(f"Failed: {exc}", size=10, color=COLORS["danger"])
+                    update_btn.tooltip = "Engine update failed"
+                    status_text.value = f"Update failed: {str(exc)[:80]}"
                 finally:
-                    btn_update.disabled = False
-                    page.run_thread(_refresh_page)
+                    update_btn.disabled = False
+                    page.run_thread(page.update)
 
-            threading.Thread(target=_worker, daemon=True).start()
+            threading.Thread(target=worker, daemon=True).start()
 
-        # ── layout ──
+        def on_analyze():
+            url = (url_field.value or "").strip()
+            if not url:
+                return
+
+            state.is_analyzing = True
+            analyze_btn.disabled = True
+            analyze_btn.text = "..."
+            status_text.value = "Analyzing..."
+            detail_text.value = ""
+            page.update()
+
+            def worker():
+                try:
+                    info = service.analyze_url(url)
+                    state.video_info = info
+                    state.url = url
+                    title_text.value = info.get("title") or t("youtube_downloader.title_placeholder")
+                    meta_text.value = f"{info.get('uploader', 'Unknown')} | {info.get('duration_string', '??:??')}"
+                    thumb_url = info.get("thumbnail")
+                    if thumb_url:
+                        raw = service.fetch_thumbnail_bytes(thumb_url)
+                        if raw:
+                            thumb_image.src_base64 = base64.b64encode(raw).decode()
+                            thumb_host.content = thumb_image
+                        else:
+                            set_preview_empty()
+                    else:
+                        set_preview_empty()
+                    queue_btn.disabled = False
+                    download_btn.disabled = False
+                    status_text.value = t("common.ready", "Ready")
+                except Exception as exc:
+                    state.video_info = None
+                    title_text.value = t("youtube_downloader.title_placeholder")
+                    meta_text.value = str(exc)[:120]
+                    set_preview_empty()
+                    queue_btn.disabled = True
+                    download_btn.disabled = True
+                    status_text.value = "Analyze failed"
+                    detail_text.value = str(exc)[:200]
+                finally:
+                    state.is_analyzing = False
+                    analyze_btn.disabled = False
+                    analyze_btn.text = t("youtube_downloader.search_btn")
+                    page.run_thread(page.update)
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        queue_btn.on_click = lambda e: on_queue()
+        download_btn.on_click = lambda e: on_download_now()
+        update_btn.on_click = lambda e: on_update_engine()
+
+        source_card = section_card(
+            "Source",
+            ft.Column(
+                [
+                    ft.Row([url_field, analyze_btn], spacing=SPACING["sm"]),
+                    preview_card,
+                    ft.Row([quality_dropdown, subs_check], spacing=SPACING["sm"], vertical_alignment=ft.CrossAxisAlignment.CENTER),
+                    action_bar(
+                        status=ft.Column([status_text, detail_text], spacing=2, tight=True),
+                        progress=progress_bar,
+                        primary=download_btn,
+                        secondary=[queue_btn, update_btn],
+                        embedded=True,
+                    ),
+                ],
+                spacing=SPACING["sm"],
+            ),
+        )
+        output_card = section_card(
+            "Output",
+            ft.Column(
+                [
+                    path_field,
+                    ft.Row([browse_btn, open_btn], spacing=SPACING["sm"]),
+                ],
+                spacing=SPACING["sm"],
+            ),
+        )
+        queue_card = section_card("Downloads", ft.Container(content=queue_column, height=260))
+
+        add_queue_hint()
+        sync_meta()
+
         page.add(
             ft.Container(
                 expand=True,
                 bgcolor=COLORS["app_bg"],
-                padding=SPACING["lg"],
                 content=ft.Column(
                     expand=True,
                     spacing=SPACING["sm"],
                     controls=[
-                        # header label
-                        ft.Text(
-                            "📺 " + t("youtube_downloader.title"),
-                            size=18,
-                            weight=ft.FontWeight.BOLD,
-                            color=COLORS["text"],
-                        ),
-                        # URL + source settings
+                        integrated_title_bar(page, t("youtube_downloader.title")),
                         ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Text(
-                                        t("youtube_downloader.source_settings"),
-                                        size=11,
-                                        weight=ft.FontWeight.BOLD,
-                                        color=COLORS["text"],
-                                    ),
-                                    ft.Row(
-                                        controls=[url_field, btn_analyze],
-                                        spacing=SPACING["xs"],
-                                    ),
-                                    preview_card,
-                                    ft.Row(
-                                        controls=[quality_dropdown, subs_check],
-                                        spacing=SPACING["sm"],
-                                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                                    ),
-                                ],
-                                spacing=SPACING["xs"],
-                            ),
-                            bgcolor=COLORS["surface"],
-                            border_radius=RADII["md"],
-                            border=ft.border.all(1, COLORS["line"]),
-                            padding=SPACING["sm"],
-                        ),
-                        # save path
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Text(
-                                        t("youtube_downloader.save_path"),
-                                        size=10,
-                                        weight=ft.FontWeight.BOLD,
-                                        color=COLORS["text_muted"],
-                                    ),
-                                    ft.Row(
-                                        controls=[path_field, btn_browse, btn_open],
-                                        spacing=4,
-                                    ),
-                                ],
-                                spacing=4,
-                            ),
-                            bgcolor=COLORS["surface"],
-                            border_radius=RADII["md"],
-                            border=ft.border.all(1, COLORS["line"]),
-                            padding=SPACING["sm"],
-                        ),
-                        # action buttons
-                        ft.Row(
-                            controls=[btn_queue, btn_download],
-                            spacing=SPACING["sm"],
-                        ),
-                        # update engine
-                        ft.Row(
-                            controls=[ft.Container(expand=True), btn_update],
-                        ),
-                        # progress section
-                        ft.Text(
-                            t("youtube_downloader.progress"),
-                            size=11,
-                            weight=ft.FontWeight.BOLD,
-                            color=COLORS["text_muted"],
-                        ),
-                        ft.Container(
-                            content=downloads_column,
-                            bgcolor=COLORS["surface"],
-                            border_radius=RADII["md"],
-                            border=ft.border.all(1, COLORS["line"]),
-                            padding=SPACING["xs"],
                             expand=True,
+                            padding=ft.padding.all(SPACING["md"]),
+                            content=ft.Column(
+                                expand=True,
+                                spacing=SPACING["sm"],
+                                controls=[
+                                    compact_meta_strip(
+                                        t("youtube_downloader.title"),
+                                        description="Analyze URLs first, then set quality/subtitle options and output path.",
+                                        badges=[queue_badge, quality_badge, path_badge],
+                                    ),
+                                    ft.Row(
+                                        expand=True,
+                                        spacing=SPACING["sm"],
+                                        controls=[
+                                            ft.Container(
+                                                expand=True,
+                                                content=ft.Column([source_card, output_card], spacing=SPACING["sm"]),
+                                            ),
+                                            ft.Container(width=404, content=queue_card),
+                                        ],
+                                    ),
+                                ],
+                            ),
                         ),
                     ],
                 ),
             )
         )
 
-    ft.app(target=main)
+        await reveal_desktop_window(page)
+
+    ft.run(main, view=ft.AppView.FLET_APP_HIDDEN)

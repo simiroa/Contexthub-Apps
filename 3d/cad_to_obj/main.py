@@ -7,6 +7,10 @@ LEGACY_SCOPE = 'file'
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = APP_ROOT.resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from runtime_bootstrap import resolve_shared_runtime
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
 os.chdir(LEGACY_ROOT)
 sys.path.insert(0, str(LEGACY_ROOT))
@@ -15,9 +19,11 @@ if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
 # Ensure Shared runtime is in path for i18n and Flet tokens
-SHARED_PATH = ROOT / "dev-tools" / "runtime" / "Shared"
-if SHARED_PATH.exists() and str(SHARED_PATH) not in sys.path:
-    sys.path.insert(0, str(SHARED_PATH))
+SHARED_PATH, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
+for path in (SHARED_PATH, SHARED_PACKAGE_ROOT):
+    path_str = str(path)
+    if path.exists() and path_str not in sys.path:
+        sys.path.insert(0, path_str)
 
 try:
     from utils.i18n import load_extra_strings

@@ -1,33 +1,74 @@
 import os
 import sys
-import flet as ft
 from pathlib import Path
 
-# Setup paths
-ROOT = Path(__file__).resolve().parents[2]
-ENGINE_ROOT = ROOT / "video" / "_engine"
-SHARED_PATH = ROOT / "dev-tools" / "runtime" / "Shared"
 
-sys.path.insert(0, str(ENGINE_ROOT))
-sys.path.insert(0, str(ROOT / "dev-tools" / "runtime" / "Shared" / "src"))
+APP_ROOT = Path(__file__).resolve().parent
+ENGINE_ROOT = APP_ROOT.parent / "_engine"
+REPO_ROOT = APP_ROOT.parents[1]
 
-from features.video.video_audio_state import VideoAudioState
-from features.video.video_audio_flet import create_video_audio_app
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-def get_targets():
-    args = [a for a in sys.argv[1:] if a]
-    if args:
-        return [Path(a) for a in args if Path(a).exists()]
-    return []
+from runtime_bootstrap import resolve_shared_runtime
 
-def main():
-    targets = get_targets()
-    video_exts = {'.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'}
-    files = [p for p in targets if p.suffix.lower() in video_exts]
-    
-    state = VideoAudioState(files=files, mode="extract")
-    app = create_video_audio_app(state)
-    ft.app(target=app)
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
+for entry in (ENGINE_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    if entry.exists():
+        sys.path.insert(0, str(entry))
+
+if not os.environ.get("CTX_APP_ROOT"):
+    os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
+
+
+def _capture_mode() -> bool:
+    return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
+
+
+def _pick_targets() -> list[Path]:
+    return [Path(arg) for arg in sys.argv[1:] if arg and Path(arg).exists()]
+
+
+def _load_locales() -> None:
+    try:
+        from utils.i18n import load_extra_strings
+
+        loc_file = ENGINE_ROOT / "locales.json"
+        if loc_file.exists():
+            load_extra_strings(loc_file)
+    except Exception:
+        pass
+
+
+def _show_confirm(targets: list[Path]) -> bool:
+    from contexthub.ui.qt.confirm_dialog import ConfirmRequest, run_confirm_dialog
+
+    request = ConfirmRequest(
+        app_root=APP_ROOT,
+        title="Extract Audio",
+        subtitle="Confirm the selected videos, then continue in a console progress flow.",
+        item_count=len(targets),
+        item_label="videos",
+        output_rule="Extracts MP3 files next to each source video.",
+        confirm_label="Extract",
+    )
+    return run_confirm_dialog(request) is not None
+
+
+def main() -> int:
+    _load_locales()
+    targets = _pick_targets()
+    if not targets and not _capture_mode():
+        return 0
+    if not _show_confirm(targets):
+        return 0
+    if _capture_mode():
+        return 0
+
+    from features.video.extract_audio_console import run_extract_audio_console
+
+    return run_extract_audio_console(targets)
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

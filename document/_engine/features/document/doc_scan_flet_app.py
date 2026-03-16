@@ -14,6 +14,7 @@ from PIL import Image
 from contexthub.ui.flet.layout import action_bar, apply_button_sizing
 from contexthub.ui.flet.theme import configure_page
 from contexthub.ui.flet.tokens import COLORS, RADII, SPACING
+from contexthub.ui.flet.window import reveal_desktop_window
 
 
 @dataclass
@@ -70,7 +71,7 @@ def _to_data_url(image: np.ndarray) -> str:
 
 
 def start_app(targets: List[str] | None = None):
-    def main(page: ft.Page):
+    async def main(page: ft.Page):
         configure_page(page, "Document Scanner", window_profile="wide_canvas")
         page.bgcolor = COLORS["app_bg"]
 
@@ -247,5 +248,6 @@ def start_app(targets: List[str] | None = None):
             )
         )
         refresh_preview()
+        await reveal_desktop_window(page)
 
-    ft.app(target=main)
+    ft.run(main, view=ft.AppView.FLET_APP_HIDDEN)

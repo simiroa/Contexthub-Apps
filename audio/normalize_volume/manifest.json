@@ -2,10 +2,10 @@
   "schema_version": "1.2",
   "id": "normalize_volume",
   "name": "Normalize Volume",
-  "description": "Legacy Audio tool.",
-  "author": "ContextHub Legacy",
-  "version": "1.0.0",
-  "icon": null,
+  "description": "Confirm selected audio files in a compact Qt shell, then normalize loudness in a console flow.",
+  "author": "ContextHub",
+  "version": "1.1.0",
+  "icon": "icon.png",
   "runtime": {
     "category": "audio",
     "python_version": "3.11",
@@ -49,8 +49,8 @@
     "sidebar_widget": null
   },
   "ui": {
-    "enabled": false,
-    "framework": "",
-    "shared_theme": ""
+    "enabled": true,
+    "framework": "qt",
+    "shared_theme": "contexthub"
   }
 }

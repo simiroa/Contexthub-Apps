@@ -1,40 +1,37 @@
-# VersusUp User Manual
+# VersusUp
 
-## Overview
+VersusUp은 구매 결정을 위해 제품 비교표와 가중치 점수, 그리고 Ollama Vision 기반 스펙 추출을 결합한 Qt 기반 DSS 앱입니다.
 
-**VersusUp** is a decision-support tool that helps you compare multiple products or services systematically. Instead of simple spreadsheets, it provides a structured way to evaluate items based on weighted criteria and archive the reasoning behind your choices.
+## 핵심 흐름
 
-## Key Features
+1. 좌측에서 프로젝트 이름과 카테고리를 정리하고 비교할 제품을 추가합니다.
+2. 제품마다 상세페이지 캡처 이미지를 연결합니다.
+3. 중앙 `QTableView`에서 항목별 값을 직접 입력하고, 우측에서 기준의 타입/가중치/방향을 조정합니다.
+4. 제품 리스트에 마우스를 올리면 Vision이 이미지를 분석하고 요약 팝업을 띄웁니다.
+5. 팝업의 `Review proposals`를 눌러 OCR/VQA 결과를 기존 항목에 덮어쓸지, 새 항목으로 추가할지 확인합니다.
+6. 우측 랭킹에서 총점과 근거를 보고 저장 또는 Markdown 리포트 내보내기를 실행합니다.
 
-- **Project-based Comparison**: Group related items into a single project (e.g., "Choosing a New Smartphone").
-- **Custom Criteria**: Define parameters for comparison (Price, Weight, Performance, etc.) and assign weights.
-- **Visual Assets**: Attach images to products for better visual identification.
-- **History Management**: Search and revisit past comparisons to understand your logical evolution.
-- **Export to Markdown**: Generate professional comparison reports for documentation or sharing.
+## 점수 계산
 
-## How to Use
+- 숫자형 항목만 점수 계산에 포함됩니다.
+- 방향이 `high`면 값이 클수록 유리하고, `low`면 값이 작을수록 유리합니다.
+- 항목별 점수는 정규화 후 `가중치 x 점수`로 합산됩니다.
+- 텍스트 항목은 설명과 근거 관리용으로 유지되며 기본적으로 총점 계산에서는 제외됩니다.
 
-### 1. Creating a Project
+## Vision 동작
 
-- Click **New Comparison** in the sidebar.
-- Enter a project name, category, and a brief description of the goal.
-- Click **Start Project**.
+- Hover 시 등록된 이미지가 있으면 Ollama Vision을 즉시 호출합니다.
+- Vision은 요약, OCR 텍스트, 후보 스펙 목록을 반환합니다.
+- 분류 모델은 후보 스펙을 기존 비교 항목에 매핑하거나 새 항목으로 추가할 제안을 만듭니다.
+- 실제 반영은 확인창에서 승인한 제안만 적용됩니다.
 
-### 2. Adding Products and Criteria
+## 저장 형식
 
-- Use the **+ Product** button to add items you are considering.
-- Use the **+ Criterion** button to define what factors matter most.
-- Input data for each product in the comparison grid.
+- 프로젝트는 사용자 앱 데이터 경로 아래 `*.versusup.json` 파일로 저장됩니다.
+- 제품, 항목, 셀 값, Vision 캐시, 모델 설정이 함께 보존됩니다.
 
-### 3. Reviewing and Exporting
+## 주의
 
-- The table automatically highlights the best choices based on scores.
-- Click **Export MD** to save a Markdown report of the comparison.
-
-### 4. Searching History
-
-- Use the **History** tab to find past projects by name or category.
-- Re-open past projects to review your decision logic.
-
----
-Created for Contexthub Utilities.
+- Ollama 기본 호스트는 `http://localhost:11434`입니다.
+- Vision/분류 모델 이름은 우측 설정 영역에서 바꿀 수 있습니다.
+- Ollama가 실행 중이 아니거나 모델 응답이 JSON 형식을 지키지 않으면 팝업에 오류가 표시됩니다.

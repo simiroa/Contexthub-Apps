@@ -1,18 +1,18 @@
 import os
 import sys
 from pathlib import Path
-import runpy
 
 LEGACY_ID = 'resize_power_of_2'
 LEGACY_SCOPE = 'file'
-USE_MENU = False
-SCRIPT_REL = "features/image/resize_gui.py"
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = APP_ROOT.resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from runtime_bootstrap import resolve_shared_runtime
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
-SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
-SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 os.chdir(LEGACY_ROOT)
 for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
     path_str = str(path)
@@ -36,52 +36,34 @@ def _pick_targets():
         except Exception:
             return []
 
+    if LEGACY_SCOPE in {"background", "tray_only", "standalone"}:
+        return []
+
+    if _capture_mode():
+        try:
+            from utils.headless_inputs import get_headless_targets
+            return get_headless_targets(LEGACY_ID, LEGACY_SCOPE, LEGACY_ROOT)
+        except Exception:
+            return []
+
     args = [a for a in sys.argv[1:] if a]
     if args:
         return args
+    return []
 
+
+def _run_qt(targets):
     try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-
-        if LEGACY_SCOPE in {"items"}:
-            paths = filedialog.askopenfilenames(title=LEGACY_ID)
-            return list(paths)
-        if LEGACY_SCOPE in {"directory"}:
-            path = filedialog.askdirectory(title=LEGACY_ID)
-            return [path] if path else []
-        path = filedialog.askopenfilename(title=LEGACY_ID)
-        return [path] if path else []
-    except Exception:
-        return []
-
-
-def _run_flet(targets):
-    try:
-        from features.image.resize_power_of_2.flet_app import start_app
+        from features.image.resize_power_of_2_qt_app import start_app
         start_app(targets)
     except ImportError as e:
-        print(f"Failed to load Flet app: {e}")
+        print(f"Failed to load Qt app: {e}")
         raise e
 
 
 def main():
     targets = _pick_targets()
-    if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
-        try:
-            import tkinter as tk
-            from tkinter import messagebox
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showwarning("ContextHub", "No target selected.")
-        except Exception:
-            pass
-        return
-
-    _run_flet(targets)
+    _run_qt(targets)
 
 
 if __name__ == "__main__":

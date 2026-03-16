@@ -11,6 +11,10 @@ class DownloadItem:
     """Represents a single download task in the queue."""
     id: int = 0
     title: str = ""
+    webpage_url: str = ""
+    quality: str = ""
+    subs: bool = False
+    path: str = ""
     progress: float = 0.0
     status: str = "queued"          # queued | starting | downloading | complete | failed
     status_text: str = ""           # human-readable text

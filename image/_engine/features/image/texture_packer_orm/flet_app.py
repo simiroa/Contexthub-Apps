@@ -10,6 +10,7 @@ from .state import PackerState
 from contexthub.ui.flet.tokens import COLORS, SPACING, RADII
 from contexthub.ui.flet.layout import action_bar, apply_button_sizing
 from contexthub.ui.flet.theme import configure_page
+from contexthub.ui.flet.window import reveal_desktop_window
 from utils.i18n import t
 
 
@@ -30,7 +31,7 @@ class TexturePackerFletApp:
         self.file_picker = None
         self.capture_mode = os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
 
-    def main(self, page: ft.Page):
+    async def main(self, page: ft.Page):
         self.page = page
         title = t("texture_packer_gui.title") or "Texture Packer"
         configure_page(page, title, window_profile="wide_canvas")
@@ -44,6 +45,7 @@ class TexturePackerFletApp:
         self.apply_preset_logic("ORM")
         if self.target_path:
             self.on_auto_parse(None)
+        await reveal_desktop_window(page)
 
     def setup_controls(self):
         self.slot_uis = {}
@@ -118,8 +120,8 @@ class TexturePackerFletApp:
                         expand=True,
                     ),
                     self.dd_preset,
-                    ft.IconButton(ft.Icons.REFRESH, on_click=self.on_auto_parse, tooltip="Auto-Parse from Folder"),
-                    ft.IconButton(ft.Icons.DELETE_SWEEP, on_click=self.on_clear_all, tooltip="Clear All"),
+                    ft.IconButton(icon=ft.Icons.REFRESH, on_click=self.on_auto_parse, tooltip="Auto-Parse from Folder"),
+                    ft.IconButton(icon=ft.Icons.DELETE_SWEEP, on_click=self.on_clear_all, tooltip="Clear All"),
                 ],
                 alignment="spaceBetween",
             ),
@@ -183,8 +185,8 @@ class TexturePackerFletApp:
                 ui["fn_text"],
                 ft.Row(
                     [
-                        ft.IconButton(ft.Icons.FOLDER_OPEN, icon_size=16, on_click=lambda _, k=key: self.on_load_slot(k)),
-                        ft.IconButton(ft.Icons.CLOSE, icon_size=16, on_click=lambda _, k=key: self.on_clear_slot(k)),
+                        ft.IconButton(icon=ft.Icons.FOLDER_OPEN, icon_size=16, on_click=lambda _, k=key: self.on_load_slot(k)),
+                        ft.IconButton(icon=ft.Icons.CLOSE, icon_size=16, on_click=lambda _, k=key: self.on_clear_slot(k)),
                     ],
                     alignment="center",
                 ),
@@ -339,4 +341,4 @@ class TexturePackerFletApp:
 
 def start_app(target: Optional[str]):
     app = TexturePackerFletApp(target)
-    ft.app(target=app.main)
+    ft.run(app.main, view=ft.AppView.FLET_APP_HIDDEN)

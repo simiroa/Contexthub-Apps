@@ -4,14 +4,15 @@ from pathlib import Path
 
 LEGACY_ID = 'rigreader_vectorizer'
 LEGACY_SCOPE = 'file'
-USE_MENU = False
-SCRIPT_REL = "features/image/vectorizer/vectorizer_gui.py"
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = APP_ROOT.resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from runtime_bootstrap import resolve_shared_runtime
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
-SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
-SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 os.chdir(LEGACY_ROOT)
 for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
     path_str = str(path)
@@ -38,38 +39,18 @@ def _pick_targets():
     args = [a for a in sys.argv[1:] if a]
     if args:
         return args
-
-    try:
-        import tkinter as tk
-        from tkinter import filedialog
-        root = tk.Tk()
-        root.withdraw()
-        if LEGACY_SCOPE in {"items"}:
-            paths = filedialog.askopenfilenames(title=LEGACY_ID)
-            return list(paths)
-        if LEGACY_SCOPE in {"directory"}:
-            path = filedialog.askdirectory(title=LEGACY_ID)
-            return [path] if path else []
-        path = filedialog.askopenfilename(title=LEGACY_ID)
-        return [path] if path else []
-    except Exception:
-        return []
+    return []
 
 
-def _run_flet(targets):
-    try:
-        from features.image.vectorizer.flet_app import start_app
-        start_app(targets)
-    except ImportError as e:
-        print(f"Failed to load Flet app: {e}")
-        raise e
+def _run_qt(targets):
+    from features.image.vectorizer.rigreader_vectorizer_qt_app import start_app
+    start_app(targets)
 
 
 def main():
     targets = _pick_targets()
-    if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
-        return
-    _run_flet(targets)
+    # For Qt, we allow starting without targets to show the workspace
+    _run_qt(targets)
 
 
 if __name__ == "__main__":

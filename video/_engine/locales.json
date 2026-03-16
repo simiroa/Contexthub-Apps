@@ -15,6 +15,33 @@
     "conversion_cancelled": "Conversion was cancelled.",
     "conversion_complete": "Conversion complete!"
   },
+  "video_convert_qt": {
+    "subtitle": "Fast desktop shell for format, scale, and bitrate conversion with FFmpeg.",
+    "queue": "Queued Videos",
+    "queue_hint": "Select an item to update the preview above.",
+    "parameters": "Parameters",
+    "description": "Choose a preset, tune format and scale, then convert the queued videos.",
+    "preset": "Preset",
+    "preview_title": "Preview",
+    "preview_empty": "Select a video from the list below to preview it here.",
+    "no_selection": "No video selected",
+    "clear_all": "Clear",
+    "custom_output_placeholder": "Custom output folder (optional)",
+    "output_folder": "Output Folder",
+    "source_folder": "Source",
+    "converted_folder": "Converted",
+    "custom_folder": "Custom",
+    "convert_and_run": "Convert And Run",
+    "open_output_folder": "Open output folder",
+    "convert": "Convert",
+    "output_unavailable": "Output path appears after videos are queued.",
+    "nvenc_ready": "NVENC ready",
+    "cpu_encode": "CPU encode",
+    "ffmpeg_missing": "FFmpeg not found",
+    "completed": "Conversion Complete",
+    "completed_with_errors": "Conversion Finished With Errors",
+    "choose_output": "Choose output folder"
+  },
   "video_audio_gui": {
     "title_extract": "Extract Audio",
     "title_remove": "Remove Audio",
@@ -28,6 +55,19 @@
     "converting": "Converting...",
     "done": "Done",
     "error": "Error: {}"
+  },
+  "remove_audio": {
+    "console": {
+      "no_targets": "No supported video files were provided.",
+      "start": "Remove Audio started.",
+      "file_count": "Files: {count}",
+      "output_rule": "Output: source folder / *_mute",
+      "processing": "[{index}/{total}] Removing audio: {name}",
+      "done_one": "Created: {path}",
+      "failed_one": "Failed: {name}",
+      "summary": "Finished: {success}/{total} succeeded.",
+      "failures": "Failures:"
+    }
   },
   "video_interp_gui": {
     "title": "Video Frame Interpolation",

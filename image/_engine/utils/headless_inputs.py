@@ -31,7 +31,6 @@ AUDIO_IDS = {
 
 VIDEO_IDS = {
     "video_convert",
-    "create_proxy",
     "remove_audio",
     "interpolate_30fps",
     "extract_audio",

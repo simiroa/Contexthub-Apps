@@ -19,11 +19,6 @@ def convert_video(target_path: str, selection=None):
     from . import convert_gui
     convert_gui.run_gui(target_path, selection=selection)
 
-def create_proxy(target_path: str, selection=None):
-    # Proxy is just a preset in convert_video now
-    from . import convert_gui
-    convert_gui.run_gui(target_path, selection=selection)
-
 def seq_to_video(target_path: str):
     from features.sequence import to_video_gui
     to_video_gui.run_gui(target_path)

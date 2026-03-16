@@ -1,8 +1,4 @@
-"""Document conversion service – UI-free business logic.
-
-Wraps the existing ``core.converter.DocumentConverter`` and
-the ``CONVERSIONS`` format matrix from the legacy GUI.
-"""
+"""Document conversion service for the Flet UI."""
 
 from __future__ import annotations
 
@@ -62,10 +58,68 @@ def get_common_formats(files: List[Path]) -> List[str]:
     return sorted(common) if common else []
 
 
+class DocConvertService:
+    def __init__(self):
+        self.converter = DocumentConverter()
+        self._cancelled = False
+
+    def cancel(self):
+        self._cancelled = True
+        self.converter.cancel()
+
+    def convert_files(
+        self,
+        files: List[Path],
+        target_label: str,
+        *,
+        use_subfolder: bool = False,
+        custom_output_dir: Optional[Path] = None,
+        options: Optional[dict] = None,
+        on_progress: Optional[Callable[[int, int, str], None]] = None,
+    ) -> tuple[int, List[str], Optional[Path]]:
+        options = options or {}
+        self._cancelled = False
+        success = 0
+        errors: List[str] = []
+        total = len(files)
+        last_output_dir: Optional[Path] = None
+
+        for idx, fpath in enumerate(files):
+            if self._cancelled:
+                errors.append("Conversion cancelled by user.")
+                break
+
+            if on_progress:
+                on_progress(idx + 1, total, fpath.name)
+
+            try:
+                ext = fpath.suffix.lower()
+                target_ext = CONVERSIONS.get(ext, {}).get(target_label)
+                if not target_ext:
+                    raise ValueError(f"No target for {ext} -> {target_label}")
+
+                out_dir = custom_output_dir or fpath.parent
+                if use_subfolder and custom_output_dir is None:
+                    out_dir = out_dir / "Converted_Docs"
+                out_dir.mkdir(parents=True, exist_ok=True)
+
+                self.converter.convert(fpath, target_ext, out_dir, options)
+                last_output_dir = out_dir
+                success += 1
+            except Exception as exc:
+                errors.append(f"{fpath.name}: {exc}")
+
+        if on_progress and not self._cancelled:
+            on_progress(total, total, "")
+
+        return success, errors, last_output_dir
+
+
 def convert_files(
     files: List[Path],
     target_label: str,
     use_subfolder: bool = True,
+    custom_output_dir: Optional[Path] = None,
     options: Optional[dict] = None,
     on_progress: Optional[Callable[[int, int, str], None]] = None,
 ) -> tuple[int, List[str]]:
@@ -74,33 +128,13 @@ def convert_files(
     Returns:
         ``(success_count, error_messages)``
     """
-    options = options or {}
-    converter = DocumentConverter()
-    success = 0
-    errors: List[str] = []
-    total = len(files)
-
-    for idx, fpath in enumerate(files):
-        if on_progress:
-            on_progress(idx, total, fpath.name)
-
-        try:
-            ext = fpath.suffix.lower()
-            target_ext = CONVERSIONS.get(ext, {}).get(target_label)
-            if not target_ext:
-                raise ValueError(f"No target for {ext} → {target_label}")
-
-            out_dir = fpath.parent
-            if use_subfolder:
-                out_dir = out_dir / "Converted_Docs"
-                out_dir.mkdir(exist_ok=True)
-
-            converter.convert(fpath, target_ext, out_dir, options)
-            success += 1
-        except Exception as exc:
-            errors.append(f"{fpath.name}: {exc}")
-
-    if on_progress:
-        on_progress(total, total, "")
-
+    service = DocConvertService()
+    success, errors, _ = service.convert_files(
+        files,
+        target_label,
+        use_subfolder=use_subfolder,
+        custom_output_dir=custom_output_dir,
+        options=options,
+        on_progress=on_progress,
+    )
     return success, errors

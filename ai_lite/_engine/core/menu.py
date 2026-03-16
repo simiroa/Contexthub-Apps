@@ -1,8 +1,7 @@
-import sys
+﻿import sys
 import os
 import traceback
 from pathlib import Path
-from tkinter import messagebox
 import importlib
 import subprocess
 import runpy
@@ -11,6 +10,11 @@ import runpy
 current_dir = Path(__file__).parent
 src_dir = current_dir.parent
 sys.path.append(str(src_dir))
+
+repo_root = current_dir.parent.parent.parent
+
+def _app_main(category, app_id):
+    return repo_root / category / app_id / 'main.py'
 
 from core.config import MenuConfig
 from core.logger import setup_logger
@@ -115,7 +119,7 @@ def _open_manager():
         # but since this process (menu.py) exits immediately (it's a transient dispatcher), it's fine.
         # The child inherits the handle? No, subprocess copies it.
     except Exception as e:
-        messagebox.showerror("Error", f"Failed to launch Manager: {e}")
+        logger.error(f"Failed to launch Manager: {e}")
 
 
 def build_handler_map():
@@ -139,32 +143,31 @@ def build_handler_map():
     
     return {
         # === Image ===
-        "image_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "convert_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "merge_to_exr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "merge_exr.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "resize_power_of_2": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "resize_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "split_exr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "split_image.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "texture_packer_orm": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "packer_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "normal_flip_green": _lazy("features.image.normal", "flip_normal_green"),
-        "simple_normal_roughness": _lazy("features.image.normal", "generate_simple_normal_roughness"),
-        "image_compare": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "compare_gui.py"), *( [str(i) for i in s] if s else [str(p)] )]),
+        "image_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "image_convert")), *([str(i) for i in s] if s else [str(p)])]),
+        "merge_to_exr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "merge_to_exr")), *([str(i) for i in s] if s else [str(p)])]),
+        "resize_power_of_2": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "resize_power_of_2")), *([str(i) for i in s] if s else [str(p)])]),
+        "split_exr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "split_exr")), *([str(i) for i in s] if s else [str(p)])]),
+        "texture_packer_orm": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "texture_packer_orm")), *([str(i) for i in s] if s else [str(p)])]),
+        "normal_flip_green": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "normal_flip_green")), *([str(i) for i in s] if s else [str(p)])]),
+        "simple_normal_roughness": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "simple_normal_roughness")), *([str(i) for i in s] if s else [str(p)])]),
+        "image_compare": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "image_compare")), *([str(i) for i in s] if s else [str(p)])]),
         "image_metadata": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "metadata_gui.py"), str(p)]),
-        "rigreader_vectorizer": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "image" / "vectorizer" / "vectorizer_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
+        "rigreader_vectorizer": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "rigreader_vectorizer")), *([str(i) for i in s] if s else [str(p)])]),
         "noise_master": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "tools" / "noise_master" / "main.py")]),
 
         # === AI ===
-        "whisper_subtitle": _lazy("features.ai.subtitle", "generate_subtitles"),
-        "esrgan_upscale": _lazy("features.image.upscale", "upscale_image"),
-        "rmbg_background": _lazy("features.ai.tools", "remove_background"),
+        "whisper_subtitle": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "whisper_subtitle")), *([str(i) for i in s] if s else [str(p)])]),
+        "esrgan_upscale": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "esrgan_upscale")), *([str(i) for i in s] if s else [str(p)])]),
+        "rmbg_background": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "rmbg_background")), *([str(i) for i in s] if s else [str(p)])]),
         "marigold_pbr": _lazy("features.ai.marigold_gui", "run_marigold_gui"),
         "gemini_image_tool": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "ai" / "standalone" / "gemini_img_tools.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "demucs_stems": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "audio" / "separate_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
+        "demucs_stems": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "demucs_stems")), *([str(i) for i in s] if s else [str(p)])]),
 
         # === Video ===
-        "video_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "video" / "convert_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "extract_audio": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "video" / "audio_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "interpolate_30fps": _lazy("features.video.tools", "frame_interp_30fps"),
-        "create_proxy": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "video" / "convert_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "remove_audio": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "video" / "audio_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
+        "video_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("video", "video_convert")), *([str(i) for i in s] if s else [str(p)])]),
+        "extract_audio": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("video", "extract_audio")), *([str(i) for i in s] if s else [str(p)])]),
+        "interpolate_30fps": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("video", "interpolate_30fps")), *([str(i) for i in s] if s else [str(p)])]),
+        "remove_audio": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("video", "remove_audio")), *([str(i) for i in s] if s else [str(p)])]),
 
         # === Sequence ===
         "sequence_arrange": _lazy("features.sequence.tools", "arrange_sequences"),
@@ -174,10 +177,10 @@ def build_handler_map():
         "sequence_renumber": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "system" / "rename.py"), "renumber", *([str(i) for i in s] if s else [str(p)])]),
 
         # === Audio ===
-        "audio_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "audio" / "convert_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "extract_bgm": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "audio" / "separate_gui.py"), *([str(i) for i in s] if s else [str(p)]), "--mode", "bgm"]),
-        "extract_voice": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "audio" / "separate_gui.py"), *([str(i) for i in s] if s else [str(p)]), "--mode", "voice"]),
-        "normalize_volume": _lazy("features.audio.tools", "optimize_volume"),
+        "audio_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("audio", "audio_convert")), *([str(i) for i in s] if s else [str(p)])]),
+        "extract_bgm": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("audio", "extract_bgm")), *([str(i) for i in s] if s else [str(p)])]),
+        "extract_voice": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("audio", "extract_voice")), *([str(i) for i in s] if s else [str(p)])]),
+        "normalize_volume": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("audio", "normalize_volume")), *([str(i) for i in s] if s else [str(p)])]),
 
         # === System ===
         "clean_empty_folders": _lazy("utils.system_tools", "clean_empty_dirs"),
@@ -188,12 +191,12 @@ def build_handler_map():
         "manager": lambda p, s=None: _open_manager(),
 
         # === 3D ===
-        "auto_lod": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "mesh" / "lod_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "cad_to_obj": _lazy("features.mesh.mayo", "convert_cad"),
-        "mesh_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "mesh" / "blender.py"), "convert", *([str(i) for i in s] if s else [str(p)])]),
-        "open_with_mayo": _lazy("features.mesh.mayo", "open_with_mayo"),
-        "extract_textures": _lazy("features.mesh.blender", "extract_textures"),
-        "blender_bake_gui": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "mesh" / "bake_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
+        "auto_lod": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("3d", "auto_lod")), *([str(i) for i in s] if s else [str(p)])]),
+        "cad_to_obj": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("3d", "cad_to_obj")), *([str(i) for i in s] if s else [str(p)])]),
+        "mesh_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("3d", "mesh_convert")), *([str(i) for i in s] if s else [str(p)])]),
+        "open_with_mayo": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("3d", "open_with_mayo")), *([str(i) for i in s] if s else [str(p)])]),
+        "extract_textures": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("3d", "extract_textures")), *([str(i) for i in s] if s else [str(p)])]),
+        "blender_bake_gui": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("3d", "blender_bake_gui")), *([str(i) for i in s] if s else [str(p)])]),
 
         # === Clipboard ===
         # copy_my_info: Launches the Info Manager GUI for editing.
@@ -206,18 +209,18 @@ def build_handler_map():
         "copy_unc_path": _lazy("utils.system_tools", "copy_unc_path"),
 
         # === Document ===
-        "doc_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "document" / "convert_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "pdf_merge": lambda p, s=None: _lazy("utils.system_tools", "pdf_merge")(p, selection=s),
-        "pdf_split": lambda p, s=None: _lazy("utils.system_tools", "pdf_split")(p, selection=s),
+        "doc_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("document", "doc_convert")), *([str(i) for i in s] if s else [str(p)])]),
+        "pdf_merge": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("document", "pdf_merge")), *([str(i) for i in s] if s else [str(p)])]),
+        "pdf_split": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("document", "pdf_split")), *([str(i) for i in s] if s else [str(p)])]),
 
         # === Rename ===
         "batch_rename": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "system" / "rename.py"), "rename", *([str(i) for i in s] if s else [str(p)])]),
 
         # === Tools ===
-        "youtube_downloader": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "video" / "downloader_gui.py")]),
-        "vacance": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "leave_manager" / "gui.py")]),
-        "leave_manager": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "leave_manager" / "gui.py")]),
-        "ai_text_lab": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "tools" / "ai_text_lab.py")]),
+        "youtube_downloader": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("utilities", "youtube_downloader"))]),
+        "vacance": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("utilities", "leave_manager"))]),
+        "leave_manager": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("utilities", "leave_manager"))]),
+        "ai_text_lab": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai_lite", "ai_text_lab"))]),
         "context_flow": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "tools" / "context_flow" / "gui.py")]),
 
         # === ComfyUI ===
@@ -288,54 +291,11 @@ def main():
     except Exception as e:
         error_msg = f"Error executing {sys.argv}: {e}\n{traceback.format_exc()}"
         logger.error(error_msg)
-        try:
-            import tkinter as tk
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showerror("Context Menu Error", f"An error occurred:\n{e}")
-        except Exception:
-            pass
+        logger.error(f'Context menu error: {e}')
 
 
 if __name__ == "__main__":
     try:
         main()
     except (PermissionError, OSError) as e:
-        # Check for Access Denied (WinError 5)
-        is_access_denied = isinstance(e, PermissionError) or (isinstance(e, OSError) and getattr(e, 'winerror', 0) == 5)
-        
-        if is_access_denied:
-            import ctypes
-            import tkinter as tk
-            from tkinter import messagebox
-            
-            # Hide Main Window
-            root = tk.Tk()
-            root.withdraw()
-            root.attributes("-topmost", True)
-            
-            if messagebox.askyesno("Access Denied", "This action requires Administrator privileges.\n\nDo you want to retry as Administrator?"):
-                # Relaunch with RunAs
-                try:
-                    params = " ".join([f'"{arg}"' for arg in sys.argv])
-                    # sys.executable is python.exe. We need to pass the script and args.
-                    # But sys.argv[0] is the script path usually.
-                    # Reconstruct command line somewhat reliably.
-                    
-                    script = sys.argv[0]
-                    args = " ".join([f'"{arg}"' for arg in sys.argv[1:]])
-                    
-                    ret = ctypes.windll.shell32.ShellExecuteW(None, "runas", PYTHON_EXE, f'"{script}" {args}', None, 1)
-                    if ret <= 32:
-                        messagebox.showerror("Error", "Elevation failed or cancelled.")
-                except Exception as ex:
-                    messagebox.showerror("Error", f"Failed to elevate: {ex}")
-            else:
-                pass # User cancelled
-        else:
-            # Re-raise other errors to be caught optionally or logged
-            # But since we are at top level, maybe we should just log and show error?
-            # main() already has a catch-all for generic exceptions, so this block is likely
-            # catching things that bubbled up or were re-raised.
-            logger.error(f"Top-level error: {e}")
-
+        logger.error(f"Top-level error: {e}")

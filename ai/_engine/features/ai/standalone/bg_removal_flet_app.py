@@ -7,8 +7,11 @@ from pathlib import Path
 import flet as ft
 
 from contexthub.ui.flet.layout import action_bar, apply_button_sizing, toolbar_row
+from contexthub.ui.flet.layout import integrated_title_bar
+from contexthub.ui.flet.prefs import load_ui_prefs, save_ui_prefs
 from contexthub.ui.flet.theme import configure_page
 from contexthub.ui.flet.tokens import COLORS, RADII, SPACING
+from contexthub.ui.flet.window import reveal_desktop_window
 from utils.ai_runner import start_ai_script
 
 
@@ -48,13 +51,29 @@ class BackgroundRemovalFletApp:
     def main(self, page: ft.Page):
         self.page = page
         configure_page(page, "AI Background Removal", window_profile="form")
+        prefs = load_ui_prefs(
+            "rmbg_background",
+            {"model": "birefnet", "postprocess": "none", "transparent": True},
+        )
         if not self.capture_mode:
             self.file_picker = ft.FilePicker(on_result=self.on_file_result)
             page.overlay.append(self.file_picker)
+        title = "AI Background Removal"
 
         self.file_count = ft.Text("", color=COLORS["text_muted"])
+        self.file_hint = ft.Text("", color=COLORS["text_muted"], size=12)
         self.model_note = ft.Text("", color=COLORS["text_muted"])
-        self.files_column = ft.ListView(spacing=SPACING["xs"], auto_scroll=False)
+        self.files_text = ft.TextField(
+            value="",
+            multiline=True,
+            read_only=True,
+            min_lines=10,
+            max_lines=10,
+            bgcolor=COLORS["surface"],
+            border_color=COLORS["line"],
+            border_radius=RADII["sm"],
+            text_style=ft.TextStyle(size=12, color=COLORS["text"]),
+        )
         self.status_text = ft.Text("Ready", color=COLORS["text_muted"])
         self.progress = ft.ProgressBar(value=0, visible=False, color=COLORS["accent"])
         self.log_box = ft.TextField(
@@ -64,24 +83,24 @@ class BackgroundRemovalFletApp:
             min_lines=4,
             max_lines=7,
             border_radius=RADII["md"],
-            bgcolor=COLORS["surface_alt"],
+            bgcolor=COLORS["surface"],
             border_color=COLORS["line"],
         )
         self.model_dropdown = ft.Dropdown(
             label="Model",
-            value="birefnet",
+            value=prefs["model"],
             width=220,
             options=[
                 ft.dropdown.Option("birefnet"),
                 ft.dropdown.Option("inspyrenet"),
                 ft.dropdown.Option("rmbg"),
             ],
-            on_select=lambda e: self.refresh_notes(),
+            on_select=lambda e: self._persist_prefs(),
         )
-        self.transparency_checkbox = ft.Checkbox(label="Transparent PNG output", value=True)
+        self.transparency_checkbox = ft.Checkbox(label="Transparent PNG output", value=prefs["transparent"], on_change=lambda e: self._persist_prefs())
         self.postprocess_dropdown = ft.Dropdown(
             label="Post-process",
-            value="none",
+            value=prefs["postprocess"],
             width=220,
             options=[
                 ft.dropdown.Option("none"),
@@ -89,6 +108,7 @@ class BackgroundRemovalFletApp:
                 ft.dropdown.Option("sharpen"),
                 ft.dropdown.Option("feather"),
             ],
+            on_select=lambda e: self._persist_prefs(),
         )
         self.run_button = apply_button_sizing(
             ft.ElevatedButton(
@@ -103,38 +123,50 @@ class BackgroundRemovalFletApp:
         page.add(
             ft.Container(
                 expand=True,
-                padding=ft.padding.all(SPACING["xl"]),
+                bgcolor=COLORS["app_bg"],
                 content=ft.Column(
                     expand=True,
+                    spacing=SPACING["sm"],
                     controls=[
-                        self._build_header(),
-                        ft.Row(
+                        integrated_title_bar(page, title),
+                        ft.Container(
                             expand=True,
-                            spacing=SPACING["md"],
-                            controls=[
-                                ft.Column(
-                                    expand=3,
-                                    controls=[
-                                        self._build_files_card(),
-                                        self._build_log_card(),
-                                    ],
-                                ),
-                                ft.Column(
-                                    expand=2,
-                                    controls=[
-                                        self._build_settings_card(),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        action_bar(
-                            status=self.status_text,
-                            progress=self.progress,
-                            primary=self.run_button,
-                            secondary=[
-                                ft.OutlinedButton("Open Folder", on_click=lambda e: self.open_output_folder()),
-                                ft.OutlinedButton("Clear", on_click=self.on_clear),
-                            ],
+                            padding=ft.padding.symmetric(horizontal=SPACING["md"], vertical=SPACING["md"]),
+                            content=ft.Column(
+                                expand=True,
+                                spacing=SPACING["md"],
+                                controls=[
+                                    self._build_header(),
+                                    ft.Row(
+                                        expand=True,
+                                        spacing=SPACING["md"],
+                                        controls=[
+                                            ft.Column(
+                                                expand=3,
+                                                controls=[
+                                                    self._build_files_card(),
+                                                    self._build_log_card(),
+                                                ],
+                                            ),
+                                            ft.Column(
+                                                expand=2,
+                                                controls=[
+                                                    self._build_settings_card(),
+                                                ],
+                                            ),
+                                        ],
+                                    ),
+                                    action_bar(
+                                        status=self.status_text,
+                                        progress=self.progress,
+                                        primary=self.run_button,
+                                        secondary=[
+                                            ft.OutlinedButton("Open Folder", on_click=lambda e: self.open_output_folder()),
+                                            ft.OutlinedButton("Clear", on_click=self.on_clear),
+                                        ],
+                                    ),
+                                ],
+                            ),
                         ),
                     ],
                 ),
@@ -172,13 +204,14 @@ class BackgroundRemovalFletApp:
                         ft.Text("Target Images", size=16, weight=ft.FontWeight.BOLD, color=COLORS["text"]),
                         apply_button_sizing(ft.OutlinedButton("Add Images", icon=ft.Icons.ADD_PHOTO_ALTERNATE, on_click=self.on_pick_files), "toolbar"),
                     ),
+                    self.file_hint,
                     ft.Container(
-                        height=180,
+                        height=240,
                         padding=SPACING["sm"],
-                        bgcolor=COLORS["surface_alt"],
+                        bgcolor=COLORS["app_bg"],
                         border_radius=RADII["md"],
                         border=ft.border.all(1, COLORS["line"]),
-                        content=self.files_column,
+                        content=self.files_text,
                     ),
                 ]
             ),
@@ -210,6 +243,7 @@ class BackgroundRemovalFletApp:
 
     def _build_log_card(self) -> ft.Container:
         return ft.Container(
+            height=220,
             bgcolor=COLORS["surface"],
             border=ft.border.all(1, COLORS["line"]),
             border_radius=RADII["lg"],
@@ -234,24 +268,35 @@ class BackgroundRemovalFletApp:
         if self.page:
             self.page.update()
 
+    def _persist_prefs(self):
+        self.refresh_notes()
+        save_ui_prefs(
+            "rmbg_background",
+            {
+                "model": self.model_dropdown.value,
+                "postprocess": self.postprocess_dropdown.value,
+                "transparent": self.transparency_checkbox.value,
+            },
+        )
+
     def refresh_files(self):
-        self.files_column.controls.clear()
+        lines: list[str] = []
         if not self.files:
-            self.files_column.controls.append(ft.Text("No images loaded yet.", color=COLORS["text_muted"]))
+            lines = [
+                "No images loaded yet.",
+                "",
+                "Use Add Images or launch from image context menu.",
+            ]
         for item in self.files[:6]:
-            self.files_column.controls.append(
-                ft.Row(
-                    controls=[
-                        ft.Icon(ft.Icons.IMAGE_OUTLINED, size=16, color=COLORS["text_muted"]),
-                        ft.Text(item.name, expand=True, color=COLORS["text"]),
-                        ft.Text(item.suffix.lower(), color=COLORS["text_muted"]),
-                    ]
-                )
-            )
+            lines.append(f"- {item.name}  ({item.suffix.lower()})")
         if len(self.files) > 6:
-            self.files_column.controls.append(ft.Text(f"... +{len(self.files) - 6} more", color=COLORS["text_muted"]))
+            lines.append(f"... +{len(self.files) - 6} more")
+        self.files_text.value = "\n".join(lines)
         self.file_count.value = f"Images: {len(self.files)}"
+        self.file_hint.value = "Use Add Images or launch from the image context menu." if not self.files else "Review the queued images before starting background removal."
         self.run_button.disabled = self.is_running or not self.files
+        if not self.files and not self.is_running:
+            self.status_text.value = "Ready. Add image files to enable background removal."
         if self.page:
             self.page.update()
 
@@ -332,4 +377,9 @@ class BackgroundRemovalFletApp:
 
 def open_bg_removal_flet(targets: list[str] | None = None):
     app = BackgroundRemovalFletApp(targets)
-    ft.app(target=app.main)
+
+    async def main(page: ft.Page):
+        app.main(page)
+        await reveal_desktop_window(page)
+
+    ft.run(main, view=ft.AppView.FLET_APP_HIDDEN)

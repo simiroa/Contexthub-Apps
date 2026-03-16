@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 class PbrGenState:
     files: List[Path] = field(default_factory=list)
     preview_mode: str = "Normal"  # "Original", "Normal", "Roughness"
+    save_mode: str = "Normal"  # "Normal", "Roughness", "Both"
     
     # Normal Parameters
     normal_strength: float = 1.0
@@ -19,3 +20,6 @@ class PbrGenState:
     is_processing: bool = False
     progress: float = 0.0
     status_text: str = "Ready"
+    detail_text: str = ""
+    custom_output_dir: Optional[Path] = None
+    last_output_dir: Optional[Path] = None

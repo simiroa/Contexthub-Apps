@@ -26,6 +26,28 @@ class VideoConvertService:
         except:
             return False
 
+    def add_inputs(self, paths: List[str]) -> None:
+        for raw_path in paths:
+            path = Path(raw_path)
+            if not path.exists():
+                continue
+            if path in self.state.files:
+                continue
+            self.state.files.append(path)
+        if self.on_update:
+            self.on_update()
+
+    def remove_input_at(self, index: int) -> None:
+        if 0 <= index < len(self.state.files):
+            self.state.files.pop(index)
+            if self.on_update:
+                self.on_update()
+
+    def clear_inputs(self) -> None:
+        self.state.files.clear()
+        if self.on_update:
+            self.on_update()
+
     def start_conversion(self):
         if self.state.is_processing: return
         self.state.is_processing = True
@@ -86,6 +108,7 @@ class VideoConvertService:
         scale = self.state.scale
         crf = self.state.crf
         save_new_folder = self.state.save_to_folder
+        custom_output_dir = self.state.custom_output_dir
         delete_original = self.state.delete_original
 
         for path in self.state.files:
@@ -95,7 +118,11 @@ class VideoConvertService:
             elif "MKV" in fmt: suffix = ".mkv"
             elif "GIF" in fmt: suffix = ".gif"
 
-            if save_new_folder:
+            if custom_output_dir:
+                out_dir = custom_output_dir
+                out_dir.mkdir(exist_ok=True, parents=True)
+                out_name = f"{path.stem}{suffix}"
+            elif save_new_folder:
                 base_dir = path.parent / "Converted"
                 if base_dir not in out_dir_cache:
                     safe_dir = get_safe_path(base_dir) if base_dir.exists() else base_dir

@@ -5,18 +5,23 @@ from pathlib import Path
 LEGACY_ID = 'doc_convert'
 LEGACY_SCOPE = 'file'
 
-ROOT = Path(__file__).resolve().parents[3]
 APP_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = APP_ROOT.resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from runtime_bootstrap import resolve_shared_runtime
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
 os.chdir(LEGACY_ROOT)
 sys.path.insert(0, str(LEGACY_ROOT))
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
-# Ensure Shared runtime is in path for i18n and Flet tokens
-SHARED_PATH = ROOT / "Runtimes" / "Shared"
-if SHARED_PATH.exists() and str(SHARED_PATH) not in sys.path:
-    sys.path.insert(0, str(SHARED_PATH))
+# Ensure Shared runtime is in path for i18n and shared UI/runtime modules
+SHARED_PATH, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
+for path in (SHARED_PATH, SHARED_PACKAGE_ROOT):
+    path_str = str(path)
+    if path.exists() and path_str not in sys.path:
+        sys.path.insert(0, path_str)
 
 try:
     from utils.i18n import load_extra_strings
@@ -29,6 +34,7 @@ except Exception:
 
 def _capture_mode():
     return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
+
 
 def _pick_targets():
     if LEGACY_SCOPE in {"background", "tray_only", "standalone"}:
@@ -44,32 +50,25 @@ def _pick_targets():
     args = [a for a in sys.argv[1:] if a]
     if args:
         return args
+    return []
 
+
+def _show_dependency_error(message: str) -> None:
+    print(message, file=sys.stderr)
+
+
+def _run_qt(targets) -> None:
     try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-
-        path = filedialog.askopenfilename(title=LEGACY_ID)
-        return [path] if path else []
-    except Exception:
-        return []
-
-
-def _run_flet(targets):
-    from features.document.doc_convert.flet_app import start_app
+        from features.document.doc_convert_qt_app import start_app
+    except ImportError as exc:
+        _show_dependency_error(f"PySide6 is required to run this app.\n\n{exc}")
+        return
     start_app(targets)
 
 
 def main():
-    # Load locales
     targets = _pick_targets()
-    if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
-        return
-
-    _run_flet(targets)
+    _run_qt(targets)
 
 
 if __name__ == "__main__":

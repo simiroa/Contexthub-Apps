@@ -5,7 +5,8 @@ import threading
 from pathlib import Path
 
 from contexthub.ui.flet.dialogs import build_progress_dialog
-from contexthub.ui.flet.layout import action_bar, apply_button_sizing
+from contexthub.ui.flet.layout import action_bar, apply_button_sizing, integrated_title_bar
+from contexthub.ui.flet.prefs import load_ui_prefs, save_ui_prefs
 from contexthub.ui.flet.theme import configure_page
 from contexthub.ui.flet.tokens import (
     COLORS,
@@ -41,22 +42,33 @@ class Qwen3TTSFletApp:
         self.ft = ft
         self.page = page
         configure_page(self.page, "Qwen3 TTS", window_profile="wide_canvas")
+        self.prefs = load_ui_prefs(
+            "qwen3_tts",
+            {
+                "profile_name": "",
+                "tone": "natural",
+                "language": "Auto",
+                "device": "cuda",
+                "output_dir": str(Path.home() / "Documents"),
+            },
+        )
 
         self.state = AppState()
         self.profiles = load_profiles()
         self.target_path = Path(target_path) if target_path else None
         initial_messages, self.profiles = prefill_messages(self.target_path, self.profiles, "Hello from ContextHub. This is a quick voice test.")
         self.state.messages = [MessageState(**item) for item in initial_messages]
-        self.selected_profile_name = self.profiles[0]["name"]
-        self.selected_tone = "natural"
-        self.selected_language = "Auto"
-        self.selected_device = "cuda"
-        self.output_dir = Path.home() / "Documents"
+        profile_names_list = profile_names(self.profiles)
+        self.selected_profile_name = self.prefs["profile_name"] if self.prefs["profile_name"] in profile_names_list else self.profiles[0]["name"]
+        self.selected_tone = self.prefs["tone"]
+        self.selected_language = self.prefs["language"]
+        self.selected_device = self.prefs["device"]
+        self.output_dir = Path(self.prefs["output_dir"])
 
         self.composer_text = ft.TextField(value="Hello from ContextHub. This is a quick voice test.", multiline=True, min_lines=3, max_lines=6, border_radius=RADII["md"], bgcolor=COLORS["surface"], border_color=COLORS["line"], color=COLORS["text"])
-        self.profile_dropdown = ft.Dropdown(label="Profile", value=self.selected_profile_name, options=[ft.dropdown.Option(name) for name in profile_names(self.profiles)], width=CONTROL_WIDTHS["profile"])
-        self.tone_dropdown = ft.Dropdown(label="Tone", value=self.selected_tone, options=[ft.dropdown.Option(name) for name in TONE_PRESETS.keys()], width=CONTROL_WIDTHS["tone"])
-        self.language_dropdown = ft.Dropdown(label="Language", value=self.selected_language, options=[ft.dropdown.Option(name) for name in SUPPORTED_LANGUAGES], width=CONTROL_WIDTHS["language"])
+        self.profile_dropdown = ft.Dropdown(label="Profile", value=self.selected_profile_name, options=[ft.dropdown.Option(name) for name in profile_names(self.profiles)], width=CONTROL_WIDTHS["profile"], on_select=lambda e: self._on_composer_profile_change(e.control.value))
+        self.tone_dropdown = ft.Dropdown(label="Tone", value=self.selected_tone, options=[ft.dropdown.Option(name) for name in TONE_PRESETS.keys()], width=CONTROL_WIDTHS["tone"], on_select=lambda e: self._on_composer_tone_change(e.control.value))
+        self.language_dropdown = ft.Dropdown(label="Language", value=self.selected_language, options=[ft.dropdown.Option(name) for name in SUPPORTED_LANGUAGES], width=CONTROL_WIDTHS["language"], on_select=lambda e: self._on_language_change(e.control.value))
         self.status_text = ft.Text(self.state.status_text, color=COLORS["text_muted"])
         self.message_column = ft.Column(spacing=SPACING["sm"], scroll=ft.ScrollMode.AUTO, expand=True)
         self.profile_panel_container = ft.Container(width=WINDOWS["side_panel_width"], visible=False)
@@ -73,8 +85,33 @@ class Qwen3TTSFletApp:
         self.profile_form_target_id = None
         self.panel_status = ft.Text("", color=COLORS["text_muted"])
 
-        self.page.add(self._build_layout())
+        self.page.bgcolor = COLORS["app_bg"]
+        self.page.add(
+            ft.Container(
+                expand=True,
+                content=ft.Column(
+                    expand=True,
+                    spacing=SPACING["sm"],
+                    controls=[
+                        integrated_title_bar(self.page, "Qwen3 TTS"),
+                        ft.Container(expand=True, padding=ft.padding.all(SPACING["lg"]), content=self._build_layout()),
+                    ],
+                ),
+            )
+        )
         self._render()
+
+    def _persist_prefs(self):
+        save_ui_prefs(
+            "qwen3_tts",
+            {
+                "profile_name": self.selected_profile_name,
+                "tone": self.selected_tone,
+                "language": self.selected_language,
+                "device": self.selected_device,
+                "output_dir": str(self.output_dir),
+            },
+        )
 
     @staticmethod
     def _mode_label(mode: str) -> str:
@@ -101,24 +138,20 @@ class Qwen3TTSFletApp:
 
     def _build_layout(self):
         ft = self.ft
-        return ft.Container(
+        return ft.Column(
             expand=True,
-            padding=ft.padding.all(SPACING["lg"]),
-            content=ft.Column(
-                expand=True,
-                controls=[
-                    self._build_header(),
-                    ft.Row(
-                        expand=True,
-                        spacing=SPACING["md"],
-                        controls=[
-                            ft.Container(expand=True, content=self.message_column),
-                            self.profile_panel_container,
-                        ],
-                    ),
-                    self._build_composer(),
-                ],
-            ),
+            controls=[
+                self._build_header(),
+                ft.Row(
+                    expand=True,
+                    spacing=SPACING["md"],
+                    controls=[
+                        ft.Container(expand=True, content=self.message_column),
+                        self.profile_panel_container,
+                    ],
+                ),
+                self._build_composer(),
+            ],
         )
 
     def _build_header(self):
@@ -180,6 +213,21 @@ class Qwen3TTSFletApp:
 
     def _toggle_profile_panel(self):
         self.state.profile_panel_open = not self.state.profile_panel_open
+        self._render()
+
+    def _on_composer_profile_change(self, profile_name):
+        self.selected_profile_name = profile_name
+        self._persist_prefs()
+        self._render()
+
+    def _on_composer_tone_change(self, tone_name):
+        self.selected_tone = tone_name
+        self._persist_prefs()
+        self._render()
+
+    def _on_language_change(self, language_name):
+        self.selected_language = language_name
+        self._persist_prefs()
         self._render()
 
     def _close_overlay(self):
@@ -446,6 +494,7 @@ class Qwen3TTSFletApp:
             self.profiles.append(item)
         save_profiles(self.profiles)
         self.selected_profile_name = item["name"]
+        self._persist_prefs()
         self.panel_status.value = "Profile saved."
         self._load_profile_into_panel(item)
         self._render()
@@ -455,6 +504,8 @@ class Qwen3TTSFletApp:
             return
         self.profiles = [profile for profile in self.profiles if profile["id"] != self.profile_form_target_id]
         save_profiles(self.profiles)
+        self.selected_profile_name = self.profiles[0]["name"]
+        self._persist_prefs()
         self._load_profile_into_panel(self.profiles[0])
         self._render()
 
@@ -469,6 +520,7 @@ class Qwen3TTSFletApp:
         self.composer_text.value = message.text
         self.selected_profile_name = message.profile
         self.selected_tone = message.tone
+        self._persist_prefs()
         self._render()
 
     def _toggle_more(self, message_id):
@@ -490,18 +542,23 @@ class Qwen3TTSFletApp:
         message = next(message for message in self.state.messages if message.id == message_id)
         message.profile = profile_name
         self.selected_profile_name = profile_name
+        self._persist_prefs()
         self._render()
 
     def _update_message_tone(self, message_id, tone_name):
         message = next(message for message in self.state.messages if message.id == message_id)
         message.tone = tone_name
         self.selected_tone = tone_name
+        self._persist_prefs()
         self._render()
 
     def _apply_composer(self, message_id):
         message = next(message for message in self.state.messages if message.id == message_id)
         message.profile = self.profile_dropdown.value
         message.tone = self.tone_dropdown.value
+        self.selected_profile_name = self.profile_dropdown.value
+        self.selected_tone = self.tone_dropdown.value
+        self._persist_prefs()
         self._render()
 
     def _delete_message(self, message_id):
@@ -635,8 +692,10 @@ class Qwen3TTSFletApp:
 
 def open_qwen3_tts_flet(target_path=None):
     import flet as ft
+    from contexthub.ui.flet.window import reveal_desktop_window
 
-    def main(page: ft.Page):
+    async def main(page: ft.Page):
         Qwen3TTSFletApp(page, target_path=target_path)
+        await reveal_desktop_window(page)
 
-    ft.app(target=main)
+    ft.run(main, view=ft.AppView.FLET_APP_HIDDEN)

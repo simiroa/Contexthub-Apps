@@ -2,10 +2,10 @@
   "schema_version": "1.2",
   "id": "split_exr",
   "name": "Split EXR",
-  "description": "Legacy Image tool.",
-  "author": "ContextHub Legacy",
-  "version": "1.0.0",
-  "icon": null,
+  "description": "Confirm selected EXR files in a compact Qt shell, then split layers in a console flow.",
+  "author": "ContextHub",
+  "version": "1.1.0",
+  "icon": "icon.png",
   "runtime": {
     "category": "image",
     "python_version": "3.11",
@@ -14,7 +14,7 @@
   "execution": {
     "entry_point": "main.py",
     "arguments": "",
-    "mode": "gui",
+    "mode": "console",
     "working_directory": "./",
     "auto_start": false,
     "run_as_admin": false,
@@ -44,7 +44,7 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "flet",
+    "framework": "qt",
     "shared_theme": "contexthub"
   }
 }

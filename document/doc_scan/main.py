@@ -4,16 +4,24 @@ from pathlib import Path
 
 LEGACY_ID = 'doc_scan'
 LEGACY_SCOPE = 'file'
-ROOT = Path(__file__).resolve().parents[3]
+
 APP_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = APP_ROOT.resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from runtime_bootstrap import resolve_shared_runtime
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
 os.chdir(LEGACY_ROOT)
 sys.path.insert(0, str(LEGACY_ROOT))
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
-SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
-if SHARED_ROOT.exists() and str(SHARED_ROOT) not in sys.path:
-    sys.path.insert(0, str(SHARED_ROOT))
+
+# Ensure Shared runtime is in path
+SHARED_PATH, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
+for path in (SHARED_PATH, SHARED_PACKAGE_ROOT):
+    path_str = str(path)
+    if path.exists() and path_str not in sys.path:
+        sys.path.insert(0, path_str)
 
 def _capture_mode():
     return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
@@ -32,21 +40,10 @@ def _pick_targets():
     args = [a for a in sys.argv[1:] if a]
     if args:
         return args
+    return []
 
-    try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-
-        paths = filedialog.askopenfilenames(title=LEGACY_ID, filetypes=[("Images", "*.png;*.jpg;*.jpeg;*.bmp;*.webp")])
-        return list(paths)
-    except Exception:
-        return []
-
-def _run_flet(targets):
-    from features.document.doc_scan_flet_app import start_app
+def _run_qt(targets):
+    from features.document.doc_scan_qt_app import start_app
     start_app(targets)
 
 def main():
@@ -58,18 +55,7 @@ def main():
     except Exception: pass
 
     targets = _pick_targets()
-    if not targets and not _capture_mode():
-        try:
-            import tkinter as tk
-            from tkinter import messagebox
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showwarning("ContextHub", "No target selected.")
-        except Exception:
-            pass
-        return
-
-    _run_flet(targets)
+    _run_qt(targets)
 
 if __name__ == "__main__":
     main()

@@ -19,7 +19,7 @@ except ModuleNotFoundError:
             if not logger.handlers:
                 logging.basicConfig(level=logging.INFO)
             return logger
-from .state import LayerStateEntry
+from .state import LayerStateEntry, VectorizerState
 from features.image.vectorizer.vectorizer_core import vectorize_image, DEFAULT_CONFIG
 from features.image.vectorizer.anchor_estimator import estimate_anchor_point
 from features.image.vectorizer.svg_builder import (
@@ -30,6 +30,12 @@ from features.image.vectorizer.svg_builder import (
     save_individual_svgs,
     LayerSVG
 )
+
+try:
+    from PySide6.QtGui import QImage, QPixmap
+    from PySide6.QtCore import Qt
+except ImportError:
+    QImage = QPixmap = None
 
 logger = setup_logger("vectorizer_service")
 
@@ -42,10 +48,185 @@ except Exception:
     HAS_PSD_TOOLS = False
 
 class VectorizerService:
-    def __init__(self):
+    def __init__(self, state: VectorizerState | None = None):
         self._temp_dir = Path(tempfile.mkdtemp(prefix="vectorizer_flet_"))
+        self.state = state or VectorizerState()
 
-    def get_missing_dependencies(self) -> List[str]:
+    def get_ui_definition(self) -> List[Dict]:
+        return [
+            {"key": "show_comparison", "label": "Enable Split Comparison", "type": "bool", "default": False},
+            {"key": "speckle", "label": "Speckle Filter", "type": "int", "default": 4, "min": 0, "max": 100},
+            {"key": "color_precision", "label": "Color Precision", "type": "int", "default": 6, "min": 1, "max": 8},
+            {"key": "corner_threshold", "label": "Corner Threshold", "type": "int", "default": 60, "min": 0, "max": 100},
+            {"key": "remove_bg", "label": "Remove Background (AI)", "type": "bool", "default": True},
+            {"key": "use_anchor", "label": "Estimate Rigging Anchors", "type": "bool", "default": True},
+            {"key": "gen_jsx", "label": "Generate AE Script (JSX)", "type": "bool", "default": True},
+        ]
+
+    def update_parameter(self, key: str, value: any):
+        if hasattr(self.state, key):
+            setattr(self.state, key, value)
+
+    def get_workflow_names(self) -> List[str]:
+        return ["Character Rig", "Flat Vector", "Logo Tracing"]
+
+    def select_workflow(self, name: str):
+        self.state.workflow_name = name
+        if name == "Character Rig":
+            self.state.use_anchor = True
+            self.state.gen_jsx = True
+            self.state.remove_bg = True
+        elif name == "Flat Vector":
+            self.state.use_anchor = False
+            self.state.gen_jsx = False
+            self.state.remove_bg = False
+            self.state.color_precision = 8
+
+    def add_inputs(self, paths: List[str]):
+        if not paths: return
+        # Force single source logic: only take the last one dropped/picked
+        p = Path(paths[-1])
+        self.state.source_path = p
+        self.state.input_assets.clear()
+        
+        new_layers = self.load_files([p])
+        self.state.input_assets.extend(new_layers)
+        
+        if self.state.input_assets:
+            self.state.preview_uid = self.state.input_assets[0].uid
+
+    def remove_input_at(self, index: int):
+        # In single-input mode, this might just remove the layer from list 
+        # or we might disable it if it's the only source
+        if 0 <= index < len(self.state.input_assets):
+            self.state.input_assets.pop(index)
+
+    def clear_inputs(self):
+        self.state.source_path = None
+        self.state.input_assets.clear()
+        self.state.preview_uid = None
+
+    def set_preview_from_index(self, index: int):
+        assets = self.state.output_assets if self.state.current_mode == "output" else self.state.input_assets
+        if 0 <= index < len(assets):
+            self.state.preview_uid = assets[index].uid
+
+    def get_source_pixmap(self) -> Optional[QPixmap]:
+        if not QPixmap or not self.state.source_path: return None
+        return QPixmap(str(self.state.source_path))
+
+    def get_preview_pixmap(self, uid: str) -> Optional[QPixmap]:
+        if not QPixmap: return None
+        
+        # Check output assets first if in output mode
+        assets = self.state.input_assets + self.state.output_assets
+        for asset in assets:
+            if asset.uid == uid:
+                if isinstance(asset.data, Path):
+                    path = asset.data
+                    if path.suffix.lower() == '.svg':
+                        # Basic SVG rendering for preview
+                        # Note: In real production, we'd use QSvgRenderer
+                        # For now, we'll try to load as image or return None
+                        # ComparativePreviewWidget handles Pixmap, so we need a render.
+                        try:
+                            from PySide6.QtSvg import QSvgRenderer
+                            from PySide6.QtGui import QPainter, QImage
+                            renderer = QSvgRenderer(str(path))
+                            if not renderer.isValid(): return None
+                            img = QImage(asset.width or 512, asset.height or 512, QImage.Format_RGBA8888)
+                            img.fill(Qt.transparent)
+                            p = QPainter(img)
+                            renderer.render(p)
+                            p.end()
+                            return QPixmap.fromImage(img)
+                        except Exception:
+                            return None
+                    return QPixmap(str(path))
+                elif hasattr(asset.data, 'image') and asset.data.image:
+                    # PSD Layer case: Isolated viewing
+                    pil_img = asset.data.image
+                    if pil_img.mode != "RGBA":
+                        pil_img = pil_img.convert("RGBA")
+                    data = pil_img.tobytes("raw", "RGBA")
+                    qimg = QImage(data, pil_img.size[0], pil_img.size[1], QImage.Format_RGBA8888)
+                    return QPixmap.fromImage(qimg)
+        return None
+
+    def get_anchor_preview_data(self, uid: str) -> Optional[Dict]:
+        """Returns anchor point position for visualization."""
+        if not self.state.use_anchor: return None
+        # We need the asset to get the name for estimation
+        assets = self.state.input_assets + self.state.output_assets
+        for asset in assets:
+            if asset.uid == uid:
+                anchor = estimate_anchor_point(asset.name, 0, 0, asset.width, asset.height)
+                return {"x": anchor.x, "y": anchor.y, "name": anchor.duik_name}
+        return None
+
+    def update_output_options(self, path, prefix, open_folder, export_json):
+        self.state.output_options.output_dir = path
+        self.state.output_options.file_prefix = prefix
+        self.state.output_options.open_folder_after_run = open_folder
+        self.state.output_options.export_session_json = export_json
+
+    def reveal_output_dir(self):
+        if self.state.output_options.output_dir:
+            os.startfile(self.state.output_options.output_dir)
+
+    def run_workflow(self, on_complete: Callable = None) -> tuple[bool, str, any]:
+        # Convert state to dict for run_vectorization
+        config = {
+            "filter_speckle": self.state.speckle,
+            "color_precision": self.state.color_precision,
+            "corner_threshold": self.state.corner_threshold,
+        }
+        options = {
+            "remove_bg": self.state.remove_bg,
+            "use_anchor": self.state.use_anchor,
+            "gen_jsx": self.state.gen_jsx,
+        }
+        
+        selected_layers = [a for a in self.state.input_assets if a.selected]
+        if not selected_layers:
+            return False, "No layers selected", None
+            
+        output_path = Path(self.state.output_options.output_dir or "vect_output")
+        self.state.is_processing = True
+        
+        def _local_complete(success, message):
+            self.state.is_processing = False
+            if success:
+                # Populate output_assets
+                self.state.output_assets.clear()
+                for layer in selected_layers:
+                    svg_path = output_path / f"{layer.name}.svg"
+                    if svg_path.exists():
+                        self.state.output_assets.append(LayerStateEntry(
+                            uid=f"res_{layer.uid}",
+                            name=layer.name,
+                            display_name=f"{layer.name}.svg",
+                            width=layer.width,
+                            height=layer.height,
+                            data=svg_path
+                        ))
+                self.state.current_mode = "output"
+                if self.state.output_assets:
+                    self.state.preview_uid = self.state.output_assets[0].uid
+            if on_complete:
+                on_complete(success, message)
+
+        self.run_vectorization(
+            selected_layers,
+            output_path,
+            config,
+            options,
+            lambda p, t: setattr(self.state, 'progress', p),
+            _local_complete
+        )
+        return True, "Processing started", None
+
+    def load_files(self, paths: List[Path]) -> List[LayerStateEntry]:
         missing = []
         if not HAS_PSD_TOOLS:
             missing.append("psd_tools")

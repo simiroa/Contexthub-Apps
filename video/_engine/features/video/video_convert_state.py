@@ -9,7 +9,8 @@ class VideoConvertState:
     scale: str = "100%"
     custom_width: str = ""
     crf: int = 23
-    save_to_folder: bool = True
+    save_to_folder: bool = False
+    custom_output_dir: Optional[Path] = None
     delete_original: bool = False
     
     # Progress state

@@ -117,15 +117,6 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/interpolate_30fps.zip"
     },
     {
-        "id": "create_proxy",
-        "name": "Create Proxy",
-        "description": "Legacy Video tool.",
-        "version": "1.0.0",
-        "category": "video",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/create_proxy/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/create_proxy.zip"
-    },
-    {
         "id": "extract_audio",
         "name": "Extract Audio",
         "description": "Legacy Video tool.",

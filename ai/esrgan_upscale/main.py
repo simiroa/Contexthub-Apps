@@ -7,9 +7,12 @@ LEGACY_SCOPE = "file"
 
 ROOT = Path(__file__).resolve().parents[3]
 APP_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = APP_ROOT.resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from runtime_bootstrap import resolve_shared_runtime
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
-SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
-SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 os.chdir(LEGACY_ROOT)
 for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
     path_str = str(path)
@@ -36,29 +39,12 @@ def _pick_targets():
     args = [a for a in sys.argv[1:] if a]
     if args:
         return args
-
-    try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-
-        if LEGACY_SCOPE in {"items"}:
-            paths = filedialog.askopenfilenames(title=LEGACY_ID)
-            return list(paths)
-        if LEGACY_SCOPE in {"directory"}:
-            path = filedialog.askdirectory(title=LEGACY_ID)
-            return [path] if path else []
-        path = filedialog.askopenfilename(title=LEGACY_ID)
-        return [path] if path else []
-    except Exception:
-        return []
+    return []
 def main():
     targets = _pick_targets()
-    from features.ai.standalone.upscale_flet_app import open_upscale_flet
+    from features.ai.upscale_qt_app import start_app
 
-    open_upscale_flet(targets)
+    start_app(targets)
 
 
 if __name__ == "__main__":

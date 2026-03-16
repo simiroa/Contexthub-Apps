@@ -1,18 +1,18 @@
 import os
 import sys
 from pathlib import Path
-import runpy
 
 LEGACY_ID = 'merge_to_exr'
 LEGACY_SCOPE = 'items'
-USE_MENU = False
-SCRIPT_REL = "features/image/merge_exr.py"
 
 ROOT = Path(__file__).resolve().parents[2]
 APP_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = APP_ROOT.resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from runtime_bootstrap import resolve_shared_runtime
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
-SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
-SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 os.chdir(LEGACY_ROOT)
 for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
     path_str = str(path)
@@ -39,71 +39,17 @@ def _pick_targets():
     args = [a for a in sys.argv[1:] if a]
     if args:
         return args
-
-    try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-
-        if LEGACY_SCOPE in {"items"}:
-            paths = filedialog.askopenfilenames(title=LEGACY_ID)
-            return list(paths)
-        if LEGACY_SCOPE in {"directory"}:
-            path = filedialog.askdirectory(title=LEGACY_ID)
-            return [path] if path else []
-        path = filedialog.askopenfilename(title=LEGACY_ID)
-        return [path] if path else []
-    except Exception:
-        return []
+    return []
 
 
-def _run_script(script_rel, targets):
-    try:
-        from features.image.merge_to_exr.flet_app import start_app
-        start_app(targets)
-    except ImportError as e:
-        print(f"Failed to load Flet app: {e}")
-        raise e
-
-
-def _run_menu(targets):
-    from core import menu as legacy_menu
-    handler = legacy_menu.build_handler_map().get(LEGACY_ID)
-    if handler is None:
-        raise RuntimeError("Missing legacy handler: " + LEGACY_ID)
-
-    target = targets[0] if targets else str(LEGACY_ROOT)
-    selection = targets if len(targets) > 1 else None
-    try:
-        if selection:
-            handler(target, selection)
-        else:
-            handler(target)
-    except TypeError:
-        handler(target)
-    else:
-        handler(target)
+def _run_flet(targets):
+    from features.image.merge_to_exr.flet_app import start_app
+    start_app(targets)
 
 
 def main():
     targets = _pick_targets()
-    if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
-        try:
-            import tkinter as tk
-            from tkinter import messagebox
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showwarning("ContextHub", "No target selected.")
-        except Exception:
-            pass
-        return
-
-    if USE_MENU:
-        _run_menu(targets)
-    else:
-        _run_script(SCRIPT_REL, targets)
+    _run_flet(targets)
 
 
 if __name__ == "__main__":

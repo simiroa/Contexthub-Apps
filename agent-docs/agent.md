@@ -22,14 +22,16 @@
 Flet 포팅 또는 Flet 공용 UI 작업이면 읽는 순서를 아래처럼 고정한다.
 
 1. `agent-docs/flet-migration-guidelines.md`
-2. `agent-docs/current-dev-context.md`
-3. `agent-docs/templates/flet-porting-template.md`
+2. `agent-docs/flet-compatibility-guide.md`
+3. `agent-docs/current-dev-context.md`
+4. `agent-docs/templates/flet-porting-template.md`
 4. 대상 앱의 `manual.md`
 
 - 앱/카테고리 목적: `agent-docs/app-overview.md`
 - 운영 방식과 코드 위치: `agent-docs/architecture.md`
 - 새 앱 추가 지침: `agent-docs/new-app-guidelines.md`
 - Python GUI를 Flet으로 이관할 때: `agent-docs/flet-migration-guidelines.md`
+- Flet API/런타임 호환성 규칙: `agent-docs/flet-compatibility-guide.md`
 - 현재 개발 기준점과 최근 수정 상태: `agent-docs/current-dev-context.md`
 - 안정성 제약: `agent-docs/stability-constraints.md`
 - Git 및 배포 정책: `agent-docs/git-policy.md`

@@ -1,47 +1,55 @@
 import os
 import sys
 from pathlib import Path
-import runpy
 
-LEGACY_ID = 'versus_up'
-LEGACY_SCOPE = 'standalone'
-USE_MENU = False
-SCRIPT_REL = "features/versus_up/versus_up_flet_app.py"
+APP_ID = "versus_up"
+APP_TITLE = "VersusUp"
+LEGACY_SCOPE = "standalone"
 
-# Local PATH setup
 APP_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = APP_ROOT.resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from runtime_bootstrap import resolve_shared_runtime
+
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
-
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 os.chdir(LEGACY_ROOT)
-if str(LEGACY_ROOT) not in sys.path:
-    sys.path.insert(0, str(LEGACY_ROOT))
+for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    path_str = str(path)
+    if path.exists() and path_str not in sys.path:
+        sys.path.insert(0, path_str)
 
-# Add feature directory to sys.path for internal imports
-feature_dir = LEGACY_ROOT / "features" / "versus_up"
-if str(feature_dir) not in sys.path:
+feature_dir = LEGACY_ROOT / "features" / APP_ID
+if feature_dir.exists() and str(feature_dir) not in sys.path:
     sys.path.insert(0, str(feature_dir))
 
-# ContextHub environment variable
-if not os.environ.get("CTX_APP_ROOT"):
-    os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
+os.environ.setdefault("CTX_APP_ROOT", str(APP_ROOT))
 
-def main():
-    script_path = LEGACY_ROOT / SCRIPT_REL
-    if not script_path.exists():
-        print(f"Error: Missing script at {script_path}")
-        return
-        
-    # Set targets (empty for standalone)
-    targets = []
-    
-    # Prepare sys.argv
-    argv = [str(script_path)] + targets
-    old_argv = sys.argv
+
+def _show_dependency_error(message: str) -> None:
+    print(message, file=sys.stderr)
+
+
+def main() -> None:
     try:
-        sys.argv = argv
-        runpy.run_path(str(script_path), run_name="__main__")
-    finally:
-        sys.argv = old_argv
+        from utils.i18n import load_extra_strings
+
+        locale_file = LEGACY_ROOT / "locales.json"
+        if locale_file.exists():
+            load_extra_strings(locale_file)
+    except Exception:
+        pass
+
+    try:
+        from features.versus_up.versus_up_qt_app import start_app
+    except ImportError as exc:
+        _show_dependency_error(f"PySide6 is required to run this app.\n\n{exc}")
+        return
+
+    start_app([])
+
 
 if __name__ == "__main__":
     main()

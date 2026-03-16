@@ -2,9 +2,9 @@
   "schema_version": "1.2",
   "id": "versus_up",
   "name": "VersusUp",
-  "description": "Product comparison and decision history management tool.",
+  "description": "Qt-based product decision support system with weighted scoring and Ollama Vision review.",
   "author": "Antigravity",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "icon": "icon.png",
   "runtime": {
     "category": "ai_lite",
@@ -35,7 +35,7 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "flet",
+    "framework": "qt",
     "shared_theme": "contexthub"
   }
 }

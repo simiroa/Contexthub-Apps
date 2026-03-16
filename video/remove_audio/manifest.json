@@ -2,10 +2,10 @@
   "schema_version": "1.2",
   "id": "remove_audio",
   "name": "Remove Audio",
-  "description": "Legacy Video tool.",
-  "author": "ContextHub Legacy",
-  "version": "1.0.0",
-  "icon": null,
+  "description": "Confirm selected videos in a compact Qt shell, then remove audio in a console flow.",
+  "author": "ContextHub",
+  "version": "1.1.0",
+  "icon": "icon.png",
   "runtime": {
     "category": "video",
     "python_version": "3.11",
@@ -48,8 +48,8 @@
     "sidebar_widget": null
   },
   "ui": {
-    "enabled": false,
-    "framework": "",
-    "shared_theme": ""
+    "enabled": true,
+    "framework": "qt",
+    "shared_theme": "contexthub"
   }
 }

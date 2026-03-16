@@ -12,7 +12,7 @@ from .state import ImageCompareState
 from contexthub.ui.flet.tokens import COLORS, SPACING, RADII
 from contexthub.ui.flet.layout import apply_button_sizing
 from contexthub.ui.flet.theme import configure_page
-from contexthub.ui.flet.window import apply_desktop_window
+from contexthub.ui.flet.window import reveal_desktop_window
 from utils.i18n import t
 
 class ImageCompareFletApp:
@@ -57,7 +57,7 @@ class ImageCompareFletApp:
         self.capture_mode = os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
         self.mode_buttons: dict[str, ft.Control] = {}
 
-    def main(self, page: ft.Page):
+    async def main(self, page: ft.Page):
         self.page = page
         configure_page(page, t("image_compare_gui.title"), window_profile="wide_canvas")
         if not self.capture_mode:
@@ -68,6 +68,7 @@ class ImageCompareFletApp:
         self.setup_ui()
         self.load_initial_data()
         self.update_ui()
+        await reveal_desktop_window(page)
 
     def setup_ui(self):
         summary_bar = ft.Container(
@@ -123,9 +124,9 @@ class ImageCompareFletApp:
             content=ft.Row([
                 ft.Text("Space/Tab: Toggle A/B | Drag: Pan | Scroll: Zoom", size=10, color=COLORS["text_soft"]),
                 ft.Row([
-                    ft.IconButton(ft.Icons.EDIT, on_click=lambda _: self.reset_view(), tooltip="Reset View"),
-                    ft.IconButton(ft.Icons.ZOOM_OUT, on_click=lambda _: self.adjust_zoom(0.8)),
-                    ft.IconButton(ft.Icons.ZOOM_IN, on_click=lambda _: self.adjust_zoom(1.2)),
+                    ft.IconButton(icon=ft.Icons.EDIT, on_click=lambda _: self.reset_view(), tooltip="Reset View"),
+                    ft.IconButton(icon=ft.Icons.ZOOM_OUT, on_click=lambda _: self.adjust_zoom(0.8)),
+                    ft.IconButton(icon=ft.Icons.ZOOM_IN, on_click=lambda _: self.adjust_zoom(1.2)),
                 ])
             ], alignment="spaceBetween"),
             padding=ft.padding.symmetric(horizontal=SPACING["md"]),
@@ -371,4 +372,4 @@ class ImageCompareFletApp:
 
 def start_app(initial_files: List[str]):
     app = ImageCompareFletApp(initial_files)
-    ft.app(target=app.main)
+    ft.run(app.main, view=ft.AppView.FLET_APP_HIDDEN)

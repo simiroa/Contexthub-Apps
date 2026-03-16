@@ -8,7 +8,8 @@ class AudioConvertState:
     output_format: str = "MP3"
     quality: str = "High"
     copy_metadata: bool = True
-    save_to_new_folder: bool = True
+    save_to_new_folder: bool = False
+    custom_output_dir: Optional[Path] = None
     delete_original: bool = False
     
     is_processing: bool = False

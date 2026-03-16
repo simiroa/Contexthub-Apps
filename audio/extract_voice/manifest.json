@@ -2,10 +2,10 @@
   "schema_version": "1.2",
   "id": "extract_voice",
   "name": "Extract Voice",
-  "description": "Legacy Audio tool.",
-  "author": "ContextHub Legacy",
-  "version": "1.0.0",
-  "icon": null,
+  "description": "Confirm selected audio files in a compact Qt shell, then extract voice stems in a console flow.",
+  "author": "ContextHub",
+  "version": "1.1.0",
+  "icon": "icon.png",
   "runtime": {
     "category": "audio",
     "python_version": "3.11",
@@ -16,7 +16,7 @@
   "execution": {
     "entry_point": "main.py",
     "arguments": "",
-    "mode": "gui",
+    "mode": "console",
     "working_directory": "./",
     "auto_start": false,
     "run_as_admin": false,
@@ -50,7 +50,7 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "flet",
+    "framework": "qt",
     "shared_theme": "contexthub"
   }
 }

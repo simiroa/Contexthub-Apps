@@ -2,10 +2,10 @@
   "schema_version": "1.2",
   "id": "video_convert",
   "name": "Video Convert",
-  "description": "Legacy Video tool.",
+  "description": "Qt video conversion shell with FFmpeg presets and batch queue controls.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
-  "icon": null,
+  "icon": "icon.png",
   "runtime": {
     "category": "video",
     "python_version": "3.11",
@@ -50,7 +50,7 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "flet",
+    "framework": "qt",
     "shared_theme": "contexthub"
   }
 }

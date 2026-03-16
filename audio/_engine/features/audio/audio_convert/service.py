@@ -19,6 +19,7 @@ class AudioConvertService:
         quality: str,
         copy_metadata: bool,
         save_to_new_folder: bool,
+        custom_output_dir: Optional[Path],
         delete_original: bool,
         on_progress: Optional[Callable[[int, int, str], None]] = None,
         on_complete: Optional[Callable[[int, int, List[str], Optional[Path]], None]] = None
@@ -39,7 +40,11 @@ class AudioConvertService:
             try:
                 # Output directory & name
                 fmt = output_format.lower()
-                if save_to_new_folder:
+                if custom_output_dir:
+                    out_dir = custom_output_dir
+                    out_dir.mkdir(parents=True, exist_ok=True)
+                    out_name = f"{path.stem}.{fmt}"
+                elif save_to_new_folder:
                     base_dir = path.parent / "Converted_Audio"
                     if not base_dir.exists():
                         base_dir.mkdir(parents=True, exist_ok=True)

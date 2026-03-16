@@ -8,6 +8,7 @@ class AudioSeparateState:
     model: str = "htdemucs"
     output_format: str = "mp3"
     separation_mode: str = "All Stems (4)"
+    custom_output_dir: Optional[Path] = None
     
     is_processing: bool = False
     progress: float = 0.0
@@ -15,3 +16,4 @@ class AudioSeparateState:
     last_output_dir: Optional[Path] = None
     
     error_message: Optional[str] = None
+

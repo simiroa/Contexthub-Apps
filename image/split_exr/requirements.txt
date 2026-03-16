@@ -1,5 +1,4 @@
 OpenEXR
 Pillow
-customtkinter
 numpy
 opencv-python

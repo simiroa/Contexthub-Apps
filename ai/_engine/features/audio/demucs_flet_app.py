@@ -9,9 +9,11 @@ from typing import List
 
 import flet as ft
 
-from contexthub.ui.flet.layout import action_bar, apply_button_sizing
+from contexthub.ui.flet.layout import action_bar, apply_button_sizing, integrated_title_bar
+from contexthub.ui.flet.prefs import load_ui_prefs, save_ui_prefs
 from contexthub.ui.flet.theme import configure_page
 from contexthub.ui.flet.tokens import COLORS, RADII, SPACING
+from contexthub.ui.flet.window import reveal_desktop_window
 from utils.ai_runner import kill_process_tree
 
 
@@ -71,14 +73,19 @@ class DemucsService:
 
 
 def start_app(targets: List[str] | None = None):
-    def main(page: ft.Page):
+    async def main(page: ft.Page):
         configure_page(page, "Demucs Stem Separation", window_profile="form")
         page.bgcolor = COLORS["app_bg"]
+        title = "Demucs Stem Separation"
 
         audio_exts = {".mp3", ".wav", ".ogg", ".flac", ".m4a", ".aac", ".wma"}
         input_paths = [Path(path) for path in (targets or []) if Path(path).suffix.lower() in audio_exts]
         service = DemucsService()
         state = {"processing": False, "progress": 0.0, "status": "Ready", "last_output_dir": None}
+        prefs = load_ui_prefs(
+            "demucs_stems",
+            {"model": "htdemucs", "format": "mp3", "mode": "All Stems (4)"},
+        )
 
         file_list = ft.Column(spacing=SPACING["xs"], scroll=ft.ScrollMode.ADAPTIVE)
         for src in input_paths:
@@ -98,13 +105,25 @@ def start_app(targets: List[str] | None = None):
                     bgcolor=COLORS["surface_alt"],
                     border=ft.border.all(1, COLORS["line"]),
                     border_radius=RADII["sm"],
-                    content=ft.Text("No audio files yet. Launch from the context menu on one or more source files.", color=COLORS["text_muted"]),
+                    content=ft.Column(
+                        spacing=SPACING["xs"],
+                        controls=[
+                            ft.Text("No audio files yet.", color=COLORS["text"]),
+                            ft.Text("Launch from the context menu on one or more source files.", color=COLORS["text_muted"]),
+                        ],
+                    ),
                 )
             )
 
-        model_dropdown = ft.Dropdown(label="Demucs Model", options=[ft.dropdown.Option("htdemucs"), ft.dropdown.Option("htdemucs_ft"), ft.dropdown.Option("mdx_extra_q"), ft.dropdown.Option("hdemucs_mmi")], value="htdemucs", bgcolor=COLORS["field_bg"], border_color=COLORS["line"], expand=True)
-        format_dropdown = ft.Dropdown(label="Output Format", options=[ft.dropdown.Option("wav"), ft.dropdown.Option("mp3"), ft.dropdown.Option("flac")], value="mp3", bgcolor=COLORS["field_bg"], border_color=COLORS["line"], expand=True)
-        mode_dropdown = ft.Dropdown(label="Separation Mode", options=[ft.dropdown.Option("All Stems (4)"), ft.dropdown.Option("Vocals vs Backing (2)")], value="All Stems (4)", bgcolor=COLORS["field_bg"], border_color=COLORS["line"], expand=True)
+        def persist_prefs(_=None):
+            save_ui_prefs(
+                "demucs_stems",
+                {"model": model_dropdown.value, "format": format_dropdown.value, "mode": mode_dropdown.value},
+            )
+
+        model_dropdown = ft.Dropdown(label="Demucs Model", options=[ft.dropdown.Option("htdemucs"), ft.dropdown.Option("htdemucs_ft"), ft.dropdown.Option("mdx_extra_q"), ft.dropdown.Option("hdemucs_mmi")], value=prefs["model"], bgcolor=COLORS["field_bg"], border_color=COLORS["line"], expand=True, on_select=persist_prefs)
+        format_dropdown = ft.Dropdown(label="Output Format", options=[ft.dropdown.Option("wav"), ft.dropdown.Option("mp3"), ft.dropdown.Option("flac")], value=prefs["format"], bgcolor=COLORS["field_bg"], border_color=COLORS["line"], expand=True, on_select=persist_prefs)
+        mode_dropdown = ft.Dropdown(label="Separation Mode", options=[ft.dropdown.Option("All Stems (4)"), ft.dropdown.Option("Vocals vs Backing (2)")], value=prefs["mode"], bgcolor=COLORS["field_bg"], border_color=COLORS["line"], expand=True, on_select=persist_prefs)
 
         log_lines = ft.Column(spacing=4, scroll=ft.ScrollMode.ADAPTIVE, controls=[ft.Text("Logs will appear here after the task starts.", size=11, font_family="Consolas", color=COLORS["text_muted"])])
         status_text = ft.Text("Ready", size=12, color=COLORS["text_muted"])
@@ -114,7 +133,7 @@ def start_app(targets: List[str] | None = None):
         def update_ui():
             progress_bar.visible = state["processing"] or state["progress"] > 0
             progress_bar.value = state["progress"]
-            status_text.value = state["status"]
+            status_text.value = "Ready. Add audio files to enable separation." if not input_paths and not state["processing"] else state["status"]
             run_btn.disabled = state["processing"] or not input_paths
             cancel_btn.disabled = not state["processing"]
             open_btn.visible = state["last_output_dir"] is not None
@@ -172,7 +191,40 @@ def start_app(targets: List[str] | None = None):
         apply_button_sizing(cancel_btn, "compact")
         apply_button_sizing(open_btn, "compact")
 
-        page.add(ft.Container(expand=True, bgcolor=COLORS["app_bg"], padding=SPACING["lg"], content=ft.Column(expand=True, spacing=SPACING["md"], controls=[summary, files_card, settings_card, logs_card, action_bar(status=status_text, progress=progress_bar, primary=run_btn, secondary=[cancel_btn, open_btn])])))
+        page.add(
+            ft.Container(
+                expand=True,
+                bgcolor=COLORS["app_bg"],
+                content=ft.Column(
+                    expand=True,
+                    spacing=SPACING["sm"],
+                    controls=[
+                        integrated_title_bar(page, title),
+                        ft.Container(
+                            expand=True,
+                            padding=ft.padding.symmetric(horizontal=SPACING["md"], vertical=SPACING["md"]),
+                            content=ft.Column(
+                                expand=True,
+                                spacing=SPACING["md"],
+                                controls=[
+                                    summary,
+                                    files_card,
+                                    settings_card,
+                                    logs_card,
+                                    action_bar(
+                                        status=status_text,
+                                        progress=progress_bar,
+                                        primary=run_btn,
+                                        secondary=[cancel_btn, open_btn],
+                                    ),
+                                ],
+                            ),
+                        ),
+                    ],
+                ),
+            )
+        )
         update_ui()
+        await reveal_desktop_window(page)
 
-    ft.app(target=main)
+    ft.run(main, view=ft.AppView.FLET_APP_HIDDEN)

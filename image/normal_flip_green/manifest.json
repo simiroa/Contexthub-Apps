@@ -2,10 +2,10 @@
   "schema_version": "1.2",
   "id": "normal_flip_green",
   "name": "Normal Flip Green",
-  "description": "Legacy Image tool.",
-  "author": "ContextHub Legacy",
-  "version": "1.0.0",
-  "icon": null,
+  "description": "Confirm selected images in a compact Qt shell, then flip green channels in a console flow.",
+  "author": "ContextHub",
+  "version": "1.1.0",
+  "icon": "icon.png",
   "runtime": {
     "category": "image",
     "python_version": "3.11",
@@ -49,7 +49,7 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "flet",
+    "framework": "qt",
     "shared_theme": "contexthub"
   }
 }

@@ -1,36 +1,28 @@
 # ComfyUI Creative Studio (Advanced)
 
 ## 소개
-LoRA 스태킹, FaceDetailer, SUPIR 등 고급 기능을 포함한 프로페셔널 AI 이미지 생성 도구입니다.
+Qt 기반의 고급 ComfyUI 작업 셸입니다. 좌측 입력 자산과 프리뷰, 우측 파라미터, 우하단 고정 실행 영역으로 구성되며 이후 ComfyUI GUI 규격의 기준점으로 사용합니다.
 
 ## 주요 기능
-- **체크포인트 선택**: 다양한 SD 모델 사용
-- **LoRA 스태킹**: 여러 LoRA 동시 적용
-- **FaceDetailer**: 얼굴 세부사항 자동 향상
-- **SUPIR**: 초고해상도 업스케일
-- **ControlNet**: 포즈, 엣지 컨트롤
-- **IPAdapter**: 참조 이미지 스타일 적용
+- 상단 앱 헤더, 설명, 런타임 상태 배지
+- 좌측 입력 프리뷰와 입력 목록 관리
+- 우측 워크플로 프리셋 선택과 동적 파라미터 편집
+- 우하단 출력 폴더, 세션 export, 실행 버튼 고정
+- ComfyUI WebUI 열기 및 세션 JSON export
 
 ## 사용법
-
 1. **ComfyUI → Creative Studio (Advanced)** 실행
-2. 모델 설정:
-   - 체크포인트 선택 (SD1.5, SDXL, etc.)
-   - LoRA 추가 (최대 5개)
-   - ControlNet 활성화 (선택)
-3. 프롬프트 입력
-4. 고급 옵션 설정:
-   - 샘플러, 스케줄러
-   - CFG Scale
-   - 디노이즈 강도
-5. 생성 및 후처리
+2. 좌측 **Add Inputs**로 이미지나 미디어 입력 추가
+3. 우측 상단에서 워크플로 프리셋 선택
+4. 파라미터를 조정하고 출력 폴더와 파일 prefix 설정
+5. **Export Session** 또는 **Run Workflow** 실행
+6. 필요하면 **Open WebUI**로 ComfyUI 웹 인터페이스를 연다
 
 ## 요구사항
-- **ComfyUI**: 설치 필수
-- **고급 노드 팩**: FaceDetailer, SUPIR 등
-- GPU VRAM 12GB 이상 권장
+- **ComfyUI** 설치 필요
+- **PySide6** 설치 필요
+- 실제 workflow 템플릿과 노드 팩은 사용 프리셋에 따라 추가 필요
 
-## 활용 예시
-- 고품질 캐릭터 일러스트
-- 사진 수준 인물 생성
-- 스타일 일관성 에셋 제작
+## 참고
+- 현재 Qt 파일럿은 자산 관리와 파라미터 셸 표준화가 목적이다
+- workflow 템플릿이 없는 프리셋은 세션 JSON export로 안전하게 fallback 한다

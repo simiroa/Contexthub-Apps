@@ -1,110 +1,34 @@
 import os
 import sys
 from pathlib import Path
-import runpy
 
-LEGACY_ID = 'image_compare'
-LEGACY_SCOPE = 'items'
-USE_MENU = False
-SCRIPT_REL = "features/image/compare_gui.py"
-
-ROOT = Path(__file__).resolve().parents[2]
+# Standard Contexthub Path Resolution
 APP_ROOT = Path(__file__).resolve().parent
-LEGACY_ROOT = APP_ROOT.parent / "_engine"
-SHARED_ROOT = ROOT / "dev-tools" / "runtime" / "Shared"
-SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
-os.chdir(LEGACY_ROOT)
-for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
-    path_str = str(path)
-    if path.exists() and path_str not in sys.path:
-        sys.path.insert(0, path_str)
-if not os.environ.get("CTX_APP_ROOT"):
-    os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
+REPO_ROOT = APP_ROOT.resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-
-def _capture_mode():
-    return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
-
-def _pick_targets():
-    if LEGACY_SCOPE in {"background", "tray_only", "standalone"}:
-        return []
-
-    if _capture_mode():
-        try:
-            from utils.headless_inputs import get_headless_targets
-            return get_headless_targets(LEGACY_ID, LEGACY_SCOPE, LEGACY_ROOT)
-        except Exception:
-            return []
-
-    args = [a for a in sys.argv[1:] if a]
-    if args:
-        return args
-
-    try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-
-        if LEGACY_SCOPE in {"items"}:
-            paths = filedialog.askopenfilenames(title=LEGACY_ID)
-            return list(paths)
-        if LEGACY_SCOPE in {"directory"}:
-            path = filedialog.askdirectory(title=LEGACY_ID)
-            return [path] if path else []
-        path = filedialog.askopenfilename(title=LEGACY_ID)
-        return [path] if path else []
-    except Exception:
-        return []
-
-
-def _run_script(script_rel, targets):
-    # For Flet migration, we import the start_app from the specific feature folder
-    # Instead of raw runpy, we use the structured flet_app.py
-    try:
-        from features.image.image_compare.flet_app import start_app
-        start_app(targets)
-    except ImportError as e:
-        raise e
-
-
-def _run_menu(targets):
-    from core import menu as legacy_menu
-    handler = legacy_menu.build_handler_map().get(LEGACY_ID)
-    if handler is None:
-        raise RuntimeError("Missing legacy handler: " + LEGACY_ID)
-
-    target = targets[0] if targets else str(LEGACY_ROOT)
-    selection = targets if len(targets) > 1 else None
-    try:
-        if selection:
-            handler(target, selection)
-        else:
-            handler(target)
-    except TypeError:
-        handler(target)
-
+from runtime_bootstrap import resolve_shared_runtime
 
 def main():
-    targets = _pick_targets()
-    if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
-        try:
-            import tkinter as tk
-            from tkinter import messagebox
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showwarning("ContextHub", "No target selected.")
-        except Exception:
-            pass
-        return
+    abs_app_root = APP_ROOT
+    os.environ["CTX_APP_ROOT"] = str(abs_app_root)
+    
+    # Shared Runtime Path
+    shared_root, shared_pkg_root = resolve_shared_runtime(abs_app_root)
+    engine_path = abs_app_root.parent / "_engine"
+    
+    # Set CWD to engine
+    if engine_path.exists():
+        os.chdir(str(engine_path))
+    
+    for path in (engine_path, shared_root, shared_pkg_root):
+        if path.exists() and str(path) not in sys.path:
+            sys.path.insert(0, str(path))
 
-    if USE_MENU:
-        _run_menu(targets)
-    else:
-        _run_script(SCRIPT_REL, targets)
-
+    # QT Launch
+    from features.image.image_compare_qt_app import main as qt_main
+    qt_main()
 
 if __name__ == "__main__":
     main()
-

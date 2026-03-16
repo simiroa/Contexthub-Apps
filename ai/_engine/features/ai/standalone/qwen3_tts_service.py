@@ -88,7 +88,7 @@ def prefill_messages(target_path, profiles, sample_text):
     if target_path and target_path.exists():
         if target_path.suffix.lower() in {".txt", ".md"}:
             try:
-                sample_text = target_path.read_text(encoding="utf-8", errors="replace")
+                sample_text = target_path.read_text(encoding="utf-8-sig", errors="replace")
             except Exception:
                 pass
         elif target_path.suffix.lower() in AUDIO_EXTENSIONS:

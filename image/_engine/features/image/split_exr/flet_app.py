@@ -91,8 +91,8 @@ class SplitExrFletApp:
                         ft.Text(t("image_split_exr.title") or "Image Channel Splitter", size=22, weight="bold"),
                         ft.Text("원본 이미지를 선택하고 감지된 채널을 검토한 뒤 한 번에 추출합니다.", size=12, color=COLORS["text_muted"]),
                     ], expand=True),
-                    ft.IconButton(ft.Icons.FOLDER_OPEN, on_click=self.on_pick_files, tooltip="Add Files"),
-                    ft.IconButton(ft.Icons.DELETE_SWEEP, on_click=self.on_clear_all, tooltip="Clear All")
+                    ft.IconButton(icon=ft.Icons.FOLDER_OPEN, on_click=self.on_pick_files, tooltip="Add Files"),
+                    ft.IconButton(icon=ft.Icons.DELETE_SWEEP, on_click=self.on_clear_all, tooltip="Clear All")
                 ], alignment="spaceBetween"),
                 ft.Container(
                     content=ft.Row([

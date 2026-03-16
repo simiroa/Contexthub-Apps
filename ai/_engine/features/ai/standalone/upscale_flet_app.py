@@ -8,9 +8,18 @@ from pathlib import Path
 
 import flet as ft
 
-from contexthub.ui.flet.layout import action_bar, apply_button_sizing, toolbar_row
+from contexthub.ui.flet.layout import (
+    action_bar,
+    apply_button_sizing,
+    compact_meta_strip,
+    integrated_title_bar,
+    section_card,
+    status_badge,
+)
+from contexthub.ui.flet.prefs import load_ui_prefs, save_ui_prefs
 from contexthub.ui.flet.theme import configure_page
 from contexthub.ui.flet.tokens import COLORS, RADII, SPACING
+from contexthub.ui.flet.window import reveal_desktop_window
 from utils import paths
 from utils.ai_runner import start_ai_script
 
@@ -40,347 +49,364 @@ def _collect_images(targets: list[str] | None) -> list[Path]:
     return files
 
 
-class UpscaleFletApp:
-    def __init__(self, initial_targets: list[str] | None = None):
-        self.files = _collect_images(initial_targets)
-        self.capture_mode = os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
-        self.current_process = None
-        self.is_running = False
-        self.page: ft.Page | None = None
-        self.file_picker: ft.FilePicker | None = None
+def _file_row(src: Path) -> ft.Container:
+    return ft.Container(
+        padding=ft.padding.symmetric(horizontal=SPACING["sm"], vertical=8),
+        bgcolor=COLORS["surface_alt"],
+        border=ft.border.all(1, COLORS["line"]),
+        border_radius=RADII["sm"],
+        content=ft.Row(
+            [
+                ft.Icon(ft.Icons.IMAGE_OUTLINED, size=16, color=COLORS["text_muted"]),
+                ft.Text(src.name, size=12, color=COLORS["text"], expand=True, no_wrap=True),
+                ft.Text(src.suffix.upper().lstrip("."), size=10, color=COLORS["text_soft"]),
+            ],
+            spacing=SPACING["sm"],
+        ),
+    )
 
-    def main(self, page: ft.Page):
-        self.page = page
+
+def _realesrgan_dir() -> Path:
+    model_root = getattr(paths, "REALESRGAN_DIR", None)
+    if model_root:
+        return Path(model_root)
+    engine_root = Path(__file__).resolve().parents[3]
+    return engine_root / "resources" / "ai_models" / "realesrgan"
+
+
+def _model_status_label() -> tuple[str, str]:
+    """Returns (label, tone) for status badge."""
+    model_root = _realesrgan_dir()
+    model = model_root / "RealESRGAN_x4plus.pth"
+    gfpgan = model_root / "GFPGANv1.4.pth"
+    if model.exists() and gfpgan.exists():
+        return "Models ready", "success"
+    if model.exists():
+        return "ESRGAN ready", "success"
+    return "Models missing", "warning"
+
+
+def _resolve_output_dir(files: list[Path], custom_output_dir: Path | None) -> Path | None:
+    if custom_output_dir:
+        return custom_output_dir
+    if files:
+        return files[0].parent
+    return None
+
+
+def _output_summary(files: list[Path], custom_output_dir: Path | None) -> str:
+    if not files:
+        return "Output path appears after images are queued."
+    out_dir = _resolve_output_dir(files, custom_output_dir)
+    return f"{out_dir}\\{files[0].stem}_upscaled.png" if out_dir else "Output path unavailable."
+
+def open_upscale_flet(targets: list[str] | None = None):
+    async def main(page: ft.Page):
+        files = _collect_images(targets)
+        capture_mode = os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
+        is_running = False
+        current_process = None
+        folder_picker = None
+        prefs = load_ui_prefs(
+            "esrgan_upscale",
+            {"scale": "4", "face_enhance": False, "use_tile": False, "output_dir": ""},
+        )
+        custom_output_dir: Path | None = Path(prefs["output_dir"]) if prefs["output_dir"] else None
+
         configure_page(page, "AI Image Upscaler", window_profile="form")
-        if not self.capture_mode:
-            self.file_picker = ft.FilePicker(on_result=self.on_file_result)
-            page.overlay.append(self.file_picker)
+        page.bgcolor = COLORS["app_bg"]
+        if not capture_mode:
+            folder_picker = ft.FilePicker()
+            page.overlay.append(folder_picker)
 
-        self.file_count = ft.Text("", color=COLORS["text_muted"])
-        self.output_hint = ft.Text("", color=COLORS["text_muted"])
-        self.files_column = ft.ListView(spacing=SPACING["xs"], auto_scroll=False)
-        self.status_text = ft.Text("Ready", color=COLORS["text_muted"])
-        self.progress = ft.ProgressBar(value=0, visible=False, color=COLORS["accent"])
-        self.log_box = ft.TextField(
+        # ── controls ──
+        file_list = ft.Column(spacing=SPACING["xs"], scroll=ft.ScrollMode.ADAPTIVE)
+        queue_badge = status_badge(f"{len(files)} files", "muted")
+        model_label, model_tone = _model_status_label()
+        model_badge = status_badge(model_label, model_tone)
+        output_badge = status_badge("Source folder", "muted")
+        output_hint = ft.Text("", size=11, color=COLORS["text_soft"], no_wrap=True)
+
+        status_text = ft.Text("Ready", size=12, color=COLORS["text_muted"])
+        detail_text = ft.Text("", size=11, color=COLORS["text_soft"], no_wrap=True)
+        progress_bar = ft.ProgressBar(value=0, visible=False, color=COLORS["accent"], bgcolor=COLORS["line"])
+
+        log_box = ft.TextField(
             value="",
             multiline=True,
             read_only=True,
-            min_lines=5,
-            max_lines=8,
+            min_lines=4,
+            max_lines=6,
             border_radius=RADII["md"],
             bgcolor=COLORS["surface_alt"],
             border_color=COLORS["line"],
         )
-        self.scale_group = ft.RadioGroup(
-            value="4",
+
+        def persist_prefs():
+            save_ui_prefs(
+                "esrgan_upscale",
+                {
+                    "scale": scale_group.value,
+                    "face_enhance": face_checkbox.value,
+                    "use_tile": tile_checkbox.value,
+                    "output_dir": str(custom_output_dir) if custom_output_dir else "",
+                },
+            )
+
+        scale_group = ft.RadioGroup(
+            value=prefs["scale"],
             content=ft.Row(
-                controls=[
-                    ft.Radio(value="2", label="2x"),
-                    ft.Radio(value="4", label="4x"),
-                ],
+                controls=[ft.Radio(value="2", label="2x"), ft.Radio(value="4", label="4x")],
                 spacing=SPACING["md"],
             ),
+            on_change=lambda e: persist_prefs(),
         )
-        self.face_checkbox = ft.Checkbox(label="Face Enhance (GFPGAN)", value=False)
-        self.tile_checkbox = ft.Checkbox(label="Use Tiling for low VRAM", value=False)
-        self.model_status = ft.Text(self._model_status_label(), color=COLORS["text_muted"])
-        self.run_button = apply_button_sizing(
-            ft.ElevatedButton(
-                "Start Upscale",
-                on_click=self.on_start,
-                bgcolor=COLORS["accent"],
-                color="#FFFFFF",
-            ),
+        face_checkbox = ft.Checkbox(label="Face Enhance (GFPGAN)", value=prefs["face_enhance"], scale=0.95, on_change=lambda e: persist_prefs())
+        tile_checkbox = ft.Checkbox(label="Use Tiling for low VRAM", value=prefs["use_tile"], scale=0.95, on_change=lambda e: persist_prefs())
+
+        # ── refresh & sync ──
+        def refresh_files():
+            nonlocal files
+            file_list.controls.clear()
+            if files:
+                for item in files:
+                    file_list.controls.append(_file_row(item))
+            else:
+                file_list.controls.append(
+                    ft.Container(
+                        padding=SPACING["md"],
+                        bgcolor=COLORS["surface_alt"],
+                        border=ft.border.all(1, COLORS["line"]),
+                        border_radius=RADII["sm"],
+                        content=ft.Column(
+                            spacing=SPACING["xs"],
+                            controls=[
+                                ft.Text("No images loaded yet.", color=COLORS["text"]),
+                                ft.Text(
+                                    "Launch from the context menu on one or more image files.",
+                                    color=COLORS["text_muted"],
+                                ),
+                            ],
+                        ),
+                    )
+                )
+
+        def sync_meta():
+            queue_badge.content.value = f"{len(files)} files"
+            if custom_output_dir:
+                output_badge.content.value = "Custom folder"
+            else:
+                output_badge.content.value = "Source folder"
+            output_hint.value = _output_summary(files, custom_output_dir)
+            detail_text.value = output_hint.value
+            ml, mt = _model_status_label()
+            model_badge.content.value = ml
+
+        def update_ui():
+            nonlocal is_running
+            progress_bar.visible = is_running or progress_bar.value > 0
+            if not files and not is_running:
+                status_text.value = "Ready. Add image files to enable upscale."
+            else:
+                status_text.value = status_text.value or "Ready"
+            run_btn.disabled = is_running or not files
+            sync_meta()
+            page.update()
+
+        def open_output_folder(_=None):
+            out_dir = _resolve_output_dir(files, custom_output_dir)
+            if out_dir and out_dir.exists():
+                os.startfile(str(out_dir))
+
+        def use_source_folder(_=None):
+            nonlocal custom_output_dir
+            custom_output_dir = None
+            persist_prefs()
+            update_ui()
+
+        def choose_output_folder(_=None):
+            nonlocal custom_output_dir
+            if folder_picker is None:
+                return
+            selected_dir = folder_picker.get_directory_path(
+                dialog_title="Choose Output Folder",
+                initial_directory=str(custom_output_dir) if custom_output_dir else None,
+            )
+            if selected_dir:
+                custom_output_dir = Path(selected_dir)
+                persist_prefs()
+                update_ui()
+
+        def on_clear(e):
+            nonlocal files, is_running
+            if is_running:
+                return
+            files = []
+            log_box.value = ""
+            status_text.value = "Ready"
+            progress_bar.visible = False
+            refresh_files()
+            update_ui()
+
+        def append_log(text: str):
+            current = log_box.value or ""
+            log_box.value = (current + text.strip() + "\n")[-4000:]
+            page.update()
+
+        def on_download_models(e):
+            nonlocal is_running
+            if is_running:
+                return
+            status_text.value = "Downloading model weights..."
+            progress_bar.visible = True
+            progress_bar.value = None
+            page.update()
+
+            def worker():
+                nonlocal is_running
+                script = Path(__file__).resolve().parents[2] / "setup" / "download_models.py"
+                proc = subprocess.run(
+                    [sys.executable, str(script), "--upscale"],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                )
+                progress_bar.visible = False
+                status_text.value = "Model download complete." if proc.returncode == 0 else "Model download failed."
+                append_log((proc.stdout or "") + (proc.stderr or ""))
+                refresh_files()
+                update_ui()
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        def on_start(e):
+            nonlocal is_running, current_process
+            if is_running or not files:
+                return
+            is_running = True
+            run_btn.disabled = True
+            progress_bar.visible = True
+            progress_bar.value = 0
+            log_box.value = ""
+            status_text.value = "Preparing upscale job..."
+            page.update()
+
+            def worker():
+                nonlocal is_running, current_process
+                args = [str(path) for path in files]
+                scale_value = scale_group.value or "4"
+                args.extend(["--scale", scale_value])
+                if face_checkbox.value:
+                    args.append("--face-enhance")
+                if tile_checkbox.value:
+                    args.extend(["--tile", "512"])
+                if custom_output_dir:
+                    args.extend(["--output", str(custom_output_dir)])
+
+                process = start_ai_script("upscale.py", *args)
+                current_process = process
+                completed = 0
+                total = max(len(files), 1)
+                for line in process.stdout:
+                    line = line.rstrip()
+                    if not line:
+                        continue
+                    append_log(line)
+                    if line.startswith("[") and "/" in line:
+                        completed += 1
+                        progress_bar.value = min(completed / total, 0.95)
+                        status_text.value = line
+                        page.update()
+                process.wait()
+                current_process = None
+                is_running = False
+                progress_bar.visible = False
+                progress_bar.value = 1 if process.returncode == 0 else 0
+                status_text.value = "Upscale complete." if process.returncode == 0 else "Upscale failed."
+                update_ui()
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        # ── buttons ──
+        run_btn = apply_button_sizing(
+            ft.ElevatedButton("Start Upscale", on_click=on_start, bgcolor=COLORS["accent"], color=COLORS["text"]),
             "primary",
+        )
+        open_output_btn = apply_button_sizing(ft.OutlinedButton("Open Output", on_click=open_output_folder), "compact")
+        source_folder_btn = apply_button_sizing(ft.OutlinedButton("Source Folder", on_click=use_source_folder), "compact")
+        choose_folder_btn = apply_button_sizing(ft.OutlinedButton("Choose Folder", on_click=choose_output_folder), "compact")
+        clear_btn = apply_button_sizing(ft.OutlinedButton("Clear", on_click=on_clear), "compact")
+        download_btn = apply_button_sizing(ft.OutlinedButton("Download Models", on_click=on_download_models), "compact")
+
+        # ── initial state ──
+        refresh_files()
+        sync_meta()
+
+        # ── layout ──
+        header = compact_meta_strip(
+            "AI Image Upscaler",
+            badges=[queue_badge, model_badge, output_badge],
+        )
+        files_card = section_card("Source Images", ft.Container(content=file_list, height=200))
+        log_card = section_card("Run Log", log_box)
+        settings_card = section_card(
+            "Upscale Settings",
+            ft.Column(
+                [
+                    ft.Text("Scale", size=13, color=COLORS["text_muted"]),
+                    scale_group,
+                    ft.Divider(height=1, color=COLORS["line"]),
+                    ft.Text("Options", size=13, color=COLORS["text_muted"]),
+                    face_checkbox,
+                    tile_checkbox,
+                    ft.Divider(height=1, color=COLORS["line"]),
+                    ft.Row([download_btn], wrap=True),
+                    output_hint,
+                ],
+                spacing=SPACING["sm"],
+            ),
         )
 
         page.add(
             ft.Container(
                 expand=True,
-                padding=ft.padding.all(SPACING["xl"]),
+                bgcolor=COLORS["app_bg"],
                 content=ft.Column(
                     expand=True,
+                    spacing=SPACING["sm"],
                     controls=[
-                        self._build_header(),
-                        ft.Row(
+                        integrated_title_bar(page, "AI Image Upscaler"),
+                        ft.Container(
                             expand=True,
-                            spacing=SPACING["md"],
-                            controls=[
-                                ft.Column(
-                                    expand=3,
-                                    controls=[
-                                        self._build_files_card(),
-                                        self._build_log_card(),
-                                    ],
-                                ),
-                                ft.Column(
-                                    expand=2,
-                                    controls=[
-                                        self._build_settings_card(),
-                                        self._build_model_card(),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        action_bar(
-                            status=self.status_text,
-                            progress=self.progress,
-                            primary=self.run_button,
-                            secondary=[
-                                ft.OutlinedButton("Open Folder", on_click=lambda e: self.open_output_folder()),
-                                ft.OutlinedButton("Clear", on_click=self.on_clear),
-                            ],
+                            padding=ft.padding.all(SPACING["sm"]),
+                            content=ft.Column(
+                                expand=True,
+                                spacing=SPACING["sm"],
+                                controls=[
+                                    header,
+                                    ft.Row(
+                                        expand=True,
+                                        spacing=SPACING["sm"],
+                                        controls=[
+                                            ft.Column([files_card, log_card], expand=3),
+                                            ft.Column([settings_card], expand=2),
+                                        ],
+                                    ),
+                                    action_bar(
+                                        status=ft.Column([status_text, detail_text], spacing=2, tight=True),
+                                        progress=progress_bar,
+                                        primary=run_btn,
+                                        secondary=[source_folder_btn, choose_folder_btn, open_output_btn, clear_btn],
+                                    ),
+                                ],
+                            ),
                         ),
                     ],
                 ),
             )
         )
-        self.refresh_files()
+        update_ui()
+        await reveal_desktop_window(page)
 
-    def _build_header(self) -> ft.Container:
-        return ft.Container(
-            bgcolor=COLORS["surface"],
-            border=ft.border.all(1, COLORS["line"]),
-            border_radius=RADII["lg"],
-            padding=SPACING["lg"],
-            content=ft.Column(
-                tight=True,
-                controls=[
-                    ft.Text("AI Image Upscaler", size=24, weight=ft.FontWeight.BOLD, color=COLORS["text"]),
-                    ft.Text("Load one or more images, pick 2x or 4x, and run ESRGAN in the RTX environment.", color=COLORS["text_muted"]),
-                    ft.Row([self.file_count, self.output_hint], wrap=True, spacing=SPACING["md"]),
-                ],
-            ),
-        )
-
-    def _build_files_card(self) -> ft.Container:
-        return ft.Container(
-            bgcolor=COLORS["surface"],
-            border=ft.border.all(1, COLORS["line"]),
-            border_radius=RADII["lg"],
-            padding=SPACING["md"],
-            content=ft.Column(
-                spacing=SPACING["sm"],
-                controls=[
-                    toolbar_row(
-                        ft.Text("Source Images", size=16, weight=ft.FontWeight.BOLD, color=COLORS["text"]),
-                        apply_button_sizing(ft.OutlinedButton("Add Images", icon=ft.Icons.ADD_PHOTO_ALTERNATE, on_click=self.on_pick_files), "toolbar"),
-                    ),
-                    ft.Container(
-                        height=180,
-                        padding=SPACING["sm"],
-                        bgcolor=COLORS["surface_alt"],
-                        border_radius=RADII["md"],
-                        border=ft.border.all(1, COLORS["line"]),
-                        content=self.files_column,
-                    ),
-                ]
-            ),
-        )
-
-    def _build_settings_card(self) -> ft.Container:
-        return ft.Container(
-            bgcolor=COLORS["surface"],
-            border=ft.border.all(1, COLORS["line"]),
-            border_radius=RADII["lg"],
-            padding=SPACING["md"],
-            content=ft.Column(
-                spacing=SPACING["sm"],
-                controls=[
-                    ft.Text("Upscale Settings", size=16, weight=ft.FontWeight.BOLD, color=COLORS["text"]),
-                    ft.Column(
-                        controls=[
-                            ft.Column([ft.Text("Scale", color=COLORS["text_muted"]), self.scale_group], spacing=6),
-                            ft.Column(
-                                [
-                                    ft.Text("Options", color=COLORS["text_muted"]),
-                                    self.face_checkbox,
-                                    self.tile_checkbox,
-                                    ft.Text("Output files are saved next to the original image.", size=12, color=COLORS["text_muted"]),
-                                ],
-                                spacing=6,
-                                expand=True,
-                            ),
-                        ],
-                        spacing=SPACING["md"],
-                    ),
-                ]
-            ),
-        )
-
-    def _build_model_card(self) -> ft.Container:
-        return ft.Container(
-            bgcolor=COLORS["surface"],
-            border=ft.border.all(1, COLORS["line"]),
-            border_radius=RADII["lg"],
-            padding=SPACING["md"],
-            content=ft.Column(
-                controls=[
-                    ft.Text("Model Status", size=16, weight=ft.FontWeight.BOLD, color=COLORS["text"]),
-                    self.model_status,
-                    ft.Row(
-                        wrap=True,
-                        controls=[
-                            apply_button_sizing(ft.OutlinedButton("Download Models", on_click=self.on_download_models), "toolbar"),
-                            ft.Text("RealESRGAN_x4plus and GFPGAN weights are checked in the shared AI model cache.", size=12, color=COLORS["text_muted"]),
-                        ],
-                    ),
-                ]
-            ),
-        )
-
-    def _build_log_card(self) -> ft.Container:
-        return ft.Container(
-            bgcolor=COLORS["surface"],
-            border=ft.border.all(1, COLORS["line"]),
-            border_radius=RADII["lg"],
-            padding=SPACING["md"],
-            content=ft.Column(
-                spacing=SPACING["sm"],
-                controls=[
-                    ft.Text("Run Log", size=16, weight=ft.FontWeight.BOLD, color=COLORS["text"]),
-                    self.log_box,
-                ]
-            ),
-        )
-
-    def _model_status_label(self) -> str:
-        model = paths.REALESRGAN_DIR / "RealESRGAN_x4plus.pth"
-        gfpgan = paths.REALESRGAN_DIR / "GFPGANv1.4.pth"
-        if model.exists() and gfpgan.exists():
-            return "RealESRGAN and GFPGAN weights are ready."
-        if model.exists():
-            return "RealESRGAN ready. GFPGAN will be downloaded if face enhance is used."
-        return "Model weights are missing. Download before the first upscale run."
-
-    def refresh_files(self):
-        self.files_column.controls.clear()
-        if not self.files:
-            self.files_column.controls.append(ft.Text("No images loaded yet.", color=COLORS["text_muted"]))
-        for item in self.files[:6]:
-            self.files_column.controls.append(
-                ft.Row(
-                    controls=[
-                        ft.Icon(ft.Icons.IMAGE_OUTLINED, size=16, color=COLORS["text_muted"]),
-                        ft.Text(item.name, expand=True, color=COLORS["text"]),
-                        ft.Text(item.suffix.lower(), color=COLORS["text_muted"]),
-                    ]
-                )
-            )
-        if len(self.files) > 6:
-            self.files_column.controls.append(ft.Text(f"... +{len(self.files) - 6} more", color=COLORS["text_muted"]))
-        self.file_count.value = f"Images: {len(self.files)}"
-        self.output_hint.value = "Output: source folder"
-        self.model_status.value = self._model_status_label()
-        self.run_button.disabled = self.is_running or not self.files
-        if self.page:
-            self.page.update()
-
-    def append_log(self, text: str):
-        current = self.log_box.value or ""
-        self.log_box.value = (current + text.strip() + "\n")[-4000:]
-        if self.page:
-            self.page.update()
-
-    def on_pick_files(self, e):
-        if self.capture_mode or self.file_picker is None:
-            return
-        self.file_picker.pick_files(allow_multiple=True, file_type=ft.FilePickerFileType.IMAGE)
-
-    def on_file_result(self, e: ft.FilePickerResultEvent):
-        if not e.files:
-            return
-        merged = self.files + [Path(item.path) for item in e.files if item.path]
-        self.files = _collect_images([str(path) for path in merged])
-        self.refresh_files()
-
-    def on_clear(self, e):
-        if self.is_running:
-            return
-        self.files = []
-        self.log_box.value = ""
-        self.status_text.value = "Ready"
-        self.progress.visible = False
-        self.refresh_files()
-
-    def on_download_models(self, e):
-        if self.is_running:
-            return
-        self.status_text.value = "Downloading model weights..."
-        self.progress.visible = True
-        self.progress.value = None
-        self.page.update()
-
-        def worker():
-            script = Path(__file__).resolve().parents[2] / "setup" / "download_models.py"
-            proc = subprocess.run(
-                [sys.executable, str(script), "--upscale"],
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-            )
-            self.progress.visible = False
-            self.status_text.value = "Model download complete." if proc.returncode == 0 else "Model download failed."
-            self.append_log((proc.stdout or "") + (proc.stderr or ""))
-            self.refresh_files()
-
-        threading.Thread(target=worker, daemon=True).start()
-
-    def on_start(self, e):
-        if self.is_running or not self.files:
-            return
-        self.is_running = True
-        self.run_button.disabled = True
-        self.progress.visible = True
-        self.progress.value = 0
-        self.log_box.value = ""
-        self.status_text.value = "Preparing upscale job..."
-        self.page.update()
-
-        def worker():
-            args = [str(path) for path in self.files]
-            scale_value = self.scale_group.value or "4"
-            args.extend(["--scale", scale_value])
-            if self.face_checkbox.value:
-                args.append("--face-enhance")
-            if self.tile_checkbox.value:
-                args.extend(["--tile", "512"])
-
-            process = start_ai_script("upscale.py", *args)
-            self.current_process = process
-            completed = 0
-            total = max(len(self.files), 1)
-            for line in process.stdout:
-                line = line.rstrip()
-                if not line:
-                    continue
-                self.append_log(line)
-                if line.startswith("[") and "/" in line:
-                    completed += 1
-                    self.progress.value = min(completed / total, 0.95)
-                    self.status_text.value = line
-                    self.page.update()
-            process.wait()
-            self.current_process = None
-            self.is_running = False
-            self.progress.visible = False
-            self.progress.value = 1 if process.returncode == 0 else 0
-            self.status_text.value = "Upscale complete." if process.returncode == 0 else "Upscale failed."
-            self.refresh_files()
-
-        threading.Thread(target=worker, daemon=True).start()
-
-    def open_output_folder(self):
-        if not self.files:
-            return
-        try:
-            os.startfile(self.files[0].parent)
-        except Exception as exc:
-            self.status_text.value = f"Could not open folder: {exc}"
-            self.page.update()
-
-
-def open_upscale_flet(targets: list[str] | None = None):
-    app = UpscaleFletApp(targets)
-    ft.app(target=app.main)
+    ft.run(main, view=ft.AppView.FLET_APP_HIDDEN)

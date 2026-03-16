@@ -1,0 +1,1284 @@
+from __future__ import annotations
+
+import os
+import sys
+import threading
+import wave
+from pathlib import Path
+
+from contexthub.ui.qt.shell import (
+    HeaderSurface,
+    apply_app_icon,
+    build_shell_stylesheet,
+    build_size_grip,
+    get_shell_metrics,
+    qt_t,
+    refresh_runtime_preferences,
+    runtime_settings_signature,
+)
+from features.ai.standalone.qwen3_tts_qt_service import Qwen3TTSQtService
+from features.ai.standalone.qwen3_tts_service import SUPPORTED_LANGUAGES, SUPPORTED_SPEAKERS, TONE_PRESETS
+
+try:
+    from PySide6.QtCore import QObject, QSettings, QTimer, Qt, QUrl, Signal
+    from PySide6.QtWidgets import (
+        QApplication,
+        QComboBox,
+        QDialog,
+        QFileDialog,
+        QFrame,
+        QHBoxLayout,
+        QLabel,
+        QListWidget,
+        QListWidgetItem,
+        QLineEdit,
+        QMainWindow,
+        QPushButton,
+        QSizePolicy,
+        QSplitter,
+        QTextEdit,
+        QVBoxLayout,
+        QWidget,
+    )
+except ImportError as exc:  # pragma: no cover
+    raise ImportError("PySide6 is required for qwen3_tts.") from exc
+
+try:
+    from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
+except Exception:  # pragma: no cover
+    QAudioOutput = None
+    QMediaPlayer = None
+
+
+APP_ID = "qwen3_tts"
+APP_TITLE = qt_t("qwen3_tts.title", "Qwen3 TTS")
+APP_SUBTITLE = qt_t("qwen3_tts.subtitle", "Chat-style voice generation with preset, clone, and design modes.")
+
+
+def _status_text(status: str) -> str:
+    return {"ready": "Ready", "queued": "Queued", "done": "Done", "error": "Error"}.get(status, status)
+
+
+def _status_color(status: str) -> str:
+    return {"ready": "#8ea5d6", "queued": "#f2bd1d", "done": "#66c6a3", "error": "#f28b82"}.get(status, "#c6d3ea")
+
+
+def _safe_prefix(value: str, limit: int = 80) -> str:
+    normalized = (value or "").strip().replace("\n", " ")
+    return normalized if len(normalized) <= limit else f"{normalized[:limit-1].rstrip()}…"
+
+
+def _has_media_player() -> bool:
+    return QMediaPlayer is not None and QAudioOutput is not None
+
+
+def _profile_accent(name: str) -> str:
+    accents = ["#7c8cff", "#f58bd7", "#65d1c7", "#f6b25f", "#9b8bff", "#5fb5ff"]
+    return accents[sum(ord(ch) for ch in (name or "profile")) % len(accents)]
+
+
+def _initials(name: str) -> str:
+    parts = [part for part in (name or "").replace("_", " ").split() if part]
+    if not parts:
+        return "?"
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return f"{parts[0][0]}{parts[1][0]}".upper()
+
+
+def _duration_text(path: str) -> str:
+    if not path:
+        return ""
+    try:
+        output = Path(path)
+        if output.suffix.lower() != ".wav" or not output.exists():
+            return ""
+        with wave.open(str(output), "rb") as wav_file:
+            duration = wav_file.getnframes() / max(1, wav_file.getframerate())
+        minutes = int(duration // 60)
+        seconds = int(duration % 60)
+        return f"{minutes}:{seconds:02d}"
+    except Exception:
+        return ""
+
+
+class _RunSignals(QObject):
+    progress = Signal(str)
+    done = Signal(bool, str)
+
+
+class MessageBubbleWidget(QFrame):
+    select_requested = Signal(str)
+    expand_requested = Signal(str)
+    apply_requested = Signal(str, str, str, str)
+    play_requested = Signal(str)
+    open_requested = Signal(str)
+    profile_requested = Signal(str)
+    regenerate_requested = Signal(str)
+    delete_requested = Signal(str)
+
+    def __init__(self, message, profiles: list[str], selected: bool = False, expanded: bool = False, media_enabled: bool = False) -> None:
+        super().__init__()
+        self.message_id = message.id
+        accent = _profile_accent(message.profile)
+        bubble_bg = "#252938" if not selected else "#2d3244"
+        border = accent if selected else "rgba(255,255,255,0.05)"
+        self.setStyleSheet(
+            f"""
+            QFrame {{
+                background: transparent;
+                border: none;
+            }}
+            QLabel#avatar {{
+                background: {accent};
+                color: #101320;
+                border-radius: 20px;
+                font-size: 13px;
+                font-weight: 700;
+            }}
+            QFrame#bubble {{
+                background: {bubble_bg};
+                border: 1px solid {border};
+                border-radius: 18px;
+            }}
+            QLabel#name {{
+                color: #f4f7ff;
+                font-size: 14px;
+                font-weight: 700;
+            }}
+            QLabel#time {{
+                color: #97a0ba;
+                font-size: 11px;
+            }}
+            QLabel#body {{
+                color: #edf1fb;
+                font-size: 15px;
+                line-height: 1.35;
+            }}
+            QLabel#mini {{
+                color: {accent};
+                font-size: 17px;
+                font-weight: 700;
+            }}
+            QLabel#meta {{
+                color: #8f97ad;
+                font-size: 11px;
+            }}
+            QPushButton#expandBtn {{
+                background: transparent;
+                color: #99a4c4;
+                border: none;
+                font-size: 13px;
+                font-weight: 700;
+                padding: 2px 4px;
+            }}
+            QPushButton#ghostBtn {{
+                background: rgba(255,255,255,0.06);
+                color: #edf1fb;
+                border: 1px solid rgba(255,255,255,0.04);
+                border-radius: 12px;
+                padding: 6px 10px;
+            }}
+            QLabel#chip {{
+                background: rgba(255,255,255,0.06);
+                border-radius: 10px;
+                color: {_status_color(message.status)};
+                padding: 3px 8px;
+                font-size: 11px;
+                font-weight: 700;
+            }}
+            """
+        )
+        root = QHBoxLayout(self)
+        root.setContentsMargins(0, 4, 0, 4)
+        root.setSpacing(12)
+
+        avatar = QLabel(_initials(message.profile))
+        avatar.setObjectName("avatar")
+        avatar.setAlignment(Qt.AlignCenter)
+        avatar.setFixedSize(40, 40)
+        root.addWidget(avatar, 0, Qt.AlignTop)
+
+        content = QVBoxLayout()
+        content.setContentsMargins(0, 0, 0, 0)
+        content.setSpacing(6)
+
+        meta_row = QHBoxLayout()
+        meta_row.setContentsMargins(0, 0, 0, 0)
+        meta_row.setSpacing(8)
+        name = QLabel(message.profile)
+        name.setObjectName("name")
+        meta_row.addWidget(name, 0)
+        clock = QLabel(message.id.replace("msg_", ""))
+        clock.setObjectName("time")
+        meta_row.addWidget(clock, 0)
+        meta_row.addStretch(1)
+        expand_btn = QPushButton("▾" if expanded else "▸")
+        expand_btn.setObjectName("expandBtn")
+        expand_btn.clicked.connect(lambda: self.expand_requested.emit(self.message_id))
+        meta_row.addWidget(expand_btn, 0)
+        status_chip = QLabel(_status_text(message.status))
+        status_chip.setObjectName("chip")
+        meta_row.addWidget(status_chip, 0)
+        content.addLayout(meta_row)
+
+        bubble = QFrame()
+        bubble.setObjectName("bubble")
+        bubble_layout = QVBoxLayout(bubble)
+        bubble_layout.setContentsMargins(18, 16, 18, 14)
+        bubble_layout.setSpacing(12)
+
+        body = QLabel(message.text)
+        body.setObjectName("body")
+        body.setWordWrap(True)
+        body.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        bubble_layout.addWidget(body)
+
+        bottom_row = QHBoxLayout()
+        bottom_row.setContentsMargins(0, 0, 0, 0)
+        bottom_row.setSpacing(10)
+        mini_play = QLabel("▶")
+        mini_play.setObjectName("mini")
+        mini_play.setFixedWidth(16)
+        bottom_row.addWidget(mini_play, 0)
+        meter = QLabel("▁▃▆▂▅")
+        meter.setObjectName("mini")
+        bottom_row.addWidget(meter, 0)
+        bottom_row.addStretch(1)
+        tone = QLabel(message.tone.title())
+        tone.setObjectName("meta")
+        bottom_row.addWidget(tone, 0)
+        duration = QLabel(_duration_text(message.output))
+        duration.setObjectName("meta")
+        bottom_row.addWidget(duration, 0)
+        bubble_layout.addLayout(bottom_row)
+
+        self.details = QFrame()
+        details_layout = QVBoxLayout(self.details)
+        details_layout.setContentsMargins(0, 0, 0, 0)
+        details_layout.setSpacing(10)
+
+        option_row = QHBoxLayout()
+        option_row.setContentsMargins(0, 0, 0, 0)
+        option_row.setSpacing(8)
+        self.profile_combo = QComboBox()
+        self.profile_combo.addItems(profiles)
+        self.profile_combo.setCurrentText(message.profile)
+        self.tone_combo = QComboBox()
+        self.tone_combo.addItems(list(TONE_PRESETS.keys()))
+        self.tone_combo.setCurrentText(message.tone)
+        option_row.addWidget(self.profile_combo, 1)
+        option_row.addWidget(self.tone_combo, 1)
+        details_layout.addLayout(option_row)
+
+        self.text_edit = QTextEdit()
+        self.text_edit.setMinimumHeight(96)
+        self.text_edit.setPlainText(message.text)
+        details_layout.addWidget(self.text_edit)
+
+        action_row = QHBoxLayout()
+        action_row.setContentsMargins(0, 0, 0, 0)
+        action_row.setSpacing(8)
+        self.apply_btn = QPushButton("Apply")
+        self.apply_btn.setObjectName("ghostBtn")
+        self.play_btn = QPushButton("Play")
+        self.play_btn.setObjectName("ghostBtn")
+        self.open_btn = QPushButton("Open")
+        self.open_btn.setObjectName("ghostBtn")
+        self.profile_btn = QPushButton("Profile")
+        self.profile_btn.setObjectName("ghostBtn")
+        self.regen_btn = QPushButton("Generate This")
+        self.regen_btn.setObjectName("ghostBtn")
+        self.delete_btn = QPushButton("Delete")
+        self.delete_btn.setObjectName("ghostBtn")
+        self.play_btn.setEnabled(media_enabled and bool(message.output))
+        self.open_btn.setEnabled(bool(message.output))
+        action_row.addWidget(self.apply_btn)
+        action_row.addWidget(self.play_btn)
+        action_row.addWidget(self.open_btn)
+        action_row.addWidget(self.profile_btn)
+        action_row.addStretch(1)
+        action_row.addWidget(self.regen_btn)
+        action_row.addWidget(self.delete_btn)
+        details_layout.addLayout(action_row)
+
+        self.apply_btn.clicked.connect(
+            lambda: self.apply_requested.emit(
+                self.message_id,
+                self.profile_combo.currentText(),
+                self.tone_combo.currentText(),
+                self.text_edit.toPlainText(),
+            )
+        )
+        self.play_btn.clicked.connect(lambda: self.play_requested.emit(self.message_id))
+        self.open_btn.clicked.connect(lambda: self.open_requested.emit(self.message_id))
+        self.profile_btn.clicked.connect(lambda: self.profile_requested.emit(self.message_id))
+        self.regen_btn.clicked.connect(lambda: self.regenerate_requested.emit(self.message_id))
+        self.delete_btn.clicked.connect(lambda: self.delete_requested.emit(self.message_id))
+
+        self.details.setVisible(expanded)
+        bubble_layout.addWidget(self.details)
+
+        content.addWidget(bubble)
+        root.addLayout(content, 1)
+
+    def mousePressEvent(self, event) -> None:  # noqa: N802
+        if event.button() == Qt.LeftButton:
+            self.select_requested.emit(self.message_id)
+        super().mousePressEvent(event)
+
+
+class Qwen3TTSQtWindow(QMainWindow):
+    def __init__(self, service: Qwen3TTSQtService, app_root: str | Path, targets: list[str] | None = None) -> None:
+        super().__init__()
+        self.service = service
+        self.app_root = Path(app_root)
+        self._settings = QSettings("Contexthub", APP_ID)
+        self._runtime_signature = runtime_settings_signature()
+        self._runtime_timer = QTimer(self)
+        self._runtime_timer.setInterval(1500)
+        self._runtime_timer.timeout.connect(self._check_runtime_preferences)
+        self._is_running = False
+        self._updating_ui = False
+        self._expanded_message_id: str | None = None
+        self._editing_profile_id: str | None = None
+
+        self._bridge = _RunSignals()
+        self._bridge.progress.connect(self._on_generation_progress)
+        self._bridge.done.connect(self._on_generation_done)
+
+        if _has_media_player():
+            self.player = QMediaPlayer(self)
+            self.audio_output = QAudioOutput(self)
+            self.player.setAudioOutput(self.audio_output)
+        else:
+            self.player = None
+            self.audio_output = None
+
+        self.setWindowTitle(APP_TITLE)
+        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.resize(1560, 980)
+        self.setMinimumSize(1220, 760)
+        apply_app_icon(self, self.app_root)
+        self.setStyleSheet(build_shell_stylesheet())
+
+        self._build_ui()
+        self._restore_window_state()
+        self._bind_actions()
+        self._refresh_all()
+        self._runtime_timer.start()
+
+    def _accent_generate_button(self, button: QPushButton) -> None:
+        button.setStyleSheet(
+            """
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6f7cff, stop:1 #5667ff);
+                color: #f7f9ff;
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 16px;
+                padding: 10px 18px;
+                font-weight: 700;
+            }
+            QPushButton:disabled {
+                background: #48506a;
+                color: #a6afc4;
+            }
+            """
+        )
+
+    def _build_ui(self) -> None:
+        m = get_shell_metrics()
+
+        central = QWidget()
+        self.setCentralWidget(central)
+        root = QVBoxLayout(central)
+        root.setContentsMargins(m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2)
+        root.setSpacing(m.section_gap)
+
+        shell = QFrame()
+        shell.setObjectName("windowShell")
+        shell_layout = QVBoxLayout(shell)
+        shell_layout.setContentsMargins(m.shell_margin, m.shell_margin, m.shell_margin, m.shell_margin)
+        shell_layout.setSpacing(m.section_gap)
+
+        self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root, show_webui=False)
+        self.header_surface.open_webui_btn.hide()
+        self.asset_count_badge = self.header_surface.asset_count_badge
+        self.runtime_status_badge = self.header_surface.runtime_status_badge
+        shell_layout.addWidget(self.header_surface)
+
+        splitter = QSplitter(Qt.Vertical)
+        splitter.setChildrenCollapsible(False)
+        splitter.setHandleWidth(6)
+        splitter.addWidget(self._build_left_panel())
+        splitter.addWidget(self._build_bottom_panel())
+        splitter.setStretchFactor(0, 8)
+        splitter.setStretchFactor(1, 4)
+        splitter.setSizes([700, 320])
+        shell_layout.addWidget(splitter, 1)
+
+        grip_row = QHBoxLayout()
+        grip_row.setContentsMargins(0, 0, 2, 0)
+        grip_row.addStretch(1)
+        self.size_grip = build_size_grip()
+        self.size_grip.setParent(shell)
+        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
+        shell_layout.addLayout(grip_row)
+
+        root.addWidget(shell)
+        self._build_profile_dialog()
+
+    def _build_left_panel(self) -> QFrame:
+        m = get_shell_metrics()
+        panel = QFrame()
+        panel.setObjectName("card")
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
+        layout.setSpacing(m.section_gap)
+
+        title_row = QHBoxLayout()
+        title_row.addWidget(QLabel(qt_t("qwen3_tts.conversation", "Conversation")), 1)
+        self.message_count_label = QLabel("0")
+        self.message_count_label.setObjectName("muted")
+        title_row.addWidget(self.message_count_label)
+        layout.addLayout(title_row)
+
+        self.message_list = QListWidget()
+        self.message_list.setMinimumHeight(360)
+        self.message_list.setSpacing(8)
+        self.message_list.setStyleSheet(
+            """
+            QListWidget {
+                background: transparent;
+                border: none;
+                outline: none;
+                padding: 4px 0;
+            }
+            QListWidget::item {
+                background: transparent;
+                border: none;
+                padding: 2px 0;
+            }
+            QListWidget::item:selected {
+                background: transparent;
+            }
+            """
+        )
+        layout.addWidget(self.message_list, 1)
+        return panel
+
+    def _build_bottom_panel(self) -> QFrame:
+        m = get_shell_metrics()
+        container = QFrame()
+        container.setObjectName("card")
+        root = QVBoxLayout(container)
+        root.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
+        root.setSpacing(10)
+
+        top_row = QHBoxLayout()
+        top_row.setContentsMargins(0, 0, 0, 0)
+        top_row.setSpacing(10)
+        self.selected_message_badge = QLabel("No message selected")
+        self.selected_message_badge.setObjectName("chip")
+        top_row.addWidget(self.selected_message_badge, 0)
+        top_row.addStretch(1)
+        self.edit_profile_btn = QPushButton("✦ Edit Profile")
+        self.edit_profile_btn.setObjectName("pillBtn")
+        top_row.addWidget(self.edit_profile_btn, 0)
+        self.open_output_btn = QPushButton("📁 Output")
+        self.open_output_btn.setObjectName("pillBtn")
+        top_row.addWidget(self.open_output_btn, 0)
+        self.generate_all_btn = QPushButton("Generate Conversation")
+        self._accent_generate_button(self.generate_all_btn)
+        top_row.addWidget(self.generate_all_btn, 0)
+        root.addLayout(top_row)
+
+        result_card = QFrame()
+        result_card.setObjectName("subtlePanel")
+        result_layout = QHBoxLayout(result_card)
+        result_layout.setContentsMargins(16, 14, 16, 14)
+        result_layout.setSpacing(16)
+
+        result_meta = QVBoxLayout()
+        result_meta.setContentsMargins(0, 0, 0, 0)
+        result_meta.setSpacing(4)
+        result_meta.addWidget(QLabel(qt_t("qwen3_tts.result_panel", "Selected Result")))
+        self.result_status_label = QLabel(qt_t("qwen3_tts.ready", "Ready"))
+        self.result_status_label.setObjectName("muted")
+        self.result_path_label = QLabel("")
+        self.result_path_label.setWordWrap(True)
+        self.result_file_label = QLabel("")
+        self.result_file_label.setWordWrap(True)
+        result_meta.addWidget(self.result_status_label)
+        result_meta.addWidget(self.result_path_label)
+        result_meta.addWidget(self.result_file_label)
+        result_layout.addLayout(result_meta, 1)
+
+        result_row = QHBoxLayout()
+        result_row.setSpacing(8)
+        self.play_btn = QPushButton(qt_t("qwen3_tts.play", "Play"))
+        self.play_btn.setObjectName("pillBtn")
+        self.open_file_btn = QPushButton(qt_t("qwen3_tts.open_file", "Open File"))
+        self.open_file_btn.setObjectName("pillBtn")
+        self.open_folder_btn = QPushButton("📂")
+        self.open_folder_btn.setObjectName("pillBtn")
+        self.rerun_btn = QPushButton("⟳ Generate This")
+        self._accent_generate_button(self.rerun_btn)
+        result_row.addWidget(self.play_btn, 0)
+        result_row.addWidget(self.open_file_btn, 0)
+        result_row.addWidget(self.open_folder_btn, 0)
+        result_row.addWidget(self.rerun_btn, 0)
+        result_layout.addLayout(result_row)
+        root.addWidget(result_card, 0)
+
+        composer_card = QFrame()
+        composer_card.setObjectName("subtlePanel")
+        composer_layout = QVBoxLayout(composer_card)
+        composer_layout.setContentsMargins(16, 14, 16, 14)
+        composer_layout.setSpacing(10)
+
+        control_row = QHBoxLayout()
+        control_row.setContentsMargins(0, 0, 0, 0)
+        control_row.setSpacing(10)
+        self.composer_profile_combo = QComboBox()
+        self.composer_profile_combo.setObjectName("presetCombo")
+        self.composer_tone_combo = QComboBox()
+        self.composer_tone_combo.addItems(list(TONE_PRESETS.keys()))
+        self.composer_language_combo = QComboBox()
+        self.composer_language_combo.addItems(SUPPORTED_LANGUAGES)
+        self.composer_device_combo = QComboBox()
+        self.composer_device_combo.addItems(["auto", "cuda", "cpu"])
+        control_row.addWidget(self.composer_profile_combo, 0)
+        control_row.addWidget(self.composer_tone_combo, 0)
+        control_row.addWidget(self.composer_language_combo, 0)
+        control_row.addWidget(self.composer_device_combo, 0)
+        control_row.addStretch(1)
+        self.composer_count_label = QLabel("0 / 2000 chars")
+        self.composer_count_label.setObjectName("muted")
+        control_row.addWidget(self.composer_count_label, 0)
+        composer_layout.addLayout(control_row)
+
+        self.composer_text = QTextEdit()
+        self.composer_text.setMinimumHeight(160)
+        self.composer_text.setPlaceholderText(qt_t("qwen3_tts.compose_hint", "Enter text to generate audio..."))
+        composer_layout.addWidget(self.composer_text, 1)
+
+        btn_row = QHBoxLayout()
+        btn_row.setContentsMargins(0, 0, 0, 0)
+        btn_row.setSpacing(10)
+        self.save_message_btn = QPushButton("＋ Save")
+        self.save_message_btn.setObjectName("pillBtn")
+        self.update_message_btn = QPushButton("✓ Update")
+        self.update_message_btn.setObjectName("pillBtn")
+        self.delete_message_btn = QPushButton("⌫ Delete")
+        self.delete_message_btn.setObjectName("pillBtn")
+        self.generate_selected_btn = QPushButton("⟳ Generate This")
+        self._accent_generate_button(self.generate_selected_btn)
+        btn_row.addWidget(self.save_message_btn)
+        btn_row.addWidget(self.update_message_btn)
+        btn_row.addWidget(self.delete_message_btn)
+        btn_row.addStretch(1)
+        btn_row.addWidget(self.generate_selected_btn, 0)
+        composer_layout.addLayout(btn_row)
+        root.addWidget(composer_card, 1)
+        return container
+
+    def _build_profile_dialog(self) -> None:
+        self.profile_dialog = QDialog(self)
+        self.profile_dialog.setWindowTitle("Profile Editor")
+        self.profile_dialog.resize(720, 720)
+        self.profile_dialog.setModal(True)
+        layout = QVBoxLayout(self.profile_dialog)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(10)
+
+        header_row = QHBoxLayout()
+        self.editor_profile_combo = QComboBox()
+        self.editor_profile_combo.setObjectName("presetCombo")
+        header_row.addWidget(self.editor_profile_combo, 1)
+        self.new_profile_btn = QPushButton("New")
+        self.new_profile_btn.setObjectName("pillBtn")
+        self.delete_profile_btn = QPushButton("Delete")
+        self.delete_profile_btn.setObjectName("pillBtn")
+        header_row.addWidget(self.new_profile_btn)
+        header_row.addWidget(self.delete_profile_btn)
+        layout.addLayout(header_row)
+
+        self.editor_profile_name = QLineEdit()
+        self.editor_mode_combo = QComboBox()
+        self.editor_mode_combo.addItems(["custom_voice", "voice_clone", "voice_design"])
+        self.editor_speaker_combo = QComboBox()
+        self.editor_speaker_combo.addItems(SUPPORTED_SPEAKERS)
+        self.editor_instruct_edit = QTextEdit()
+        self.editor_instruct_edit.setMinimumHeight(100)
+        self.editor_ref_audio = QLineEdit()
+        self.ref_audio_browse_btn = QPushButton("Browse")
+        self.ref_audio_browse_btn.setObjectName("pillBtn")
+        self.editor_ref_text = QTextEdit()
+        self.editor_ref_text.setMinimumHeight(90)
+        self.editor_profile_quality = QLabel("")
+        self.editor_profile_quality.setWordWrap(True)
+        self.editor_profile_quality.setObjectName("muted")
+
+        self.editor_profile_name_label = QLabel("Profile Name")
+        self.editor_mode_label = QLabel("Mode")
+        self.editor_speaker_label = QLabel("Speaker")
+        self.editor_instruction_label = QLabel("Instruction")
+        self.editor_ref_audio_label = QLabel("Clone Ref Audio")
+        self.editor_ref_text_label = QLabel("Clone Ref Text")
+        layout.addWidget(self.editor_profile_name_label)
+        layout.addWidget(self.editor_profile_name)
+        layout.addWidget(self.editor_mode_label)
+        layout.addWidget(self.editor_mode_combo)
+        layout.addWidget(self.editor_speaker_label)
+        layout.addWidget(self.editor_speaker_combo)
+        layout.addWidget(self.editor_instruction_label)
+        layout.addWidget(self.editor_instruct_edit)
+
+        ref_audio_row = QHBoxLayout()
+        ref_audio_row.addWidget(self.editor_ref_audio, 1)
+        ref_audio_row.addWidget(self.ref_audio_browse_btn)
+        layout.addWidget(self.editor_ref_audio_label)
+        layout.addLayout(ref_audio_row)
+        layout.addWidget(self.editor_ref_text_label)
+        layout.addWidget(self.editor_ref_text)
+        layout.addWidget(self.editor_profile_quality)
+
+        footer = QHBoxLayout()
+        footer.addStretch(1)
+        self.profile_cancel_btn = QPushButton("Close")
+        self.profile_cancel_btn.setObjectName("pillBtn")
+        self.profile_save_btn = QPushButton("Save Profile")
+        self._accent_generate_button(self.profile_save_btn)
+        footer.addWidget(self.profile_cancel_btn)
+        footer.addWidget(self.profile_save_btn)
+        layout.addLayout(footer)
+
+        self.editor_mode_combo.currentTextChanged.connect(self._on_editor_mode_changed)
+
+    def _bind_actions(self) -> None:
+        self.message_list.itemSelectionChanged.connect(self._on_message_selected)
+        self.message_list.itemDoubleClicked.connect(self._on_message_double_clicked)
+        self.composer_profile_combo.currentTextChanged.connect(self._on_composer_prefs_changed)
+        self.composer_tone_combo.currentTextChanged.connect(self._on_composer_prefs_changed)
+        self.composer_language_combo.currentTextChanged.connect(self._on_composer_prefs_changed)
+        self.composer_device_combo.currentTextChanged.connect(self._on_composer_prefs_changed)
+        self.composer_text.textChanged.connect(self._refresh_composer_metrics)
+        self.save_message_btn.clicked.connect(self._save_message)
+        self.update_message_btn.clicked.connect(self._update_selected_message)
+        self.delete_message_btn.clicked.connect(self._delete_selected_message)
+        self.generate_selected_btn.clicked.connect(self._generate_selected)
+        self.generate_all_btn.clicked.connect(self._generate_all)
+        self.rerun_btn.clicked.connect(self._regenerate_selected)
+        self.play_btn.clicked.connect(self._play_selected_output)
+        self.open_file_btn.clicked.connect(self._open_selected_output)
+        self.open_folder_btn.clicked.connect(self._open_output_folder)
+        self.ref_audio_browse_btn.clicked.connect(self._browse_ref_audio)
+        self.editor_profile_combo.currentTextChanged.connect(self._on_editor_profile_selected)
+        self.profile_save_btn.clicked.connect(self._save_editor_profile)
+        self.profile_cancel_btn.clicked.connect(self.profile_dialog.close)
+        self.new_profile_btn.clicked.connect(self._start_new_profile)
+        self.delete_profile_btn.clicked.connect(self._delete_profile)
+        self.edit_profile_btn.clicked.connect(self._open_profile_dialog)
+        self.open_output_btn.clicked.connect(self._reveal_output_dir)
+
+    def _refresh_all(self) -> None:
+        self._refresh_profile_choices()
+        self._refresh_composer_preferences()
+        self._refresh_messages()
+        self._load_editor_profile()
+        self._sync_message_details()
+        self._refresh_composer_metrics()
+        self._refresh_runtime_status()
+
+    def _refresh_runtime_status(self) -> None:
+        self.runtime_status_badge.setText(self.service.state.status_text)
+        self.asset_count_badge.setText(qt_t("comfyui.qt_shell.asset_count", "{count} messages", count=len(self.service.messages)))
+
+    def _refresh_composer_preferences(self) -> None:
+        self._updating_ui = True
+        self.composer_tone_combo.setCurrentText(self.service.state.selected_tone)
+        self.composer_language_combo.setCurrentText(self.service.state.selected_language)
+        self.composer_device_combo.setCurrentText(self.service.state.selected_device)
+        self._updating_ui = False
+
+    def _refresh_composer_metrics(self) -> None:
+        length = len(self.composer_text.toPlainText())
+        self.composer_count_label.setText(f"{length} / 2000 chars")
+
+    def _refresh_profile_choices(self) -> None:
+        profiles = self.service.get_profile_choices()
+        current_profile = self.service.state.selected_profile
+        current_editor = self.editor_profile_combo.currentText() if hasattr(self, "editor_profile_combo") else current_profile
+        self._updating_ui = True
+        self.composer_profile_combo.blockSignals(True)
+        self.editor_profile_combo.blockSignals(True)
+        self.composer_profile_combo.clear()
+        self.editor_profile_combo.clear()
+        self.composer_profile_combo.addItems(profiles)
+        self.editor_profile_combo.addItems(profiles)
+        if current_profile in profiles:
+            self.composer_profile_combo.setCurrentText(current_profile)
+            if current_editor in profiles:
+                self.editor_profile_combo.setCurrentText(current_editor)
+            else:
+                self.editor_profile_combo.setCurrentText(current_profile)
+        elif profiles:
+            self.composer_profile_combo.setCurrentIndex(0)
+            self.editor_profile_combo.setCurrentIndex(0)
+            self.service.state.selected_profile = profiles[0]
+        self.composer_profile_combo.blockSignals(False)
+        self.editor_profile_combo.blockSignals(False)
+        self._updating_ui = False
+
+    def _refresh_messages(self) -> None:
+        selected_id = self.service.state.selected_message_id
+        current_index = self.message_list.currentRow()
+        self.message_list.blockSignals(True)
+        self.message_list.clear()
+        profiles = self.service.get_profile_choices()
+        for message in self.service.messages:
+            item = QListWidgetItem()
+            item.setData(Qt.UserRole, message.id)
+            item.setToolTip(f"id: {message.id}\nstatus: {message.status}\ntext: {message.text}")
+            if message.output:
+                item.setToolTip(f"{item.toolTip()}\noutput: {message.output}")
+            self.message_list.addItem(item)
+            bubble = MessageBubbleWidget(
+                message,
+                profiles,
+                selected=message.id == selected_id,
+                expanded=message.id == self._expanded_message_id,
+                media_enabled=self.player is not None,
+            )
+            bubble.select_requested.connect(self._select_message_from_bubble)
+            bubble.expand_requested.connect(self._toggle_message_expand)
+            bubble.apply_requested.connect(self._apply_message_changes)
+            bubble.play_requested.connect(self._play_message_output)
+            bubble.open_requested.connect(self._open_message_output)
+            bubble.profile_requested.connect(self._open_profile_from_message)
+            bubble.regenerate_requested.connect(self._regenerate_message)
+            bubble.delete_requested.connect(self._delete_message_by_id)
+            item.setSizeHint(bubble.sizeHint())
+            self.message_list.setItemWidget(item, bubble)
+        self.message_count_label.setText(str(len(self.service.messages)))
+        if self.message_list.count() == 0:
+            self.service.state.selected_message_id = None
+            self._expanded_message_id = None
+        else:
+            target_row = 0
+            if selected_id is not None:
+                for row in range(self.message_list.count()):
+                    item = self.message_list.item(row)
+                    if item is not None and item.data(Qt.UserRole) == selected_id:
+                        target_row = row
+                        break
+            elif current_index >= 0 and current_index < self.message_list.count():
+                target_row = current_index
+            self.message_list.setCurrentRow(target_row)
+        self.message_list.blockSignals(False)
+        self._refresh_message_widgets()
+        self._refresh_result_panel()
+
+    def _refresh_message_widgets(self) -> None:
+        selected_id = self.service.state.selected_message_id
+        profiles = self.service.get_profile_choices()
+        for row in range(self.message_list.count()):
+            item = self.message_list.item(row)
+            if item is None:
+                continue
+            message_id = item.data(Qt.UserRole)
+            message = self.service.message_by_id(message_id)
+            if message is None:
+                continue
+            bubble = MessageBubbleWidget(
+                message,
+                profiles,
+                selected=message.id == selected_id,
+                expanded=message.id == self._expanded_message_id,
+                media_enabled=self.player is not None,
+            )
+            bubble.select_requested.connect(self._select_message_from_bubble)
+            bubble.expand_requested.connect(self._toggle_message_expand)
+            bubble.apply_requested.connect(self._apply_message_changes)
+            bubble.play_requested.connect(self._play_message_output)
+            bubble.open_requested.connect(self._open_message_output)
+            bubble.profile_requested.connect(self._open_profile_from_message)
+            bubble.regenerate_requested.connect(self._regenerate_message)
+            bubble.delete_requested.connect(self._delete_message_by_id)
+            item.setSizeHint(bubble.sizeHint())
+            self.message_list.setItemWidget(item, bubble)
+
+    def _sync_message_details(self) -> None:
+        selected = self.service.selected_message()
+        self._updating_ui = True
+        if selected is None:
+            self.composer_text.setPlainText("")
+            self._updating_ui = False
+            self._refresh_message_widgets()
+            self._refresh_result_panel()
+            return
+        if selected.profile in self.service.get_profile_choices():
+            self.composer_profile_combo.setCurrentText(selected.profile)
+        if selected.tone in [str(key) for key in TONE_PRESETS.keys()]:
+            self.composer_tone_combo.setCurrentText(selected.tone)
+        self.composer_text.setPlainText(selected.text)
+        self._updating_ui = False
+        self._refresh_message_widgets()
+        self._refresh_composer_metrics()
+        self._refresh_result_panel()
+
+    def _refresh_result_panel(self) -> None:
+        self._sync_result_button_states()
+        message = self.service.selected_message()
+        if message is None:
+            self.selected_message_badge.setText("No message selected")
+            self.result_status_label.setText("No message selected")
+            self.result_path_label.setText("")
+            self.result_file_label.setText("")
+            return
+        self.selected_message_badge.setText(f"{message.profile} · {_status_text(message.status)}")
+        self.result_status_label.setText(f"Status: {_status_text(message.status)}")
+        if message.output:
+            output_path = Path(message.output)
+            self.result_path_label.setText(f"Output: {output_path.parent}")
+            self.result_file_label.setText(f"File: {output_path.name}")
+            self.play_btn.setEnabled(self.player is not None)
+            self.open_file_btn.setEnabled(True)
+            self.rerun_btn.setEnabled(True)
+        else:
+            self.result_path_label.setText("Output: No output yet")
+            self.result_file_label.setText("")
+            self.play_btn.setEnabled(False)
+            self.open_file_btn.setEnabled(False)
+            self.rerun_btn.setEnabled(True)
+
+    def _sync_result_button_states(self) -> None:
+        is_selected = self.service.selected_message() is not None
+        has_media = self.player is not None
+        self.save_message_btn.setEnabled(not self._is_running)
+        self.update_message_btn.setEnabled(not self._is_running and is_selected)
+        self.delete_message_btn.setEnabled(not self._is_running and is_selected)
+        self.generate_selected_btn.setEnabled(not self._is_running and is_selected)
+        self.generate_all_btn.setEnabled(not self._is_running)
+        self.play_btn.setEnabled(not self._is_running and has_media)
+        self.rerun_btn.setEnabled(not self._is_running and is_selected)
+        self.open_file_btn.setEnabled(not self._is_running and is_selected)
+
+    def _on_message_selected(self) -> None:
+        if self._updating_ui:
+            return
+        item = self.message_list.currentItem()
+        if item is None:
+            self.service.set_selected_message(None)
+            self._sync_message_details()
+            return
+        message_id = item.data(Qt.UserRole)
+        self.service.set_selected_message(message_id)
+        self._sync_message_details()
+
+    def _select_message_from_bubble(self, message_id: str) -> None:
+        self.service.set_selected_message(message_id)
+        for row in range(self.message_list.count()):
+            item = self.message_list.item(row)
+            if item is not None and item.data(Qt.UserRole) == message_id:
+                self.message_list.setCurrentRow(row)
+                break
+        self._sync_message_details()
+
+    def _toggle_message_expand(self, message_id: str) -> None:
+        self._expanded_message_id = None if self._expanded_message_id == message_id else message_id
+        self._refresh_message_widgets()
+
+    def _apply_message_changes(self, message_id: str, profile: str, tone: str, text: str) -> None:
+        self.service.update_message(message_id, profile=profile, tone=tone, text=text)
+        self.service.set_selected_message(message_id)
+        self.service.state.selected_profile = profile
+        self.service.state.selected_tone = tone
+        self.service.state.status_text = "Bubble changes applied."
+        self._refresh_profile_choices()
+        self._sync_message_details()
+        self._refresh_messages()
+        self._refresh_runtime_status()
+
+    def _play_message_output(self, message_id: str) -> None:
+        self.service.set_selected_message(message_id)
+        self._sync_message_details()
+        self._play_selected_output()
+
+    def _open_message_output(self, message_id: str) -> None:
+        self.service.set_selected_message(message_id)
+        self._sync_message_details()
+        self._open_selected_output()
+
+    def _open_profile_from_message(self, message_id: str) -> None:
+        self.service.set_selected_message(message_id)
+        message = self.service.message_by_id(message_id)
+        if message is not None:
+            self.editor_profile_combo.setCurrentText(message.profile)
+        self._open_profile_dialog()
+
+    def _regenerate_message(self, message_id: str) -> None:
+        self.service.set_selected_message(message_id)
+        self._expanded_message_id = message_id
+        self._sync_message_details()
+        self._run_generation([message_id])
+
+    def _delete_message_by_id(self, message_id: str) -> None:
+        if self._expanded_message_id == message_id:
+            self._expanded_message_id = None
+        self.service.delete_message(message_id)
+        if self.service.messages:
+            self.service.set_selected_message(self.service.messages[0].id)
+        self.service.state.status_text = "Message deleted."
+        self._refresh_messages()
+        self._refresh_runtime_status()
+
+    def _on_message_double_clicked(self, item: QListWidgetItem) -> None:
+        if item is None:
+            return
+        message_id = item.data(Qt.UserRole)
+        self._toggle_message_expand(message_id)
+
+    def _on_composer_prefs_changed(self) -> None:
+        if self._updating_ui:
+            return
+        self.service.set_composer_preferences(
+            self.composer_profile_combo.currentText(),
+            self.composer_tone_combo.currentText(),
+            self.composer_language_combo.currentText(),
+            self.composer_device_combo.currentText(),
+            self.service.state.output_dir or str(Path.home() / "Documents"),
+        )
+
+    def _sync_output_settings(self) -> None:
+        output_dir = self.service.state.output_dir or str(Path.home() / "Documents")
+        self.service.set_output_dir(output_dir)
+
+    def _save_message(self) -> None:
+        text = self.composer_text.toPlainText().strip()
+        if not text:
+            self.service.state.status_text = "Message text is required."
+            self._refresh_runtime_status()
+            return
+        self._sync_output_settings()
+        try:
+            message = self.service.upsert_message(text)
+        except ValueError as exc:
+            self.service.state.status_text = str(exc)
+            self._refresh_runtime_status()
+            return
+        message.profile = self.composer_profile_combo.currentText()
+        message.tone = self.composer_tone_combo.currentText()
+        self.service.set_selected_message(message.id)
+        self.service.state.status_text = "Message saved."
+        self._refresh_messages()
+        self._scroll_to_message(message.id)
+
+    def _update_selected_message(self) -> None:
+        message = self.service.selected_message()
+        if message is None:
+            self._save_message()
+            return
+        self._sync_output_settings()
+        self.service.update_message(
+            message.id,
+            profile=self.composer_profile_combo.currentText(),
+            tone=self.composer_tone_combo.currentText(),
+            text=self.composer_text.toPlainText(),
+        )
+        self.service.state.status_text = "Message updated."
+        self._refresh_messages()
+
+    def _delete_selected_message(self) -> None:
+        message = self.service.selected_message()
+        if message is None:
+            return
+        if self._expanded_message_id == message.id:
+            self._expanded_message_id = None
+        self.service.delete_message(message.id)
+        self.service.state.status_text = "Message deleted."
+        if self.service.messages:
+            self.service.set_selected_message(self.service.messages[0].id)
+        self._refresh_messages()
+
+    def _scroll_to_message(self, message_id: str) -> None:
+        for row in range(self.message_list.count()):
+            item = self.message_list.item(row)
+            if item is not None and item.data(Qt.UserRole) == message_id:
+                self.message_list.setCurrentRow(row)
+                return
+
+    def _generate_selected(self) -> None:
+        message = self.service.selected_message()
+        if message is None:
+            self.service.state.status_text = "Select a message first."
+            self._refresh_runtime_status()
+            return
+        self._expanded_message_id = message.id
+        self._run_generation([message.id])
+
+    def _generate_all(self) -> None:
+        self._expanded_message_id = None
+        self._run_generation([message.id for message in self.service.messages])
+
+    def _regenerate_selected(self) -> None:
+        self._generate_selected()
+
+    def _run_generation(self, target_ids: list[str]) -> None:
+        if self._is_running:
+            return
+        if not target_ids:
+            self.service.state.status_text = "No message lines found."
+            self._refresh_runtime_status()
+            return
+        self._sync_output_settings()
+        self._is_running = True
+        self._sync_result_button_states()
+        self.service.state.status_text = "Running..."
+        self._refresh_runtime_status()
+
+        def worker() -> None:
+            ok, _payload, message, _active = self.service.run_jobs(target_ids, on_line=self._bridge.progress.emit)
+            QTimer.singleShot(0, lambda: self._bridge.done.emit(ok, message))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_generation_progress(self, line: str) -> None:
+        text = line.strip()
+        if not text:
+            return
+        self.service.state.status_text = text
+        QTimer.singleShot(0, self._refresh_runtime_status)
+
+    def _on_generation_done(self, ok: bool, message: str) -> None:
+        self._is_running = False
+        if not message:
+            message = "Done." if ok else "Generation failed."
+        self.service.state.status_text = message
+        self._sync_result_button_states()
+        self._refresh_messages()
+        self._refresh_result_panel()
+        self._refresh_runtime_status()
+
+    def _play_selected_output(self) -> None:
+        if self.player is None:
+            self.service.state.status_text = "Media playback is not available."
+            self._refresh_runtime_status()
+            return
+        message = self.service.selected_message()
+        if message is None or not message.output:
+            self.service.state.status_text = "No output file."
+            self._refresh_runtime_status()
+            return
+        output_path = Path(message.output)
+        if not output_path.exists():
+            self.service.state.status_text = "Output file is missing."
+            self._refresh_runtime_status()
+            return
+        self.player.stop()
+        self.player.setSource(QUrl.fromLocalFile(str(output_path)))
+        self.player.play()
+        self.service.state.status_text = "Playing."
+        self._refresh_runtime_status()
+
+    def _open_selected_output(self) -> None:
+        message = self.service.selected_message()
+        if message is None or not message.output:
+            self.service.state.status_text = "No output to open."
+            self._refresh_runtime_status()
+            return
+        self._open_path(Path(message.output), "file")
+
+    def _open_output_folder(self) -> None:
+        message = self.service.selected_message()
+        if message is None:
+            self.service.state.status_text = "No message selected."
+            self._refresh_runtime_status()
+            return
+        if message.output:
+            self._open_path(Path(message.output).parent, "folder")
+            return
+        self._open_path(self.service.active_output_dir(), "folder")
+
+    def _reveal_output_dir(self) -> None:
+        self._sync_output_settings()
+        self.service.reveal_output_dir()
+
+    def _open_path(self, target: Path, mode: str) -> None:
+        try:
+            target_str = str(target)
+            if mode == "folder":
+                target.mkdir(parents=True, exist_ok=True)
+            os.startfile(target_str)  # noqa: PTH118
+            self.service.state.status_text = "Opened."
+        except Exception:
+            self.service.state.status_text = "Failed to open target."
+        self._refresh_runtime_status()
+
+    def _start_new_profile(self) -> None:
+        profile = self.service.add_profile_template()
+        self._editing_profile_id = profile["id"]
+        self.editor_profile_name.setText(profile["name"])
+        self.editor_mode_combo.setCurrentText(profile["mode"])
+        self.editor_speaker_combo.setCurrentText(profile["speaker"])
+        self.editor_instruct_edit.setPlainText(profile["instruct"])
+        self.editor_ref_audio.clear()
+        self.editor_ref_text.clear()
+        self._refresh_profile_quality()
+
+    def _load_editor_profile(self) -> None:
+        self._updating_ui = True
+        name = self.editor_profile_combo.currentText() or self.service.state.selected_profile
+        profile = self.service.profile_by_name(name)
+        self._editing_profile_id = profile.get("id") if profile else None
+        if not profile:
+            self._updating_ui = False
+            return
+        self.editor_profile_name.setText(profile.get("name", ""))
+        self.editor_mode_combo.setCurrentText(profile.get("mode", "custom_voice"))
+        self.editor_speaker_combo.setCurrentText(profile.get("speaker", SUPPORTED_SPEAKERS[0]))
+        self.editor_instruct_edit.setPlainText(profile.get("instruct", ""))
+        self.editor_ref_audio.setText(profile.get("ref_audio", ""))
+        self.editor_ref_text.setPlainText(profile.get("ref_text", ""))
+        self._updating_ui = False
+        self._on_editor_mode_changed(self.editor_mode_combo.currentText())
+        self._refresh_profile_quality()
+
+    def _on_editor_profile_selected(self) -> None:
+        if self._updating_ui:
+            return
+        self._load_editor_profile()
+
+    def _on_editor_mode_changed(self, mode: str) -> None:
+        is_clone = mode == "voice_clone"
+        is_design = mode == "voice_design"
+        self.editor_speaker_label.setVisible(not is_design)
+        self.editor_speaker_combo.setVisible(not is_design)
+        self.editor_ref_audio_label.setVisible(is_clone)
+        self.editor_ref_audio.setVisible(is_clone)
+        self.ref_audio_browse_btn.setVisible(is_clone)
+        self.editor_ref_text_label.setVisible(is_clone)
+        self.editor_ref_text.setVisible(is_clone)
+        self._refresh_profile_quality()
+
+    def _refresh_profile_quality(self) -> None:
+        profile_name = self.editor_profile_combo.currentText()
+        profile = self.service.profile_by_name(profile_name)
+        if profile is None or profile.get("mode") != "voice_clone":
+            self.editor_profile_quality.setText("")
+            return
+        quality = self.service.profile_quality(profile_name)
+        if quality is None:
+            self.editor_profile_quality.setText("")
+            return
+        status, message = quality
+        self.editor_profile_quality.setText(message)
+
+    def _browse_ref_audio(self) -> None:
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            APP_TITLE,
+            str(Path.home()),
+            "Audio Files (*.wav *.mp3 *.m4a *.flac *.ogg *.aac)",
+        )
+        if file_path:
+            self.editor_ref_audio.setText(file_path)
+            self._refresh_profile_quality()
+
+    def _open_profile_dialog(self) -> None:
+        selected = self.service.selected_message()
+        if selected is not None:
+            self.editor_profile_combo.setCurrentText(selected.profile)
+        self._load_editor_profile()
+        self.profile_dialog.show()
+        self.profile_dialog.raise_()
+        self.profile_dialog.activateWindow()
+
+    def _save_editor_profile(self) -> None:
+        name = self.editor_profile_name.text().strip() or "Profile"
+        mode = self.editor_mode_combo.currentText()
+        speaker = self.editor_speaker_combo.currentText()
+        instruct = self.editor_instruct_edit.toPlainText().strip()
+        ref_audio = self.editor_ref_audio.text().strip()
+        ref_text = self.editor_ref_text.toPlainText().strip()
+        if not name:
+            self.service.state.status_text = "Profile name is required."
+            self._refresh_runtime_status()
+            return
+        if mode == "voice_clone" and not ref_audio:
+            self.service.state.status_text = "Clone profile requires reference audio."
+            self._refresh_runtime_status()
+            return
+        if mode == "voice_clone" and ref_audio and not Path(ref_audio).exists():
+            self.service.state.status_text = "Reference audio file does not exist."
+            self._refresh_runtime_status()
+            return
+        if mode == "voice_design" and not instruct:
+            self.service.state.status_text = "Voice design profile requires a description."
+            self._refresh_runtime_status()
+            return
+        ok = self.service.save_profile(self._editing_profile_id, name, mode, speaker, instruct, ref_audio, ref_text)
+        if not ok:
+            self.service.state.status_text = "Profile name already exists."
+            self._refresh_runtime_status()
+            return
+        self.service.state.selected_profile = name
+        self.service.state.inspector_profile_name = name
+        self._refresh_profile_choices()
+        self.editor_profile_combo.setCurrentText(name)
+        self._load_editor_profile()
+        self._refresh_messages()
+        self.service.state.status_text = "Profile saved."
+        self.profile_dialog.close()
+        self._refresh_runtime_status()
+
+    def _delete_profile(self) -> None:
+        name = self.editor_profile_combo.currentText()
+        if not name:
+            return
+        ok = self.service.delete_profile(name)
+        if not ok:
+            self.service.state.status_text = "At least one profile must remain."
+            self._refresh_runtime_status()
+            return
+        self._refresh_profile_choices()
+        self._load_editor_profile()
+        self._refresh_messages()
+        self.service.state.status_text = "Profile deleted."
+        self._refresh_runtime_status()
+
+    def _check_runtime_preferences(self) -> None:
+        current = runtime_settings_signature()
+        if current == self._runtime_signature:
+            return
+        self._runtime_signature = current
+        refresh_runtime_preferences()
+        self.setStyleSheet(build_shell_stylesheet())
+
+    def _restore_window_state(self) -> None:
+        geometry = self._settings.value("geometry")
+        if geometry:
+            self.restoreGeometry(geometry)
+        if self._settings.value("is_maximized", False, bool):
+            self.showMaximized()
+
+    def closeEvent(self, event) -> None:
+        self._settings.setValue("geometry", self.saveGeometry())
+        self._settings.setValue("is_maximized", self.isMaximized())
+        super().closeEvent(event)
+
+
+def start_app(targets: list[str] | None = None, app_root: str | Path | None = None) -> int:
+    app = QApplication.instance() or QApplication(sys.argv)
+    target: Path | None = None
+    if targets:
+        candidate = Path(targets[0])
+        if candidate.exists():
+            target = candidate
+    service = Qwen3TTSQtService(target)
+    root = Path(app_root) if app_root else Path(__file__).resolve().parents[3] / "ai" / APP_ID
+    window = Qwen3TTSQtWindow(service, root, targets)
+    window.show()
+    return app.exec()

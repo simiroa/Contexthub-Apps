@@ -3,6 +3,8 @@
 ## 소개
 노멀 맵의 그린(Y) 채널을 반전시킵니다. DirectX↔OpenGL 노멀맵 변환에 사용됩니다.
 
+이 앱은 짧은 확인 UI 후 콘솔 흐름으로 바로 처리됩니다.
+
 ## 왜 필요한가?
 - **DirectX (Y-)**: Unreal Engine, 3ds Max
 - **OpenGL (Y+)**: Unity, Blender, Maya
@@ -12,7 +14,8 @@
 
 1. 노멀 맵 이미지 선택 후 우클릭
 2. **Image → Normal Flip Green** 선택
-3. 그린 채널 반전된 이미지 생성
+3. 파일 개수 확인 후 **Flip** 실행
+4. 콘솔 진행 로그 확인
 
 ## 출력 파일
 - `원본파일명_flipped.png`

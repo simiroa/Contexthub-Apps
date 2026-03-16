@@ -1,5 +1,4 @@
 Pillow
-customtkinter
 psd-tools
 rembg
 vtracer

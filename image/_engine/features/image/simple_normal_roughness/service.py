@@ -30,6 +30,9 @@ class SimplePbrService:
     def __init__(self):
         self._cancel_flag = False
 
+    def cancel(self):
+        self._cancel_flag = True
+
     def generate_maps(self, 
                      img_pil: Image.Image, 
                      params: Dict) -> Tuple[Image.Image, Image.Image]:
@@ -93,9 +96,10 @@ class SimplePbrService:
     def run_batch_save(self,
                         files: List[Path],
                         params: Dict,
-                        mode: str, # "Normal" or "Roughness"
+                        mode: str, # "Normal" or "Roughness" or "Both"
+                        output_dir: Optional[Path],
                         on_progress: Callable[[float, str], None],
-                        on_complete: Callable[[int, List[str]], None]):
+                        on_complete: Callable[[int, List[str], Optional[Path]], None]):
         
         self._cancel_flag = False
         
@@ -103,6 +107,7 @@ class SimplePbrService:
             success = 0
             errors = []
             total = len(files)
+            last_output_dir: Optional[Path] = None
             
             for i, path in enumerate(files):
                 if self._cancel_flag: break
@@ -110,19 +115,27 @@ class SimplePbrService:
                     on_progress(i / total, f"Processing: {path.name}")
                     with Image.open(path) as img:
                         norm, rough = self.generate_maps(img.convert("RGB"), params)
+                        target_dir = output_dir or path.parent
+                        target_dir.mkdir(parents=True, exist_ok=True)
                         
                         if mode == "Normal":
-                            out_path = path.parent / f"{path.stem}_normal.png"
+                            out_path = target_dir / f"{path.stem}_normal.png"
                             norm.save(out_path)
                         elif mode == "Roughness":
-                            out_path = path.parent / f"{path.stem}_roughness.png"
+                            out_path = target_dir / f"{path.stem}_roughness.png"
                             rough.save(out_path)
+                        else:
+                            norm.save(target_dir / f"{path.stem}_normal.png")
+                            rough.save(target_dir / f"{path.stem}_roughness.png")
                         
+                        last_output_dir = target_dir
                         success += 1
                 except Exception as e:
                     logger.error(f"Failed to process {path.name}: {e}")
                     errors.append(f"{path.name}: {e}")
             
-            on_complete(success, errors)
+            if self._cancel_flag and "Cancelled by user." not in errors:
+                errors.append("Cancelled by user.")
+            on_complete(success, errors, last_output_dir)
 
         threading.Thread(target=_task, daemon=True).start()

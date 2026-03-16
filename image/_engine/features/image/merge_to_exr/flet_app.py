@@ -8,7 +8,7 @@ from .state import ExrMergeState, ChannelConfig
 from contexthub.ui.flet.tokens import COLORS, SPACING, RADII
 from contexthub.ui.flet.layout import action_bar, apply_button_sizing
 from contexthub.ui.flet.theme import configure_page
-from contexthub.ui.flet.window import apply_desktop_window
+from contexthub.ui.flet.window import reveal_desktop_window
 from utils.i18n import t
 
 class ChannelRow(ft.Container):
@@ -53,11 +53,11 @@ class ChannelRow(ft.Container):
         self.content = ft.Row([
             self.chk_enabled,
             self.dd_file,
-            ft.Icon("arrow_forward", size=12, color=COLORS["line"]),
+            ft.Icon(ft.Icons.ARROW_FORWARD, size=12, color=COLORS["line"]),
             self.tf_name,
             self.dd_mode,
             ft.Row([self.chk_inv, self.chk_lin], spacing=0),
-            ft.IconButton(ft.Icons.CLOSE, icon_size=16, icon_color=COLORS["danger"], on_click=lambda _: self.on_delete_cb(self))
+            ft.IconButton(icon=ft.Icons.CLOSE, icon_size=16, icon_color=COLORS["danger"], on_click=lambda _: self.on_delete_cb(self))
         ], spacing=SPACING["sm"], vertical_alignment="center")
 
     def _handle_change(self, _):
@@ -87,7 +87,7 @@ class ExrMergeFletApp:
         )
         apply_button_sizing(self.btn_export, "primary")
 
-    def main(self, page: ft.Page):
+    async def main(self, page: ft.Page):
         self.page = page
         title = t("merge_exr.header") or "EXR Merger"
         configure_page(page, title, window_profile="table_heavy")
@@ -95,6 +95,7 @@ class ExrMergeFletApp:
         
         self.setup_ui()
         self.auto_create_channels()
+        await reveal_desktop_window(page)
 
     def setup_ui(self):
         header = ft.Container(
@@ -105,7 +106,7 @@ class ExrMergeFletApp:
                         ft.Text("소스 이미지를 EXR 레이어에 매핑한 뒤 멀티레이어 파일 하나로 내보냅니다.", size=12, color=COLORS["text_muted"]),
                     ], expand=True),
                     apply_button_sizing(ft.ElevatedButton(t("merge_exr.add_custom") or "Add Layer", icon=ft.Icons.ADD, on_click=self.on_add_layer), "toolbar"),
-                    ft.IconButton(ft.Icons.DELETE_SWEEP, on_click=self.on_clear_all, tooltip="Clear All")
+                    ft.IconButton(icon=ft.Icons.DELETE_SWEEP, on_click=self.on_clear_all, tooltip="Clear All")
                 ], alignment="spaceBetween"),
                 ft.Container(
                     content=ft.Row([
@@ -287,4 +288,4 @@ class ExrMergeFletApp:
 
 def start_app(initial_files: List[str]):
     app = ExrMergeFletApp(initial_files)
-    ft.app(target=app.main)
+    ft.run(app.main, view=ft.AppView.FLET_APP_HIDDEN)

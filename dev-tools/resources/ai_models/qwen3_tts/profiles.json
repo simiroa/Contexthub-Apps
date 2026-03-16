@@ -28,5 +28,25 @@
     "ref_audio": "",
     "ref_text": "",
     "x_vector_only": false
+  },
+  {
+    "id": "clone_test",
+    "name": "Clone Test",
+    "mode": "voice_clone",
+    "speaker": "Vivian",
+    "instruct": "Speak naturally with clear pacing and a calm, confident tone.",
+    "ref_audio": "C:\\Users\\HG_maison\\Documents\\Contexthub-Apps\\Diagnostics\\generated\\gui_capture_inputs\\qwen3_tts_sample.wav",
+    "ref_text": "sample transcript",
+    "x_vector_only": false
+  },
+  {
+    "id": "bad_clone",
+    "name": "Bad Clone",
+    "mode": "voice_clone",
+    "speaker": "Vivian",
+    "instruct": "",
+    "ref_audio": "",
+    "ref_text": "",
+    "x_vector_only": false
   }
 ]

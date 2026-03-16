@@ -18,6 +18,7 @@ class AudioSeparateService:
         model: str,
         output_format: str,
         mode: str,
+        custom_output_dir: Optional[Path] = None,
         on_progress: Optional[Callable[[int, int, str], None]] = None,
         on_complete: Optional[Callable[[int, int, List[str], Optional[Path]], None]] = None,
         on_log: Optional[Callable[[str], None]] = None
@@ -38,7 +39,7 @@ class AudioSeparateService:
                 on_progress(i, total, path.name)
 
             try:
-                output_dir = path.parent / "Separated_Audio"
+                output_dir = custom_output_dir or (path.parent / "Separated_Audio")
                 if not output_dir.exists():
                     output_dir.mkdir(parents=True, exist_ok=True)
                 

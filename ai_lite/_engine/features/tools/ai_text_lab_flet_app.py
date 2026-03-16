@@ -11,7 +11,10 @@ if str(_engine_root) not in sys.path:
     sys.path.insert(0, str(_engine_root))
 
 from contexthub.ui.flet.tokens import COLORS, RADII, SPACING
+from contexthub.ui.flet.layout import apply_button_sizing, integrated_title_bar
+from contexthub.ui.flet.prefs import load_ui_prefs, save_ui_prefs
 from contexthub.ui.flet.theme import configure_page
+from contexthub.ui.flet.window import reveal_desktop_window
 from utils.i18n import t
 
 from ai_text_lab_service import AITextLabService
@@ -54,13 +57,41 @@ class AITextLabFletApp:
         self.service = AITextLabService()
         self.state = AITextLabState()
         self.cancel_event = threading.Event()
+        self.prefs = load_ui_prefs(
+            "ai_text_lab",
+            {
+                "preset": "🔍 Grammar Fix",
+                "model": "qwen3:8b",
+                "think_mode": "Auto",
+                "auto_clip": False,
+                "pinned": False,
+            },
+        )
+        self.state.current_preset = self.prefs["preset"]
+        self.state.current_model = self.prefs["model"]
+        self.state.think_mode = self.prefs["think_mode"]
+        self.state.is_auto_clip = self.prefs["auto_clip"]
+        self.state.is_pinned = self.prefs["pinned"]
+
+    def persist_prefs(self):
+        save_ui_prefs(
+            "ai_text_lab",
+            {
+                "preset": self.state.current_preset,
+                "model": self.state.current_model,
+                "think_mode": self.state.think_mode,
+                "auto_clip": self.state.is_auto_clip,
+                "pinned": self.state.is_pinned,
+            },
+        )
 
     def run(self):
-        ft.app(target=self.main)
+        ft.run(self.main, view=ft.AppView.FLET_APP_HIDDEN)
 
-    def main(self, page: ft.Page):
+    async def main(self, page: ft.Page):
         self.page = page
         configure_page(page, "AI Text Lab")
+        self.page.window.always_on_top = self.state.is_pinned
         
         # Async Backend Init
         self.update_status("Initializing...")
@@ -68,6 +99,7 @@ class AITextLabFletApp:
         
         self.build_ui()
         self.start_clipboard_poll()
+        await reveal_desktop_window(page)
 
     def init_backend_task(self):
         ollama_models = self.service.list_ollama_models()
@@ -106,6 +138,7 @@ class AITextLabFletApp:
             color=ft.Colors.WHITE,
             style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
         )
+        apply_button_sizing(self.run_btn, "primary")
 
         header_row = ft.Container(
             content=ft.Row([self.preset_dropdown, self.run_btn], spacing=10),
@@ -142,8 +175,8 @@ class AITextLabFletApp:
 
         self.utility_row = ft.Row(
             [
-                ft.IconButton(ft.Icons.BOLT, on_click=self.toggle_auto_clip, tooltip="Auto-Paste"),
-                ft.IconButton(ft.Icons.PUSH_PIN_OUTLINED, on_click=self.toggle_pin, tooltip="Pin on top"),
+                ft.IconButton(ft.Icons.BOLT if self.state.is_auto_clip else ft.Icons.BOLT_OUTLINED, on_click=self.toggle_auto_clip, tooltip="Auto-Paste"),
+                ft.IconButton(ft.Icons.PUSH_PIN if self.state.is_pinned else ft.Icons.PUSH_PIN_OUTLINED, on_click=self.toggle_pin, tooltip="Pin on top"),
             ],
             spacing=0,
         )
@@ -160,6 +193,8 @@ class AITextLabFletApp:
         self.input_box = ft.TextField(
             multiline=True,
             expand=True,
+            min_lines=4,
+            max_lines=8,
             hint_text="Type or paste text here...",
             on_change=self.on_input_change,
             bgcolor=COLORS["surface_alt"],
@@ -169,7 +204,8 @@ class AITextLabFletApp:
 
         self.output_box = ft.TextField(
             multiline=True,
-            expand=2,
+            expand=True,
+            min_lines=10,
             read_only=True,
             bgcolor=COLORS["surface_alt"],
             border_color=ft.Colors.with_opacity(0.1, COLORS["accent"]),
@@ -180,18 +216,71 @@ class AITextLabFletApp:
         self.status_bar = ft.Text(self.state.status_msg, size=11, color=COLORS["text_soft"])
 
         self.page.add(
-            header_row,
-            ft.Container(content=settings_row, padding=ft.padding.only(left=5, right=5)),
-            ft.Column([
-                ft.Text("INPUT", size=10, weight="bold", color=COLORS["text_soft"]),
-                self.input_box,
-                ft.Row([
-                    ft.Text("RESULT", size=10, weight="bold", color=COLORS["accent"]),
-                    ft.ProgressBar(visible=False, width=100, color=COLORS["accent"]),
-                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                self.output_box,
-                self.status_bar,
-            ], expand=True, spacing=5)
+            ft.Container(
+                expand=True,
+                bgcolor=COLORS["app_bg"],
+                content=ft.Column(
+                    expand=True,
+                    spacing=SPACING["sm"],
+                    controls=[
+                        integrated_title_bar(self.page, "AI Text Lab"),
+                        ft.Container(
+                            expand=True,
+                            padding=ft.padding.symmetric(horizontal=SPACING["md"], vertical=SPACING["md"]),
+                            content=ft.Column(
+                                expand=True,
+                                spacing=SPACING["sm"],
+                                controls=[
+                                    header_row,
+                                    ft.Container(content=settings_row, padding=ft.padding.only(left=5, right=5)),
+                                    ft.Column(
+                                        [
+                                            ft.Container(
+                                                bgcolor=COLORS["surface"],
+                                                border=ft.border.all(1, COLORS["line"]),
+                                                border_radius=RADII["md"],
+                                                padding=SPACING["sm"],
+                                                content=ft.Column(
+                                                    spacing=SPACING["xs"],
+                                                    controls=[
+                                                        ft.Text("INPUT", size=10, weight="bold", color=COLORS["text_soft"]),
+                                                        ft.Row([self.input_box]),
+                                                    ],
+                                                ),
+                                            ),
+                                            ft.Container(
+                                                expand=True,
+                                                bgcolor=COLORS["surface"],
+                                                border=ft.border.all(1, COLORS["line"]),
+                                                border_radius=RADII["md"],
+                                                padding=SPACING["sm"],
+                                                content=ft.Column(
+                                                    expand=True,
+                                                    spacing=SPACING["xs"],
+                                                    controls=[
+                                                        ft.Row([
+                                                            ft.Text("RESULT", size=10, weight="bold", color=COLORS["accent"]),
+                                                            ft.ProgressBar(visible=False, width=100, color=COLORS["accent"]),
+                                                        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                                                        self.output_box,
+                                                    ],
+                                                ),
+                                            ),
+                                            ft.Container(
+                                                padding=ft.padding.symmetric(horizontal=SPACING["xs"]),
+                                                content=self.status_bar,
+                                            ),
+                                        ],
+                                        expand=True,
+                                        horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+                                        spacing=SPACING["sm"],
+                                    ),
+                                ],
+                            ),
+                        ),
+                    ],
+                ),
+            )
         )
 
     # --- Handlers ---
@@ -202,6 +291,7 @@ class AITextLabFletApp:
             self.page.update()
             return
         self.state.current_preset = choice
+        self.persist_prefs()
         self.trigger_process_debounce()
 
     def on_run_click(self, e):
@@ -209,11 +299,13 @@ class AITextLabFletApp:
 
     def on_model_change(self, e):
         self.state.current_model = self.model_dropdown.value
+        self.persist_prefs()
         self.update_status(f"Model changed to {self.state.current_model}")
         threading.Thread(target=lambda: self.service.warmup_model(self.state.current_model), daemon=True).start()
 
     def on_think_toggle_change(self, e):
         self.state.think_mode = self.think_toggle.value
+        self.persist_prefs()
         self.page.update()
 
     def on_input_change(self, e):
@@ -284,6 +376,7 @@ class AITextLabFletApp:
     def toggle_auto_clip(self, e):
         self.state.is_auto_clip = not self.state.is_auto_clip
         e.control.icon = ft.Icons.BOLT if self.state.is_auto_clip else ft.Icons.BOLT_OUTLINED
+        self.persist_prefs()
         self.update_status(f"Auto-Paste: {'ON' if self.state.is_auto_clip else 'OFF'}")
         self.page.update()
 
@@ -291,6 +384,7 @@ class AITextLabFletApp:
         self.state.is_pinned = not self.state.is_pinned
         self.page.window.always_on_top = self.state.is_pinned
         e.control.icon = ft.Icons.PUSH_PIN if self.state.is_pinned else ft.Icons.PUSH_PIN_OUTLINED
+        self.persist_prefs()
         self.page.update()
 
     def on_copy_click(self, e):

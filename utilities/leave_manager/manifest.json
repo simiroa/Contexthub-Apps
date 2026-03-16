@@ -46,7 +46,7 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "customtkinter",
+    "framework": "pyside6",
     "shared_theme": "contexthub"
   }
 }
