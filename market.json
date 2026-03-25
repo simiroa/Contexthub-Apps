@@ -20,8 +20,8 @@
     {
         "id": "pdf_split",
         "name": "PDF Split",
-        "description": "Legacy Document tool.",
-        "version": "1.0.0",
+        "description": "Confirm selected PDFs in a compact Qt shell, choose a simple output format, then split in a console flow.",
+        "version": "1.1.0",
         "category": "document",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/pdf_split/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/pdf_split.zip"
@@ -38,8 +38,8 @@
     {
         "id": "normalize_volume",
         "name": "Normalize Volume",
-        "description": "Legacy Audio tool.",
-        "version": "1.0.0",
+        "description": "Confirm selected audio files in a compact Qt shell, then normalize loudness in a console flow.",
+        "version": "1.1.0",
         "category": "audio",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/normalize_volume/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normalize_volume.zip"
@@ -47,8 +47,8 @@
     {
         "id": "extract_voice",
         "name": "Extract Voice",
-        "description": "Legacy Audio tool.",
-        "version": "1.0.0",
+        "description": "Confirm selected audio files in a compact Qt shell, then extract voice stems in a console flow.",
+        "version": "1.1.0",
         "category": "audio",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_voice/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_voice.zip"
@@ -65,8 +65,8 @@
     {
         "id": "extract_bgm",
         "name": "Extract BGM",
-        "description": "Legacy Audio tool.",
-        "version": "1.0.0",
+        "description": "Confirm selected audio files in a compact Qt shell, then extract BGM stems in a console flow.",
+        "version": "1.1.0",
         "category": "audio",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_bgm/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_bgm.zip"
@@ -92,8 +92,8 @@
     {
         "id": "versus_up",
         "name": "VersusUp",
-        "description": "Product comparison and decision history management tool.",
-        "version": "1.0.0",
+        "description": "Qt-based product decision support system with weighted scoring and Ollama Vision review.",
+        "version": "2.0.0",
         "category": "ai_lite",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai_lite/versus_up/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/versus_up.zip"
@@ -110,8 +110,8 @@
     {
         "id": "interpolate_30fps",
         "name": "Interpolate 30fps",
-        "description": "Legacy Video tool.",
-        "version": "1.0.0",
+        "description": "Confirm selected videos in a compact Qt shell, then interpolate to 30fps in a console flow.",
+        "version": "1.1.0",
         "category": "video",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/interpolate_30fps/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/interpolate_30fps.zip"
@@ -119,8 +119,8 @@
     {
         "id": "extract_audio",
         "name": "Extract Audio",
-        "description": "Legacy Video tool.",
-        "version": "1.0.0",
+        "description": "Confirm selected videos in a compact Qt shell, then extract audio in a console flow.",
+        "version": "1.1.0",
         "category": "video",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/extract_audio/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_audio.zip"
@@ -128,8 +128,8 @@
     {
         "id": "remove_audio",
         "name": "Remove Audio",
-        "description": "Legacy Video tool.",
-        "version": "1.0.0",
+        "description": "Confirm selected videos in a compact Qt shell, then remove audio in a console flow.",
+        "version": "1.1.0",
         "category": "video",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/remove_audio/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/remove_audio.zip"
@@ -137,7 +137,7 @@
     {
         "id": "video_convert",
         "name": "Video Convert",
-        "description": "Legacy Video tool.",
+        "description": "Qt video conversion shell with FFmpeg presets and batch queue controls.",
         "version": "1.0.0",
         "category": "video",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/video_convert/icon.png",
@@ -209,8 +209,8 @@
     {
         "id": "normal_flip_green",
         "name": "Normal Flip Green",
-        "description": "Legacy Image tool.",
-        "version": "1.0.0",
+        "description": "Confirm selected images in a compact Qt shell, then flip green channels in a console flow.",
+        "version": "1.1.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/normal_flip_green/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normal_flip_green.zip"
@@ -236,8 +236,8 @@
     {
         "id": "split_exr",
         "name": "Split EXR",
-        "description": "Legacy Image tool.",
-        "version": "1.0.0",
+        "description": "Confirm selected EXR files in a compact Qt shell, then split layers in a console flow.",
+        "version": "1.1.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/split_exr/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/split_exr.zip"
@@ -279,6 +279,15 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_convert.zip"
     },
     {
+        "id": "marigold_pbr",
+        "name": "Marigold PBR",
+        "description": "Generate PBR maps such as albedo, normal, and depth from a single image.",
+        "version": "2.1.0",
+        "category": "ai",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/marigold_pbr/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/marigold_pbr.zip"
+    },
+    {
         "id": "esrgan_upscale",
         "name": "ESRGAN Upscale",
         "description": "Legacy AI tool.",
@@ -298,8 +307,8 @@
     },
     {
         "id": "whisper_subtitle",
-        "name": "Whisper Subtitle AI",
-        "description": "Legacy AI tool.",
+        "name": "Whisper Subtitle AI (Qt)",
+        "description": "Queue-based subtitle generation with editable SRT/VTT/TXT/JSON outputs and per-asset session recovery.",
         "version": "1.0.0",
         "category": "ai",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/whisper_subtitle/icon.png",
