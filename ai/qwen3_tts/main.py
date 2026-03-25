@@ -9,13 +9,19 @@ LEGACY_SCOPE = ""
 APP_ROOT = Path(__file__).resolve().parent
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
 REPO_ROOT = APP_ROOT.parents[1]
-SHARED_ROOT = REPO_ROOT / "dev-tools" / "runtime" / "Shared"
-SHARED_PACKAGE_ROOT = SHARED_ROOT / "contexthub"
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from runtime_bootstrap import resolve_shared_runtime
+
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 
 os.chdir(LEGACY_ROOT)
 for entry in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
-    if entry.exists() and str(entry) not in sys.path:
-        sys.path.insert(0, str(entry))
+    if entry.exists():
+        entry_str = str(entry)
+        if entry_str not in sys.path:
+            sys.path.insert(0, entry_str)
 
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)

@@ -1,4 +1,4 @@
-"""Document conversion service for the Flet UI."""
+"""Document conversion service for the Qt document conversion UI."""
 
 from __future__ import annotations
 

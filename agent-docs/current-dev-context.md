@@ -12,14 +12,14 @@ Flet 작업은 이 문서만 단독으로 읽지 말고, 먼저 `agent-docs/flet
 
 - Python GUI 공통 규격 정리가 진행된 상태다.
 - Qt 공용 규격은 `dev-tools/runtime/Shared/contexthub/ui/qt/` 기준으로 승격되었다.
-- Qt 공용 규칙은 이제 `comfyui`뿐 아니라 `video/video_convert`까지 실제 적용 사례가 생겼다.
+- Qt 공용 규칙은 `comfyui`, `video/video_convert`, `document/doc_scan`, `utilities/leave_manager` 같은 앱에 실제 적용 사례가 생겼다.
 - shared Qt manual dialog는 markdown viewer 기준으로 재디자인되었고, 표/목록/코드블록/링크 스타일을 포함한다.
-- `creative_studio_advanced`, `creative_studio_z`는 최근 compact form 규칙에 맞게 `QGroupBox title` 기반 파라미터 카드에서 내부 eyebrow 라벨 구조로 정리되었다.
-- shared `ExportRunPanel`은 최근 `collapsed action bar / expanded detail panel` 규격으로 정리되었다.
-- `prompt_master`, `rigreader_vectorizer`, `doc_scan`는 최근 세션에서 직접 수정되었다.
-- `ai` 카테고리 일부는 모델 카드 잘림과 하단 액션 버튼 미노출 문제를 수정했다.
-- `ai/qwen3_tts` 초안 앱이 추가되었고, 실제 RTX 생성 검증까지 끝난 상태다.
+- `creative_studio_advanced`, `creative_studio_z`는 compact form 규칙에 맞게 `QGroupBox title` 기반 파라미터 카드에서 내부 eyebrow 라벨 구조로 정리되었다.
+- shared `ExportRunPanel`은 `collapsed action bar / expanded detail panel` 규격으로 정리되었다.
+- `image_compare`, `image_convert`, `resize_power_of_2`, `simple_normal_roughness`, `texture_packer_orm`는 Qt 진입점으로 정리되었다.
+- `video_audio`, `video_convert`, `video_interp`의 Flet 전용 구현은 제거되었고, Qt/console 경로만 남았다.
 - 공유 런타임 변경분은 로컬 미러뿐 아니라 원본 `C:\Users\HG\Documents\Contexthub\Runtimes\Shared`에도 반영했다.
+- 앱별 하드코딩 경로 문제를 정리하기 위해 `runtime_bootstrap.py`를 저장소 루트에 추가했다.
 
 ## 이미 반영된 핵심 규칙
 
@@ -28,6 +28,7 @@ Flet 작업은 이 문서만 단독으로 읽지 말고, 먼저 `agent-docs/flet
 - Python GUI는 가능하면 `BaseWindow`를 사용한다.
 - Qt 공용 shell/panel은 `dev-tools/runtime/Shared/contexthub/ui/qt/`를 우선 사용한다.
 - Qt 범용 규칙은 `agent-docs/qt-shared-runtime-guidelines.md`를 함께 본다.
+- 앱의 shared/runtime 경로는 `runtime_bootstrap.resolve_shared_runtime()`로 계산한다.
 - locale 로딩은 `CTX_APP_ROOT` 기준 체인을 따른다.
 - 푸터 액션 버튼과 진행 바는 가능하면 `footer_frame`에 둔다.
 - 공통 버튼/카드 색상은 `gui_lib.py` 상수를 우선한다.
@@ -42,7 +43,8 @@ Flet 작업은 이 문서만 단독으로 읽지 말고, 먼저 `agent-docs/flet
 
 ### 3. 로컬 테스트
 
-- 공유 런타임 테스트 기준 경로: `dev-tools/runtime/Shared`
+- 공유 런타임 테스트 기준 경로: `CTX_RUNTIME_ROOT` 또는 `CTX_DEV_RUNTIME_ROOT`
+- 개발 미러 기준 경로: `dev-tools/runtime/Shared`
 - Qt shared shell/panel 기준 경로: `dev-tools/runtime/Shared/contexthub/ui/qt/`
 - GUI 실행 도구: `dev-tools/run-app-local.ps1`
 - GUI 캡처 도구: `dev-tools/capture-python-gui-apps.ps1`

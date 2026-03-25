@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import List, Optional, Tuple, Dict
 import numpy as np
 from PIL import Image
-import flet as ft
 
 # Import core logic from existing compare_core
 import features.image.compare_core as compare_core

@@ -49,7 +49,7 @@ except Exception:
 
 class VectorizerService:
     def __init__(self, state: VectorizerState | None = None):
-        self._temp_dir = Path(tempfile.mkdtemp(prefix="vectorizer_flet_"))
+        self._temp_dir = Path(tempfile.mkdtemp(prefix="vectorizer_qt_"))
         self.state = state or VectorizerState()
 
     def get_ui_definition(self) -> List[Dict]:

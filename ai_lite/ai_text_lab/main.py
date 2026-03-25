@@ -4,37 +4,25 @@ from pathlib import Path
 
 APP_ROOT = Path(__file__).resolve().parent
 
-def _setup_paths():
-    REPO_ROOT = APP_ROOT.resolve().parents[1]
-    _engine_root = APP_ROOT.parent / "_engine"
-    
-    # Add REPO_ROOT for runtime_bootstrap
-    if str(REPO_ROOT) not in sys.path:
-        sys.path.insert(0, str(REPO_ROOT))
-    
-    from runtime_bootstrap import resolve_shared_runtime
-    SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
-    
-    # Feature specific path (service/state)
-    feature_dir = _engine_root / "features" / "tools"
-    
-    # Critical Paths for App/Shared
-    # We insert SHARED_PACKAGE_ROOT first so 'core', 'utils' can be found as top-level
-    new_paths = [
-        str(feature_dir),
-        str(_engine_root),
-        str(SHARED_PACKAGE_ROOT),
-        str(SHARED_ROOT),
-    ]
-    
-    for p in new_paths:
-        if os.path.exists(p) and p not in sys.path:
-            sys.path.insert(0, p)
-            
-    os.environ.setdefault("CTX_APP_ROOT", str(APP_ROOT))
+REPO_ROOT = APP_ROOT.parents[1]
+LEGACY_ROOT = APP_ROOT.parent / "_engine"
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from runtime_bootstrap import resolve_shared_runtime
+
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
+FEATURE_DIR = LEGACY_ROOT / "features" / "tools"
+for path in (LEGACY_ROOT, FEATURE_DIR, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    if path.exists():
+        path_str = str(path)
+        if path_str not in sys.path:
+            sys.path.insert(0, path_str)
+
+if not os.environ.get("CTX_APP_ROOT"):
+    os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
 def main():
-    _setup_paths()
     # Now import app components
     try:
         from ai_text_lab_qt_app import start_app

@@ -29,9 +29,19 @@
 
 - `APP_ROOT`를 현재 앱 폴더로 잡는다.
 - `LEGACY_ROOT`를 같은 카테고리의 `_engine`으로 잡는다.
+- `runtime_bootstrap.resolve_shared_runtime()`로 shared/runtime 경로를 통일해서 계산한다.
 - `CTX_APP_ROOT` 환경변수를 설정한다.
 - 입력 파일을 CLI 인자, 헤드리스 입력, 파일 선택 대화상자에서 수집한다.
 - `_engine/features/...` 아래 실제 GUI/기능 스크립트를 `runpy.run_path()`로 실행한다.
+
+경로 계약은 앱별 하드코딩보다 환경변수와 공통 bootstrap을 우선한다.
+
+- `CTX_APP_ROOT`: 현재 앱 루트
+- `CTX_RUNTIME_ROOT`: 배포된 Contexthub Runtime 루트
+- `CTX_DEV_RUNTIME_ROOT`: 개발용 로컬 runtime 미러 루트
+- `CTX_SHARED_RUNTIME_ROOT`: shared runtime를 직접 주입해야 할 때 사용하는 선택 변수
+
+앱 코드는 위 값을 직접 조합하지 말고 `runtime_bootstrap.py` 같은 공통 헬퍼를 통해 해석한다.
 
 이 구조는 `image/image_convert/main.py`, `utilities/youtube_downloader/main.py` 같은 앱에서 확인된다.
 

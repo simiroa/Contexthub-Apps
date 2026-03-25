@@ -3,26 +3,23 @@ import sys
 from pathlib import Path
 
 APP_ROOT = Path(__file__).resolve().parent
-REPO_ROOT = APP_ROOT.resolve().parents[1]
-# Add category engine to sys.path
+REPO_ROOT = APP_ROOT.parents[1]
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
-if str(LEGACY_ROOT) not in sys.path:
-    sys.path.insert(0, str(LEGACY_ROOT))
-
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-# Ensure Shared runtime is in path and takes precedence for internal shell imports
 from runtime_bootstrap import resolve_shared_runtime
-SHARED_PATH, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 
-# Prepend in reverse order to ensure contexthub root is at the very top
+os.chdir(LEGACY_ROOT)
+SHARED_PATH, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 for path in (SHARED_PATH, SHARED_PACKAGE_ROOT):
-    path_str = str(path)
     if path.exists():
-        if path_str in sys.path:
-            sys.path.remove(path_str)
-        sys.path.insert(0, path_str)
+        path_str = str(path)
+        if path_str not in sys.path:
+            sys.path.insert(0, path_str)
+
+if LEGACY_ROOT.exists() and str(LEGACY_ROOT) not in sys.path:
+    sys.path.insert(0, str(LEGACY_ROOT))
 
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
@@ -43,7 +40,7 @@ def _capture_mode():
 def main():
     if _capture_mode():
         return
-    
+
     from features.leave_manager.leave_manager_qt_app import start_app
     start_app([])
 
