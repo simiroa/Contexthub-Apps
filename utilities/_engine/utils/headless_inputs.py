@@ -21,7 +21,6 @@ IMAGE_IDS = {
 }
 
 AUDIO_IDS = {
-    "audio_convert",
     "extract_bgm",
     "extract_voice",
     "normalize_volume",
@@ -61,9 +60,6 @@ MESH_IDS = {
 
 DIR_IDS = {
     "batch_rename",
-    "clean_empty_folders",
-    "create_symlink",
-    "move_to_new_folder",
     "unwrap_folder",
 }
 

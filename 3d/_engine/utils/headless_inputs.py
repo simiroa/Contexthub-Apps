@@ -61,9 +61,6 @@ MESH_IDS = {
 
 DIR_IDS = {
     "batch_rename",
-    "clean_empty_folders",
-    "create_symlink",
-    "move_to_new_folder",
     "unwrap_folder",
 }
 

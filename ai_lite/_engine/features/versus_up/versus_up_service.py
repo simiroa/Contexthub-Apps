@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-import base64
-import hashlib
 import json
 import os
 import uuid
-from io import BytesIO
 from pathlib import Path
 from typing import Any
 
-import requests
-from PIL import Image
-
+from features.versus_up.versus_up_preset_store import VersusUpPresetStore
+from features.versus_up.versus_up_project_store import VersusUpProjectStore
+from features.versus_up.versus_up_scoring_service import VersusUpScoringService, safe_float
+from features.versus_up.versus_up_settings_service import VersusUpSettingsService
 from features.versus_up.versus_up_state import (
     CriterionRecord,
     ProductRecord,
@@ -21,6 +19,7 @@ from features.versus_up.versus_up_state import (
     VisionProposal,
     utc_now_iso,
 )
+from features.versus_up.versus_up_vision_service import VersusUpVisionService
 
 
 PROJECT_EXTENSION = ".versusup.json"
@@ -65,13 +64,6 @@ def _new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
-def _safe_float(value: str) -> float | None:
-    try:
-        return float(str(value).strip())
-    except Exception:
-        return None
-
-
 class VersusUpService:
     def __init__(self) -> None:
         self.state = VersusUpState()
@@ -81,6 +73,19 @@ class VersusUpService:
         self.recent_file = self.app_data_dir / "recent_projects.json"
         self.presets_file = self.app_data_dir / "presets.json"
         self.settings_file = self.app_data_dir / "settings.json"
+        self._settings_service = VersusUpSettingsService()
+        self._project_store = VersusUpProjectStore()
+        self._preset_store = VersusUpPresetStore()
+        self._scoring_service = VersusUpScoringService()
+        self._vision_service = VersusUpVisionService(
+            lambda: self.state,
+            self.criterion_by_id,
+            self.add_criterion,
+            self.set_cell_value,
+            self.recalculate_scores,
+            self.autosave_project,
+            self.infer_value_type,
+        )
         self._presets_cache: list[dict[str, Any]] = []
         self.load_settings()
         self._load_recent_projects()
@@ -88,65 +93,22 @@ class VersusUpService:
         self.create_default_project()
 
     def load_settings(self) -> None:
-        if not self.settings_file.exists():
-            return
-        try:
-            data = json.loads(self.settings_file.read_text(encoding="utf-8"))
-        except Exception:
-            return
-        self.state.ollama_host = str(data.get("ollama_host", self.state.ollama_host))
-        self.state.vision_model = str(data.get("vision_model", self.state.vision_model))
-        self.state.classifier_model = str(data.get("classifier_model", self.state.classifier_model))
-        output_dir = str(data.get("output_dir", "")).strip()
-        self.state.output_options.output_dir = Path(output_dir) if output_dir else None
-        self.state.output_options.file_prefix = str(data.get("file_prefix", self.state.output_options.file_prefix))
+        self._settings_service.load_settings(self.settings_file, self.state)
 
     def save_settings(self) -> None:
-        payload = {
-            "ollama_host": self.state.ollama_host,
-            "vision_model": self.state.vision_model,
-            "classifier_model": self.state.classifier_model,
-            "output_dir": str(self.state.output_options.output_dir) if self.state.output_options.output_dir else "",
-            "file_prefix": self.state.output_options.file_prefix,
-        }
-        self.settings_file.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        self._settings_service.save_settings(self.settings_file, self.state)
 
     def _load_recent_projects(self) -> None:
-        if not self.recent_file.exists():
-            self.state.recent_projects = []
-            return
-        try:
-            data = json.loads(self.recent_file.read_text(encoding="utf-8"))
-            self.state.recent_projects = [str(item) for item in data.get("recent_projects", []) if str(item)]
-        except Exception:
-            self.state.recent_projects = []
+        self.state.recent_projects = self._project_store.load_recent_projects(self.recent_file)
 
     def _save_recent_projects(self) -> None:
-        unique = []
-        for path in self.state.recent_projects:
-            if path not in unique:
-                unique.append(path)
-        self.state.recent_projects = unique[:12]
-        self.recent_file.write_text(
-            json.dumps({"recent_projects": self.state.recent_projects}, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
+        self.state.recent_projects = self._project_store.save_recent_projects(self.recent_file, self.state.recent_projects)
 
     def _load_presets(self) -> None:
-        if not self.presets_file.exists():
-            self._presets_cache = []
-            return
-        try:
-            payload = json.loads(self.presets_file.read_text(encoding="utf-8"))
-            self._presets_cache = list(payload.get("presets", []) or [])
-        except Exception:
-            self._presets_cache = []
+        self._presets_cache = self._preset_store.load(self.presets_file)
 
     def _save_presets(self) -> None:
-        self.presets_file.write_text(
-            json.dumps({"presets": self._presets_cache}, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
+        self._preset_store.save(self.presets_file, self._presets_cache)
 
     def touch_updated_at(self) -> None:
         self.state.project_meta.updated_at = utc_now_iso()
@@ -241,29 +203,7 @@ class VersusUpService:
         }
 
     def apply_project_payload(self, payload: dict[str, Any], project_path: Path | None = None) -> None:
-        self.state.schema_version = str(payload.get("schema_version", "2.0"))
-        self.state.project_meta = ProjectMeta.from_dict(dict(payload.get("project", {}) or {}))
-        self.state.products = [ProductRecord.from_dict(item) for item in list(payload.get("products", []) or [])]
-        self.state.criteria = [CriterionRecord.from_dict(item) for item in list(payload.get("criteria", []) or [])]
-        self.state.cells = {}
-        for cell in list(payload.get("cells", []) or []):
-            product_id = str(cell.get("product_id", ""))
-            criterion_id = str(cell.get("criterion_id", ""))
-            if product_id and criterion_id:
-                self.state.cells[(product_id, criterion_id)] = str(cell.get("value", ""))
-        vision_cache = dict(payload.get("vision_cache", {}) or {})
-        for product in self.state.products:
-            if product.id in vision_cache:
-                product.vision_cache = VisionCache.from_dict(dict(vision_cache[product.id] or {}))
-                product.vision_status = product.vision_cache.status
-                product.vision_summary = product.vision_cache.summary
-        settings = dict(payload.get("settings", {}) or {})
-        self.state.ollama_host = str(settings.get("ollama_host", self.state.ollama_host))
-        self.state.vision_model = str(settings.get("vision_model", self.state.vision_model))
-        self.state.classifier_model = str(settings.get("classifier_model", self.state.classifier_model))
-        self.state.project_path = project_path
-        self.state.selected_product_id = self.state.products[0].id if self.state.products else None
-        self.state.selected_criterion_id = self.state.criteria[0].id if self.state.criteria else None
+        self._project_store.apply_project_payload(self.state, payload, project_path)
         self.recalculate_scores()
         self.state.status_text = f"Loaded {self.state.project_meta.name}"
 
@@ -699,31 +639,7 @@ class VersusUpService:
             self.state.selected_product_id = self.state.products[column].id
 
     def recalculate_scores(self) -> None:
-        scores = {product.id: 0.0 for product in self.state.products}
-        reasons = {product.id: [] for product in self.state.products}
-        for criterion in self.state.criteria:
-            if criterion.type != "number" or not criterion.include_in_score:
-                continue
-            numeric_values: list[tuple[str, float]] = []
-            for product in self.state.products:
-                value = _safe_float(self.cell_value(product.id, criterion.id))
-                if value is not None:
-                    numeric_values.append((product.id, value))
-            if not numeric_values:
-                continue
-            values = [item[1] for item in numeric_values]
-            min_value = min(values)
-            max_value = max(values)
-            span = max_value - min_value
-            for product_id, value in numeric_values:
-                normalized = 1.0 if span == 0 else (value - min_value) / span
-                if criterion.direction == "low":
-                    normalized = 1.0 - normalized
-                weighted = normalized * criterion.weight
-                scores[product_id] += weighted
-                reasons[product_id].append(f"{criterion.label}: {value}{criterion.unit} -> {weighted:.2f}")
-        self.state.scores = scores
-        self.state.score_reasons = reasons
+        self._scoring_service.recalculate_scores(self.state, self.cell_value)
 
     def best_product_id(self) -> str | None:
         if not self.state.products:
@@ -731,35 +647,13 @@ class VersusUpService:
         return max(self.state.products, key=lambda product: self.state.scores.get(product.id, 0.0)).id
 
     def infer_value_type(self, value: str) -> str:
-        return "number" if _safe_float(value) is not None else "text"
+        return "number" if safe_float(value) is not None else "text"
 
     def analyze_product_image(self, product_id: str) -> VisionCache:
         product = self.product_by_id(product_id)
         if product is None:
             raise ValueError("Unknown product")
-        image_path = Path(product.image_path)
-        if not image_path.exists():
-            raise FileNotFoundError("Product image is missing")
-        image_hash = self._hash_file(image_path)
-        if product.vision_cache.image_hash == image_hash and product.vision_cache.status == "ready":
-            return product.vision_cache
-
-        product.vision_status = "running"
-        product.vision_cache.status = "running"
-        extracted = self._call_vision_model(image_path)
-        proposals = self._classify_extracted_items(extracted)
-        cache = VisionCache(
-            image_hash=image_hash,
-            status="ready",
-            summary=str(extracted.get("summary", "")),
-            raw_text=str(extracted.get("raw_text", "")),
-            extracted_items=list(extracted.get("items", []) or []),
-            proposals=proposals,
-            analyzed_at=utc_now_iso(),
-        )
-        product.vision_cache = cache
-        product.vision_status = cache.status
-        product.vision_summary = cache.summary
+        cache = self._vision_service.analyze_product_image(product, self.state.criteria)
         self.touch_updated_at()
         return cache
 
@@ -767,174 +661,11 @@ class VersusUpService:
         product = self.product_by_id(product_id)
         if product is None:
             return
-        product.vision_cache.status = "error"
-        product.vision_cache.error = message
-        product.vision_cache.summary = ""
-        product.vision_status = "error"
-        product.vision_summary = ""
-
-    def _hash_file(self, path: Path) -> str:
-        digest = hashlib.sha256()
-        with path.open("rb") as handle:
-            while True:
-                chunk = handle.read(1024 * 1024)
-                if not chunk:
-                    break
-                digest.update(chunk)
-        return digest.hexdigest()
-
-    def _prepare_image(self, image_path: Path, max_size: tuple[int, int] = (1400, 1400)) -> str:
-        with Image.open(image_path) as img:
-            img.thumbnail(max_size)
-            if img.mode != "RGB":
-                img = img.convert("RGB")
-            buffer = BytesIO()
-            img.save(buffer, format="JPEG", quality=88)
-            return base64.b64encode(buffer.getvalue()).decode("utf-8")
-
-    def _post_ollama(self, payload: dict[str, Any], timeout: int = 90) -> dict[str, Any]:
-        response = requests.post(f"{self.state.ollama_host}/api/generate", json=payload, timeout=timeout)
-        response.raise_for_status()
-        return response.json()
-
-    def _extract_json(self, text: str) -> dict[str, Any]:
-        cleaned = text.strip()
-        if "```" in cleaned:
-            parts = cleaned.split("```")
-            for part in parts:
-                candidate = part.strip()
-                if candidate.startswith("json"):
-                    candidate = candidate[4:].strip()
-                if candidate.startswith("{") and candidate.endswith("}"):
-                    cleaned = candidate
-                    break
-        start = cleaned.find("{")
-        end = cleaned.rfind("}")
-        if start >= 0 and end >= start:
-            cleaned = cleaned[start : end + 1]
-        return json.loads(cleaned)
-
-    def _call_vision_model(self, image_path: Path) -> dict[str, Any]:
-        prompt = (
-            "You are analyzing a shopping product detail screenshot. "
-            "Extract OCR text and candidate specifications. "
-            "Return JSON only with keys summary, raw_text, items. "
-            "Each item must include name, value, unit, reason."
-        )
-        payload = {
-            "model": self.state.vision_model,
-            "prompt": prompt,
-            "images": [self._prepare_image(image_path)],
-            "stream": False,
-            "format": "json",
-        }
-        result = self._post_ollama(payload)
-        output = self._extract_json(str(result.get("response", "{}")))
-        if "items" not in output:
-            output["items"] = []
-        return output
-
-    def _classify_extracted_items(self, extracted: dict[str, Any]) -> list[VisionProposal]:
-        criteria_payload = [
-            {
-                "id": criterion.id,
-                "label": criterion.label,
-                "type": criterion.type,
-                "unit": criterion.unit,
-            }
-            for criterion in self.state.criteria
-        ]
-        prompt = (
-            "Map extracted shopping specs to existing comparison criteria. "
-            "Return JSON only with key proposals. "
-            "Each proposal must include criterion_id, criterion_name, value, unit, confidence, reason, action. "
-            "Use action replace for existing criteria and add for new criteria. "
-            "If no good match exists, set criterion_id to null and action to add."
-        )
-        payload = {
-            "model": self.state.classifier_model or self.state.vision_model,
-            "prompt": json.dumps(
-                {
-                    "instruction": prompt,
-                    "criteria": criteria_payload,
-                    "extracted_items": extracted.get("items", []),
-                },
-                ensure_ascii=False,
-            ),
-            "stream": False,
-            "format": "json",
-        }
-        try:
-            result = self._post_ollama(payload, timeout=60)
-            output = self._extract_json(str(result.get("response", "{}")))
-            proposals = [VisionProposal.from_dict(item) for item in list(output.get("proposals", []) or [])]
-            if proposals:
-                return proposals
-        except Exception:
-            pass
-
-        proposals: list[VisionProposal] = []
-        for item in list(extracted.get("items", []) or []):
-            name = str(item.get("name", "")).strip()
-            value = str(item.get("value", "")).strip()
-            unit = str(item.get("unit", "")).strip()
-            best = self._match_existing_criterion(name, unit)
-            proposals.append(
-                VisionProposal(
-                    criterion_id=best.id if best else None,
-                    criterion_name=best.label if best else name,
-                    value=value,
-                    unit=unit,
-                    confidence=0.55 if best else 0.35,
-                    reason=str(item.get("reason", "Fallback keyword matching")),
-                    action="replace" if best else "add",
-                )
-            )
-        return proposals
-
-    def _match_existing_criterion(self, name: str, unit: str) -> CriterionRecord | None:
-        lowered = name.lower()
-        best: CriterionRecord | None = None
-        best_score = 0
-        for criterion in self.state.criteria:
-            score = 0
-            label = criterion.label.lower()
-            if lowered == label:
-                score += 4
-            if lowered in label or label in lowered:
-                score += 2
-            if unit and criterion.unit and unit.lower() == criterion.unit.lower():
-                score += 2
-            if score > best_score:
-                best = criterion
-                best_score = score
-        return best
+        self._vision_service.set_vision_error(product, message)
 
     def apply_vision_proposals(self, product_id: str, proposals: list[VisionProposal]) -> list[str]:
-        applied: list[str] = []
-        for proposal in proposals:
-            if not proposal.approved:
-                continue
-            criterion_id = proposal.criterion_id
-            if proposal.action == "add" or criterion_id is None or self.criterion_by_id(criterion_id) is None:
-                created = self.add_criterion(
-                    proposal.criterion_name,
-                    description="Added from Vision proposal.",
-                    data_type=self.infer_value_type(proposal.value),
-                    unit=proposal.unit,
-                    include_in_score=self.infer_value_type(proposal.value) == "number",
-                )
-                criterion_id = created.id
-            self.set_cell_value(product_id, criterion_id, proposal.value)
-            applied.append(f"{proposal.criterion_name}={proposal.value}{proposal.unit}")
-            proposal.approved = True
         product = self.product_by_id(product_id)
-        if product:
-            product.vision_cache.proposals = proposals
-            product.vision_status = "ready"
-        self.recalculate_scores()
-        self.autosave_project()
-        return applied
+        return self._vision_service.apply_vision_proposals(product_id, product, proposals)
 
     def build_runtime_status(self) -> tuple[str, str]:
         best_id = self.best_product_id()

@@ -156,9 +156,9 @@ def build_handler_map():
 
         # === AI ===
         "whisper_subtitle": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "whisper_subtitle")), *([str(i) for i in s] if s else [str(p)])]),
-        "esrgan_upscale": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "esrgan_upscale")), *([str(i) for i in s] if s else [str(p)])]),
-        "rmbg_background": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "rmbg_background")), *([str(i) for i in s] if s else [str(p)])]),
-        "marigold_pbr": _lazy("features.ai.marigold_gui", "run_marigold_gui"),
+        "esrgan_upscale": lambda p, s=None: _lazy("features.ai.upscale_qt_app", "start_app")([str(i) for i in s] if s else [str(p)]),
+        "rmbg_background": lambda p, s=None: _lazy("features.ai.bg_removal_qt_app", "start_app")([str(i) for i in s] if s else [str(p)]),
+        "marigold_pbr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "marigold_pbr")), *([str(i) for i in s] if s else [str(p)])]),
         "gemini_image_tool": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "ai" / "standalone" / "gemini_img_tools.py"), *([str(i) for i in s] if s else [str(p)])]),
         "demucs_stems": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "demucs_stems")), *([str(i) for i in s] if s else [str(p)])]),
 
@@ -176,17 +176,13 @@ def build_handler_map():
         "sequence_renumber": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "system" / "rename.py"), "renumber", *([str(i) for i in s] if s else [str(p)])]),
 
         # === Audio ===
-        "audio_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("audio", "audio_convert")), *([str(i) for i in s] if s else [str(p)])]),
         "extract_bgm": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("audio", "extract_bgm")), *([str(i) for i in s] if s else [str(p)])]),
         "extract_voice": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("audio", "extract_voice")), *([str(i) for i in s] if s else [str(p)])]),
         "normalize_volume": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("audio", "normalize_volume")), *([str(i) for i in s] if s else [str(p)])]),
 
         # === System ===
-        "clean_empty_folders": _lazy("utils.system_tools", "clean_empty_dirs"),
-        "move_to_new_folder": lambda p, s=None: _lazy("utils.system_tools", "move_to_new_folder")(p, selection=s),
         "unwrap_folder": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "system" / "unwrap_folder_gui.py"), str(p)]),
         "finder": _lazy("features.finder", "open_finder"),
-        "create_symlink": _lazy("utils.system_tools", "create_symlink"),
         "manager": lambda p, s=None: _open_manager(),
 
         # === 3D ===
@@ -203,9 +199,6 @@ def build_handler_map():
         "copy_my_info": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "scripts" / "sys_info_manager.py")]),
         "analyze_error": _lazy("utils.system_clipboard", "analyze_error"),
         "open_from_clipboard": lambda p, s=None: _lazy("utils.system_open_from_clipboard", "open_path_from_clipboard")(),
-        "save_clipboard_image": _lazy("utils.system_tools", "save_clipboard_image"),
-        "clipboard_to_new_folder": _lazy("utils.system_tools", "clipboard_to_new_folder"),
-        "copy_unc_path": _lazy("utils.system_tools", "copy_unc_path"),
 
         # === Document ===
         "doc_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("document", "doc_convert")), *([str(i) for i in s] if s else [str(p)])]),
@@ -223,7 +216,6 @@ def build_handler_map():
         "context_flow": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "tools" / "context_flow" / "gui.py")]),
 
         # === ComfyUI ===
-        "seedvr2_upscaler": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "comfyui" / "seedvr2_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
         "z_image_turbo": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "comfyui" / "z_image_turbo_gui.py"), *([str(i) for i in s] if s else [str(p)])]),
     }
 

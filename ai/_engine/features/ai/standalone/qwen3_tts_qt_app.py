@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import sys
 import threading
-import wave
 from pathlib import Path
 
 from contexthub.ui.qt.shell import (
@@ -16,7 +15,9 @@ from contexthub.ui.qt.shell import (
     refresh_runtime_preferences,
     runtime_settings_signature,
 )
+from features.ai.standalone.qwen3_tts_profile_editor import Qwen3TTSProfileDialog
 from features.ai.standalone.qwen3_tts_qt_service import Qwen3TTSQtService
+from features.ai.standalone.qwen3_tts_qt_widgets import MessageBubbleWidget, status_text
 from features.ai.standalone.qwen3_tts_service import SUPPORTED_LANGUAGES, SUPPORTED_SPEAKERS, TONE_PRESETS
 
 try:
@@ -55,277 +56,13 @@ APP_TITLE = qt_t("qwen3_tts.title", "Qwen3 TTS")
 APP_SUBTITLE = qt_t("qwen3_tts.subtitle", "Chat-style voice generation with preset, clone, and design modes.")
 
 
-def _status_text(status: str) -> str:
-    return {"ready": "Ready", "queued": "Queued", "done": "Done", "error": "Error"}.get(status, status)
-
-
-def _status_color(status: str) -> str:
-    return {"ready": "#8ea5d6", "queued": "#f2bd1d", "done": "#66c6a3", "error": "#f28b82"}.get(status, "#c6d3ea")
-
-
-def _safe_prefix(value: str, limit: int = 80) -> str:
-    normalized = (value or "").strip().replace("\n", " ")
-    return normalized if len(normalized) <= limit else f"{normalized[:limit-1].rstrip()}…"
-
-
 def _has_media_player() -> bool:
     return QMediaPlayer is not None and QAudioOutput is not None
-
-
-def _profile_accent(name: str) -> str:
-    accents = ["#7c8cff", "#f58bd7", "#65d1c7", "#f6b25f", "#9b8bff", "#5fb5ff"]
-    return accents[sum(ord(ch) for ch in (name or "profile")) % len(accents)]
-
-
-def _initials(name: str) -> str:
-    parts = [part for part in (name or "").replace("_", " ").split() if part]
-    if not parts:
-        return "?"
-    if len(parts) == 1:
-        return parts[0][:2].upper()
-    return f"{parts[0][0]}{parts[1][0]}".upper()
-
-
-def _duration_text(path: str) -> str:
-    if not path:
-        return ""
-    try:
-        output = Path(path)
-        if output.suffix.lower() != ".wav" or not output.exists():
-            return ""
-        with wave.open(str(output), "rb") as wav_file:
-            duration = wav_file.getnframes() / max(1, wav_file.getframerate())
-        minutes = int(duration // 60)
-        seconds = int(duration % 60)
-        return f"{minutes}:{seconds:02d}"
-    except Exception:
-        return ""
 
 
 class _RunSignals(QObject):
     progress = Signal(str)
     done = Signal(bool, str)
-
-
-class MessageBubbleWidget(QFrame):
-    select_requested = Signal(str)
-    expand_requested = Signal(str)
-    apply_requested = Signal(str, str, str, str)
-    play_requested = Signal(str)
-    open_requested = Signal(str)
-    profile_requested = Signal(str)
-    regenerate_requested = Signal(str)
-    delete_requested = Signal(str)
-
-    def __init__(self, message, profiles: list[str], selected: bool = False, expanded: bool = False, media_enabled: bool = False) -> None:
-        super().__init__()
-        self.message_id = message.id
-        accent = _profile_accent(message.profile)
-        bubble_bg = "#252938" if not selected else "#2d3244"
-        border = accent if selected else "rgba(255,255,255,0.05)"
-        self.setStyleSheet(
-            f"""
-            QFrame {{
-                background: transparent;
-                border: none;
-            }}
-            QLabel#avatar {{
-                background: {accent};
-                color: #101320;
-                border-radius: 20px;
-                font-size: 13px;
-                font-weight: 700;
-            }}
-            QFrame#bubble {{
-                background: {bubble_bg};
-                border: 1px solid {border};
-                border-radius: 18px;
-            }}
-            QLabel#name {{
-                color: #f4f7ff;
-                font-size: 14px;
-                font-weight: 700;
-            }}
-            QLabel#time {{
-                color: #97a0ba;
-                font-size: 11px;
-            }}
-            QLabel#body {{
-                color: #edf1fb;
-                font-size: 15px;
-                line-height: 1.35;
-            }}
-            QLabel#mini {{
-                color: {accent};
-                font-size: 17px;
-                font-weight: 700;
-            }}
-            QLabel#meta {{
-                color: #8f97ad;
-                font-size: 11px;
-            }}
-            QPushButton#expandBtn {{
-                background: transparent;
-                color: #99a4c4;
-                border: none;
-                font-size: 13px;
-                font-weight: 700;
-                padding: 2px 4px;
-            }}
-            QPushButton#ghostBtn {{
-                background: rgba(255,255,255,0.06);
-                color: #edf1fb;
-                border: 1px solid rgba(255,255,255,0.04);
-                border-radius: 12px;
-                padding: 6px 10px;
-            }}
-            QLabel#chip {{
-                background: rgba(255,255,255,0.06);
-                border-radius: 10px;
-                color: {_status_color(message.status)};
-                padding: 3px 8px;
-                font-size: 11px;
-                font-weight: 700;
-            }}
-            """
-        )
-        root = QHBoxLayout(self)
-        root.setContentsMargins(0, 4, 0, 4)
-        root.setSpacing(12)
-
-        avatar = QLabel(_initials(message.profile))
-        avatar.setObjectName("avatar")
-        avatar.setAlignment(Qt.AlignCenter)
-        avatar.setFixedSize(40, 40)
-        root.addWidget(avatar, 0, Qt.AlignTop)
-
-        content = QVBoxLayout()
-        content.setContentsMargins(0, 0, 0, 0)
-        content.setSpacing(6)
-
-        meta_row = QHBoxLayout()
-        meta_row.setContentsMargins(0, 0, 0, 0)
-        meta_row.setSpacing(8)
-        name = QLabel(message.profile)
-        name.setObjectName("name")
-        meta_row.addWidget(name, 0)
-        clock = QLabel(message.id.replace("msg_", ""))
-        clock.setObjectName("time")
-        meta_row.addWidget(clock, 0)
-        meta_row.addStretch(1)
-        expand_btn = QPushButton("▾" if expanded else "▸")
-        expand_btn.setObjectName("expandBtn")
-        expand_btn.clicked.connect(lambda: self.expand_requested.emit(self.message_id))
-        meta_row.addWidget(expand_btn, 0)
-        status_chip = QLabel(_status_text(message.status))
-        status_chip.setObjectName("chip")
-        meta_row.addWidget(status_chip, 0)
-        content.addLayout(meta_row)
-
-        bubble = QFrame()
-        bubble.setObjectName("bubble")
-        bubble_layout = QVBoxLayout(bubble)
-        bubble_layout.setContentsMargins(18, 16, 18, 14)
-        bubble_layout.setSpacing(12)
-
-        body = QLabel(message.text)
-        body.setObjectName("body")
-        body.setWordWrap(True)
-        body.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        bubble_layout.addWidget(body)
-
-        bottom_row = QHBoxLayout()
-        bottom_row.setContentsMargins(0, 0, 0, 0)
-        bottom_row.setSpacing(10)
-        mini_play = QLabel("▶")
-        mini_play.setObjectName("mini")
-        mini_play.setFixedWidth(16)
-        bottom_row.addWidget(mini_play, 0)
-        meter = QLabel("▁▃▆▂▅")
-        meter.setObjectName("mini")
-        bottom_row.addWidget(meter, 0)
-        bottom_row.addStretch(1)
-        tone = QLabel(message.tone.title())
-        tone.setObjectName("meta")
-        bottom_row.addWidget(tone, 0)
-        duration = QLabel(_duration_text(message.output))
-        duration.setObjectName("meta")
-        bottom_row.addWidget(duration, 0)
-        bubble_layout.addLayout(bottom_row)
-
-        self.details = QFrame()
-        details_layout = QVBoxLayout(self.details)
-        details_layout.setContentsMargins(0, 0, 0, 0)
-        details_layout.setSpacing(10)
-
-        option_row = QHBoxLayout()
-        option_row.setContentsMargins(0, 0, 0, 0)
-        option_row.setSpacing(8)
-        self.profile_combo = QComboBox()
-        self.profile_combo.addItems(profiles)
-        self.profile_combo.setCurrentText(message.profile)
-        self.tone_combo = QComboBox()
-        self.tone_combo.addItems(list(TONE_PRESETS.keys()))
-        self.tone_combo.setCurrentText(message.tone)
-        option_row.addWidget(self.profile_combo, 1)
-        option_row.addWidget(self.tone_combo, 1)
-        details_layout.addLayout(option_row)
-
-        self.text_edit = QTextEdit()
-        self.text_edit.setMinimumHeight(96)
-        self.text_edit.setPlainText(message.text)
-        details_layout.addWidget(self.text_edit)
-
-        action_row = QHBoxLayout()
-        action_row.setContentsMargins(0, 0, 0, 0)
-        action_row.setSpacing(8)
-        self.apply_btn = QPushButton("Apply")
-        self.apply_btn.setObjectName("ghostBtn")
-        self.play_btn = QPushButton("Play")
-        self.play_btn.setObjectName("ghostBtn")
-        self.open_btn = QPushButton("Open")
-        self.open_btn.setObjectName("ghostBtn")
-        self.profile_btn = QPushButton("Profile")
-        self.profile_btn.setObjectName("ghostBtn")
-        self.regen_btn = QPushButton("Generate This")
-        self.regen_btn.setObjectName("ghostBtn")
-        self.delete_btn = QPushButton("Delete")
-        self.delete_btn.setObjectName("ghostBtn")
-        self.play_btn.setEnabled(media_enabled and bool(message.output))
-        self.open_btn.setEnabled(bool(message.output))
-        action_row.addWidget(self.apply_btn)
-        action_row.addWidget(self.play_btn)
-        action_row.addWidget(self.open_btn)
-        action_row.addWidget(self.profile_btn)
-        action_row.addStretch(1)
-        action_row.addWidget(self.regen_btn)
-        action_row.addWidget(self.delete_btn)
-        details_layout.addLayout(action_row)
-
-        self.apply_btn.clicked.connect(
-            lambda: self.apply_requested.emit(
-                self.message_id,
-                self.profile_combo.currentText(),
-                self.tone_combo.currentText(),
-                self.text_edit.toPlainText(),
-            )
-        )
-        self.play_btn.clicked.connect(lambda: self.play_requested.emit(self.message_id))
-        self.open_btn.clicked.connect(lambda: self.open_requested.emit(self.message_id))
-        self.profile_btn.clicked.connect(lambda: self.profile_requested.emit(self.message_id))
-        self.regen_btn.clicked.connect(lambda: self.regenerate_requested.emit(self.message_id))
-        self.delete_btn.clicked.connect(lambda: self.delete_requested.emit(self.message_id))
-
-        self.details.setVisible(expanded)
-        bubble_layout.addWidget(self.details)
-
-        content.addWidget(bubble)
-        root.addLayout(content, 1)
-
-    def mousePressEvent(self, event) -> None:  # noqa: N802
-        if event.button() == Qt.LeftButton:
-            self.select_requested.emit(self.message_id)
-        super().mousePressEvent(event)
 
 
 class Qwen3TTSQtWindow(QMainWindow):
@@ -585,77 +322,8 @@ class Qwen3TTSQtWindow(QMainWindow):
         return container
 
     def _build_profile_dialog(self) -> None:
-        self.profile_dialog = QDialog(self)
-        self.profile_dialog.setWindowTitle("Profile Editor")
-        self.profile_dialog.resize(720, 720)
-        self.profile_dialog.setModal(True)
-        layout = QVBoxLayout(self.profile_dialog)
-        layout.setContentsMargins(18, 18, 18, 18)
-        layout.setSpacing(10)
-
-        header_row = QHBoxLayout()
-        self.editor_profile_combo = QComboBox()
-        self.editor_profile_combo.setObjectName("presetCombo")
-        header_row.addWidget(self.editor_profile_combo, 1)
-        self.new_profile_btn = QPushButton("New")
-        self.new_profile_btn.setObjectName("pillBtn")
-        self.delete_profile_btn = QPushButton("Delete")
-        self.delete_profile_btn.setObjectName("pillBtn")
-        header_row.addWidget(self.new_profile_btn)
-        header_row.addWidget(self.delete_profile_btn)
-        layout.addLayout(header_row)
-
-        self.editor_profile_name = QLineEdit()
-        self.editor_mode_combo = QComboBox()
-        self.editor_mode_combo.addItems(["custom_voice", "voice_clone", "voice_design"])
-        self.editor_speaker_combo = QComboBox()
-        self.editor_speaker_combo.addItems(SUPPORTED_SPEAKERS)
-        self.editor_instruct_edit = QTextEdit()
-        self.editor_instruct_edit.setMinimumHeight(100)
-        self.editor_ref_audio = QLineEdit()
-        self.ref_audio_browse_btn = QPushButton("Browse")
-        self.ref_audio_browse_btn.setObjectName("pillBtn")
-        self.editor_ref_text = QTextEdit()
-        self.editor_ref_text.setMinimumHeight(90)
-        self.editor_profile_quality = QLabel("")
-        self.editor_profile_quality.setWordWrap(True)
-        self.editor_profile_quality.setObjectName("muted")
-
-        self.editor_profile_name_label = QLabel("Profile Name")
-        self.editor_mode_label = QLabel("Mode")
-        self.editor_speaker_label = QLabel("Speaker")
-        self.editor_instruction_label = QLabel("Instruction")
-        self.editor_ref_audio_label = QLabel("Clone Ref Audio")
-        self.editor_ref_text_label = QLabel("Clone Ref Text")
-        layout.addWidget(self.editor_profile_name_label)
-        layout.addWidget(self.editor_profile_name)
-        layout.addWidget(self.editor_mode_label)
-        layout.addWidget(self.editor_mode_combo)
-        layout.addWidget(self.editor_speaker_label)
-        layout.addWidget(self.editor_speaker_combo)
-        layout.addWidget(self.editor_instruction_label)
-        layout.addWidget(self.editor_instruct_edit)
-
-        ref_audio_row = QHBoxLayout()
-        ref_audio_row.addWidget(self.editor_ref_audio, 1)
-        ref_audio_row.addWidget(self.ref_audio_browse_btn)
-        layout.addWidget(self.editor_ref_audio_label)
-        layout.addLayout(ref_audio_row)
-        layout.addWidget(self.editor_ref_text_label)
-        layout.addWidget(self.editor_ref_text)
-        layout.addWidget(self.editor_profile_quality)
-
-        footer = QHBoxLayout()
-        footer.addStretch(1)
-        self.profile_cancel_btn = QPushButton("Close")
-        self.profile_cancel_btn.setObjectName("pillBtn")
-        self.profile_save_btn = QPushButton("Save Profile")
-        self._accent_generate_button(self.profile_save_btn)
-        footer.addWidget(self.profile_cancel_btn)
-        footer.addWidget(self.profile_save_btn)
-        layout.addLayout(footer)
-
-        self.editor_mode_combo.currentTextChanged.connect(self._on_editor_mode_changed)
+        self.profile_dialog = Qwen3TTSProfileDialog(self, self._accent_generate_button)
+        self.profile_dialog.mode_combo.currentTextChanged.connect(self._on_editor_mode_changed)
 
     def _bind_actions(self) -> None:
         self.message_list.itemSelectionChanged.connect(self._on_message_selected)
@@ -674,12 +342,12 @@ class Qwen3TTSQtWindow(QMainWindow):
         self.play_btn.clicked.connect(self._play_selected_output)
         self.open_file_btn.clicked.connect(self._open_selected_output)
         self.open_folder_btn.clicked.connect(self._open_output_folder)
-        self.ref_audio_browse_btn.clicked.connect(self._browse_ref_audio)
-        self.editor_profile_combo.currentTextChanged.connect(self._on_editor_profile_selected)
-        self.profile_save_btn.clicked.connect(self._save_editor_profile)
-        self.profile_cancel_btn.clicked.connect(self.profile_dialog.close)
-        self.new_profile_btn.clicked.connect(self._start_new_profile)
-        self.delete_profile_btn.clicked.connect(self._delete_profile)
+        self.profile_dialog.ref_audio_browse_btn.clicked.connect(self._browse_ref_audio)
+        self.profile_dialog.profile_combo.currentTextChanged.connect(self._on_editor_profile_selected)
+        self.profile_dialog.save_btn.clicked.connect(self._save_editor_profile)
+        self.profile_dialog.cancel_btn.clicked.connect(self.profile_dialog.close)
+        self.profile_dialog.new_profile_btn.clicked.connect(self._start_new_profile)
+        self.profile_dialog.delete_profile_btn.clicked.connect(self._delete_profile)
         self.edit_profile_btn.clicked.connect(self._open_profile_dialog)
         self.open_output_btn.clicked.connect(self._reveal_output_dir)
 
@@ -710,26 +378,19 @@ class Qwen3TTSQtWindow(QMainWindow):
     def _refresh_profile_choices(self) -> None:
         profiles = self.service.get_profile_choices()
         current_profile = self.service.state.selected_profile
-        current_editor = self.editor_profile_combo.currentText() if hasattr(self, "editor_profile_combo") else current_profile
+        current_editor = self.profile_dialog.current_profile_name() if hasattr(self, "profile_dialog") else current_profile
         self._updating_ui = True
         self.composer_profile_combo.blockSignals(True)
-        self.editor_profile_combo.blockSignals(True)
         self.composer_profile_combo.clear()
-        self.editor_profile_combo.clear()
         self.composer_profile_combo.addItems(profiles)
-        self.editor_profile_combo.addItems(profiles)
         if current_profile in profiles:
             self.composer_profile_combo.setCurrentText(current_profile)
-            if current_editor in profiles:
-                self.editor_profile_combo.setCurrentText(current_editor)
-            else:
-                self.editor_profile_combo.setCurrentText(current_profile)
         elif profiles:
             self.composer_profile_combo.setCurrentIndex(0)
-            self.editor_profile_combo.setCurrentIndex(0)
             self.service.state.selected_profile = profiles[0]
+        if hasattr(self, "profile_dialog"):
+            self.profile_dialog.set_profile_choices(profiles, current_profile, current_editor)
         self.composer_profile_combo.blockSignals(False)
-        self.editor_profile_combo.blockSignals(False)
         self._updating_ui = False
 
     def _refresh_messages(self) -> None:
@@ -838,8 +499,8 @@ class Qwen3TTSQtWindow(QMainWindow):
             self.result_path_label.setText("")
             self.result_file_label.setText("")
             return
-        self.selected_message_badge.setText(f"{message.profile} · {_status_text(message.status)}")
-        self.result_status_label.setText(f"Status: {_status_text(message.status)}")
+        self.selected_message_badge.setText(f"{message.profile} · {status_text(message.status)}")
+        self.result_status_label.setText(f"Status: {status_text(message.status)}")
         if message.output:
             output_path = Path(message.output)
             self.result_path_label.setText(f"Output: {output_path.parent}")
@@ -916,7 +577,7 @@ class Qwen3TTSQtWindow(QMainWindow):
         self.service.set_selected_message(message_id)
         message = self.service.message_by_id(message_id)
         if message is not None:
-            self.editor_profile_combo.setCurrentText(message.profile)
+            self.profile_dialog.select_profile(message.profile)
         self._open_profile_dialog()
 
     def _regenerate_message(self, message_id: str) -> None:
@@ -1120,30 +781,20 @@ class Qwen3TTSQtWindow(QMainWindow):
     def _start_new_profile(self) -> None:
         profile = self.service.add_profile_template()
         self._editing_profile_id = profile["id"]
-        self.editor_profile_name.setText(profile["name"])
-        self.editor_mode_combo.setCurrentText(profile["mode"])
-        self.editor_speaker_combo.setCurrentText(profile["speaker"])
-        self.editor_instruct_edit.setPlainText(profile["instruct"])
-        self.editor_ref_audio.clear()
-        self.editor_ref_text.clear()
+        self.profile_dialog.set_template(profile)
         self._refresh_profile_quality()
 
     def _load_editor_profile(self) -> None:
         self._updating_ui = True
-        name = self.editor_profile_combo.currentText() or self.service.state.selected_profile
+        name = self.profile_dialog.current_profile_name() or self.service.state.selected_profile
         profile = self.service.profile_by_name(name)
         self._editing_profile_id = profile.get("id") if profile else None
         if not profile:
             self._updating_ui = False
             return
-        self.editor_profile_name.setText(profile.get("name", ""))
-        self.editor_mode_combo.setCurrentText(profile.get("mode", "custom_voice"))
-        self.editor_speaker_combo.setCurrentText(profile.get("speaker", SUPPORTED_SPEAKERS[0]))
-        self.editor_instruct_edit.setPlainText(profile.get("instruct", ""))
-        self.editor_ref_audio.setText(profile.get("ref_audio", ""))
-        self.editor_ref_text.setPlainText(profile.get("ref_text", ""))
+        self.profile_dialog.load_profile(profile)
         self._updating_ui = False
-        self._on_editor_mode_changed(self.editor_mode_combo.currentText())
+        self._on_editor_mode_changed(self.profile_dialog.mode_combo.currentText())
         self._refresh_profile_quality()
 
     def _on_editor_profile_selected(self) -> None:
@@ -1152,57 +803,50 @@ class Qwen3TTSQtWindow(QMainWindow):
         self._load_editor_profile()
 
     def _on_editor_mode_changed(self, mode: str) -> None:
-        is_clone = mode == "voice_clone"
-        is_design = mode == "voice_design"
-        self.editor_speaker_label.setVisible(not is_design)
-        self.editor_speaker_combo.setVisible(not is_design)
-        self.editor_ref_audio_label.setVisible(is_clone)
-        self.editor_ref_audio.setVisible(is_clone)
-        self.ref_audio_browse_btn.setVisible(is_clone)
-        self.editor_ref_text_label.setVisible(is_clone)
-        self.editor_ref_text.setVisible(is_clone)
+        self.profile_dialog.set_mode_visibility(mode)
         self._refresh_profile_quality()
 
     def _refresh_profile_quality(self) -> None:
-        profile_name = self.editor_profile_combo.currentText()
+        profile_name = self.profile_dialog.current_profile_name()
         profile = self.service.profile_by_name(profile_name)
         if profile is None or profile.get("mode") != "voice_clone":
-            self.editor_profile_quality.setText("")
+            self.profile_dialog.set_quality_message("")
             return
         quality = self.service.profile_quality(profile_name)
         if quality is None:
-            self.editor_profile_quality.setText("")
+            self.profile_dialog.set_quality_message("")
             return
-        status, message = quality
-        self.editor_profile_quality.setText(message)
+        _status, message = quality
+        self.profile_dialog.set_quality_message(message)
 
     def _browse_ref_audio(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             APP_TITLE,
-            str(Path.home()),
+            self.profile_dialog.browse_root(),
             "Audio Files (*.wav *.mp3 *.m4a *.flac *.ogg *.aac)",
         )
         if file_path:
-            self.editor_ref_audio.setText(file_path)
+            self.profile_dialog.ref_audio.setText(file_path)
             self._refresh_profile_quality()
 
     def _open_profile_dialog(self) -> None:
         selected = self.service.selected_message()
         if selected is not None:
-            self.editor_profile_combo.setCurrentText(selected.profile)
+            self.profile_dialog.select_profile(selected.profile)
         self._load_editor_profile()
         self.profile_dialog.show()
         self.profile_dialog.raise_()
         self.profile_dialog.activateWindow()
 
     def _save_editor_profile(self) -> None:
-        name = self.editor_profile_name.text().strip() or "Profile"
-        mode = self.editor_mode_combo.currentText()
-        speaker = self.editor_speaker_combo.currentText()
-        instruct = self.editor_instruct_edit.toPlainText().strip()
-        ref_audio = self.editor_ref_audio.text().strip()
-        ref_text = self.editor_ref_text.toPlainText().strip()
+        payload = self.profile_dialog.profile_payload()
+        name = payload["name"] or "Profile"
+        mode = payload["mode"]
+        speaker = payload["speaker"]
+        instruct = payload["instruct"]
+        ref_audio = payload["ref_audio"]
+        ref_text = payload["ref_text"]
         if not name:
             self.service.state.status_text = "Profile name is required."
             self._refresh_runtime_status()
@@ -1227,7 +871,7 @@ class Qwen3TTSQtWindow(QMainWindow):
         self.service.state.selected_profile = name
         self.service.state.inspector_profile_name = name
         self._refresh_profile_choices()
-        self.editor_profile_combo.setCurrentText(name)
+        self.profile_dialog.select_profile(name)
         self._load_editor_profile()
         self._refresh_messages()
         self.service.state.status_text = "Profile saved."
@@ -1235,7 +879,7 @@ class Qwen3TTSQtWindow(QMainWindow):
         self._refresh_runtime_status()
 
     def _delete_profile(self) -> None:
-        name = self.editor_profile_combo.currentText()
+        name = self.profile_dialog.current_profile_name()
         if not name:
             return
         ok = self.service.delete_profile(name)
