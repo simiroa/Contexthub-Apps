@@ -30,7 +30,7 @@ from contexthub.ui.qt.shell import (
 from manager.helpers.comfyui_service import ComfyUIService
 
 try:
-    from PySide6.QtCore import QEvent, QPoint, QThread, QTimer, Signal, Qt
+    from PySide6.QtCore import QThread, QTimer, Signal, Qt
     from PySide6.QtWidgets import (
         QApplication,
         QFrame,
@@ -77,9 +77,6 @@ class DashboardWindow(QMainWindow):
         super().__init__()
         self.service = ComfyUIService()
         self._task_thread: TaskThread | None = None
-        self._drag_offset: QPoint | None = None
-        self._dragging = False
-        self._drag_mode = "idle"
         self._refresh_timer = QTimer(self)
         self._refresh_timer.setInterval(2000)
         self._refresh_timer.timeout.connect(self.refresh_status)
@@ -91,10 +88,6 @@ class DashboardWindow(QMainWindow):
         self.setMinimumSize(520, 300)
         apply_app_icon(self, APP_ROOT)
         self.setStyleSheet(build_shell_stylesheet())
-
-        app = QApplication.instance()
-        if app is not None:
-            app.installEventFilter(self)
 
         self._build_ui()
         self.refresh_status()
@@ -120,9 +113,6 @@ class DashboardWindow(QMainWindow):
         self.header_surface.asset_count_badge.show()
         self.header_surface.runtime_status_badge.show()
         self.header_surface.open_webui_btn.hide()
-        self.header_surface.title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        self.header_surface.subtitle_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        self._bind_drag(self.header_surface)
         shell_layout.addWidget(self.header_surface)
 
         self.content_card = QFrame()
@@ -162,10 +152,6 @@ class DashboardWindow(QMainWindow):
         self.stop_btn.clicked.connect(self.stop_server)
         self.open_web_btn.clicked.connect(self.open_web_ui)
 
-    def _bind_drag(self, widget: QWidget) -> None:
-        widget.setMouseTracking(True)
-        widget.installEventFilter(self)
-
     def _set_busy(self, busy: bool) -> None:
         for btn in (
             self.start_btn,
@@ -190,32 +176,6 @@ class DashboardWindow(QMainWindow):
         self._set_busy(False)
         self.refresh_status()
 
-    def eventFilter(self, obj, event):
-        event_type = event.type()
-        if obj is self.header_surface and event_type == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
-            self._dragging = True
-            self._refresh_timer.stop()
-            self.header_surface.setCursor(Qt.ClosedHandCursor)
-            self._drag_offset = None
-            self._drag_mode = "system"
-            handle = self.windowHandle()
-            if handle is not None and hasattr(handle, "startSystemMove") and handle.startSystemMove():
-                return True
-            self._drag_mode = "manual"
-            self._drag_offset = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
-            return True
-        if obj is self.header_surface and event_type == QEvent.MouseMove and self._drag_mode == "manual" and self._drag_offset is not None and event.buttons() & Qt.LeftButton:
-            self.move(event.globalPosition().toPoint() - self._drag_offset)
-            return True
-        if self._dragging and event_type == QEvent.MouseButtonRelease:
-            self._dragging = False
-            self._drag_mode = "idle"
-            self._drag_offset = None
-            self.header_surface.unsetCursor()
-            self._refresh_timer.start()
-            return False
-        return super().eventFilter(obj, event)
-
     def _server_address(self) -> str:
         address = getattr(self.service.client, "server_address", "")
         if address:
@@ -225,8 +185,6 @@ class DashboardWindow(QMainWindow):
         return f"http://{host}:{port}"
 
     def refresh_status(self) -> None:
-        if self._dragging:
-            return
         running, port = self.service.is_running()
         self.header_surface.asset_count_badge.setText(str(port or self.service.port))
         self.header_surface.runtime_status_badge.setText("READY" if running else "STOPPED")

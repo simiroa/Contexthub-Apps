@@ -225,6 +225,28 @@ function Ensure-SampleVideoInput {
     return $null
 }
 
+function Ensure-SampleAudioInput {
+    param([string]$OutputPath)
+
+    if (Test-Path $OutputPath) {
+        return $OutputPath
+    }
+
+    $outputDir = Split-Path -Parent $OutputPath
+    New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+
+    $ffmpegCmd = Get-Command ffmpeg.exe -ErrorAction SilentlyContinue
+    if (-not $ffmpegCmd) {
+        return $null
+    }
+
+    & $ffmpegCmd.Source -y -f lavfi -i "sine=frequency=440:sample_rate=48000:duration=3" -c:a pcm_s16le $OutputPath | Out-Null
+    if (Test-Path $OutputPath) {
+        return $OutputPath
+    }
+    return $null
+}
+
 function Resolve-CaptureTargets {
     param(
         [string]$Category,
@@ -235,6 +257,18 @@ function Resolve-CaptureTargets {
     switch ($key) {
         "video/video_convert" {
             $sample = Ensure-SampleVideoInput -OutputPath (Join-Path $fixturesPath "video_convert_sample.mp4")
+            if ($sample) {
+                return @($sample)
+            }
+        }
+        "video/remove_audio" {
+            $sample = Ensure-SampleVideoInput -OutputPath (Join-Path $fixturesPath "remove_audio_sample.mp4")
+            if ($sample) {
+                return @($sample)
+            }
+        }
+        "audio/normalize_volume" {
+            $sample = Ensure-SampleAudioInput -OutputPath (Join-Path $fixturesPath "normalize_volume_sample.wav")
             if ($sample) {
                 return @($sample)
             }

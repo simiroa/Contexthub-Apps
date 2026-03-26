@@ -11,7 +11,6 @@ from typing import Any, Callable
 
 from contexthub.ui.qt.shell import qt_t
 
-from features.ai.standalone.subtitle_gen import generate_subtitles
 from features.ai.whisper_subtitle_state import (
     SUPPORTED_MEDIA_EXTS,
     GenerationOptions,
@@ -665,6 +664,9 @@ class WhisperSubtitleService:
         self.state.current_item_session = self._session_path_for_asset(asset)
         options = self.state.generation_options
         output_dir = str(self.resolve_output_dir(asset))
+        # `subtitle_gen` pulls in heavy ML dependencies; defer that import until the user starts generation.
+        from features.ai.standalone.subtitle_gen import generate_subtitles
+
         result = generate_subtitles(
             str(asset),
             model_size=options.model,
