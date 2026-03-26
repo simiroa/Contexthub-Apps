@@ -6,7 +6,7 @@ on:
     paths:
       - "3d/**"
       - "ai/**"
-      - "ai_light/**"
+      - "ai_lite/**"
       - "audio/**"
       - "comfyui/**"
       - "document/**"
