@@ -373,13 +373,24 @@ class MergeToExrWindow(QMainWindow):
         self._refresh_header()
 
     def _set_export_status(self, status: str, detail: str) -> None:
-        self.export_panel.set_status(status if not detail else f"{status} - {detail}")
+        text = status if not detail else f"{status} - {detail}"
+        if hasattr(self.export_panel, "set_status"):
+            self.export_panel.set_status(text)
+            return
+        if hasattr(self.export_panel, "status_label"):
+            self.export_panel.status_label.setText(text)
 
     def _set_export_progress(self, value: int) -> None:
-        self.export_panel.set_progress(value)
+        if hasattr(self.export_panel, "set_progress"):
+            self.export_panel.set_progress(value)
+            return
+        if hasattr(self.export_panel, "progress_bar"):
+            self.export_panel.progress_bar.setValue(value)
 
     def _set_run_enabled(self, enabled: bool) -> None:
-        self.export_panel.run_button.setEnabled(enabled)
+        button = getattr(self.export_panel, "run_button", None) or getattr(self.export_panel, "run_btn", None)
+        if button is not None:
+            button.setEnabled(enabled)
 
     def _select_row(self, index: int) -> None:
         self.layer_list.setCurrentRow(index)

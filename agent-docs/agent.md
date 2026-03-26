@@ -30,6 +30,7 @@ Flet 포팅 또는 Flet 공용 UI 작업이면 읽는 순서를 아래처럼 고
 - 앱/카테고리 목적: `agent-docs/app-overview.md`
 - 운영 방식과 코드 위치: `agent-docs/architecture.md`
 - 새 앱 추가 지침: `agent-docs/new-app-guidelines.md`
+- Qt shared runtime 계약과 템플릿 분류: `agent-docs/gui-runtime-contract.md`
 - Python GUI를 Flet으로 이관할 때: `agent-docs/flet-migration-guidelines.md`
 - Flet API/런타임 호환성 규칙: `agent-docs/flet-compatibility-guide.md`
 - 현재 개발 기준점과 최근 수정 상태: `agent-docs/current-dev-context.md`

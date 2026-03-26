@@ -10,6 +10,7 @@ from contexthub.ui.qt.shell import (
     build_shell_stylesheet,
     build_size_grip,
     get_shell_metrics,
+    get_shell_palette,
     qt_t,
     refresh_runtime_preferences,
     runtime_settings_signature,
@@ -354,7 +355,9 @@ class ImageConvertWindow(QMainWindow):
             return
             
         self._sync_output_options()
-        self.export_panel.run_button.setEnabled(False)
+        button = getattr(self.export_panel, "run_button", None) or getattr(self.export_panel, "run_btn", None)
+        if button is not None:
+            button.setEnabled(False)
         self.export_panel.status_label.setText("Starting...")
         
         def on_progress(f, c, t):
@@ -362,7 +365,9 @@ class ImageConvertWindow(QMainWindow):
             
         def on_complete(count, errors):
             def _ui():
-                self.export_panel.run_button.setEnabled(True)
+                button = getattr(self.export_panel, "run_button", None) or getattr(self.export_panel, "run_btn", None)
+                if button is not None:
+                    button.setEnabled(True)
                 if errors:
                     self.export_panel.status_label.setText(f"Done: {count} success, {len(errors)} errors.")
                 else:

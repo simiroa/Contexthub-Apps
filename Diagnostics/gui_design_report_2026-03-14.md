@@ -81,8 +81,6 @@
 
 ## Audio
 
-### audio_convert
-- 캡처: [audio_convert.png](/C:/Users/HG/Documents/Contexthub-Apps/Diagnostics/gui_captures/audio/audio_convert.png)
 - 평가: 실행은 가능하지만, 상단이 너무 비어 있어 레이아웃 완성도가 낮습니다.
 - 장점: 하단 CTA는 명확하고 변환 옵션도 이해하기 쉽습니다.
 - 문제: 파일 영역이 거의 비가시적이고, 체크 옵션이 넓게 퍼져 있어 화면 집중력이 떨어집니다.

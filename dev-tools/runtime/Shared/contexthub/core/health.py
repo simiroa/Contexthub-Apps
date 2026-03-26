@@ -65,7 +65,7 @@ class HealthCheck:
                 # Check if it's actually in path
                 import shutil
                 if not shutil.which("ffmpeg"):
-                     self._add_result("FFmpeg", "ERROR", "FFmpeg not found in PATH or tools folder.")
+                    self._add_result("FFmpeg", "ERROR", "FFmpeg not found in PATH, Externals, or tools folder.")
                      return
 
             # Try execution

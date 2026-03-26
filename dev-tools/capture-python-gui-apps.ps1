@@ -4,12 +4,13 @@ param(
     [string]$SharedRoot,
     [string]$OutputRoot = "Diagnostics\\gui_captures",
     [string]$CaptureFixturesRoot = "Diagnostics\\generated\\gui_capture_inputs",
-    [string[]]$Categories = @("image", "ai", "ai_lite", "document", "utilities", "video"),
+    [string[]]$Categories = @("3d", "ai", "ai_lite", "audio", "comfyui", "document", "image", "native", "utilities", "video"),
     [string[]]$OnlyApps = @(),
     [int]$WaitSeconds = 20,
     [int]$CooldownSeconds = 2,
     [int]$PaintWaitMilliseconds = 1200,
     [string]$PythonExe = "python",
+    [switch]$DryRun,
     [switch]$Clean
 )
 
@@ -33,17 +34,20 @@ $logPath = Join-Path $RepoRoot "Diagnostics\\gui_capture_log.md"
 $runTmpRoot = Join-Path $RepoRoot "Diagnostics\\gui_runs"
 
 $localSharedRoot = Join-Path $RepoRoot "dev-tools\runtime\Shared"
-$fallbackSharedRoot = Join-Path $HubRoot "Runtimes\Shared"
+$fallbackSharedRoot = $null
+if ($HubRoot) {
+    $fallbackSharedRoot = Join-Path $HubRoot "Runtimes\Shared"
+}
 if (-not $SharedRoot) {
-    if (Test-Path $localSharedRoot) {
+    if (Test-Path -LiteralPath $localSharedRoot) {
         $SharedRoot = $localSharedRoot
     }
-    else {
+    elseif ($fallbackSharedRoot -and (Test-Path -LiteralPath $fallbackSharedRoot)) {
         $SharedRoot = $fallbackSharedRoot
     }
 }
 
-if (-not (Test-Path $SharedRoot)) {
+if ([string]::IsNullOrWhiteSpace($SharedRoot) -or -not (Test-Path -LiteralPath $SharedRoot)) {
     throw "Shared runtime not found: $SharedRoot"
 }
 
@@ -82,6 +86,63 @@ Add-Type -AssemblyName System.Drawing
 function Write-Log {
     param([string]$Message)
     Add-Content -Path $logPath -Value $Message
+}
+
+function Get-UiFramework {
+    param([object]$Manifest)
+
+    try {
+        if ($Manifest.ui -and $Manifest.ui.framework) {
+            return [string]$Manifest.ui.framework
+        }
+    }
+    catch {
+    }
+
+    return ""
+}
+
+function Get-UiTemplate {
+    param([object]$Manifest)
+
+    try {
+        if ($Manifest.ui -and $Manifest.ui.template) {
+            return [string]$Manifest.ui.template
+        }
+    }
+    catch {
+    }
+
+    return ""
+}
+
+function Test-QtFramework {
+    param([string]$Framework)
+
+    if ([string]::IsNullOrWhiteSpace($Framework)) {
+        return $false
+    }
+
+    $normalized = $Framework.Trim().ToLowerInvariant()
+    return @("qt", "pyside6") -contains $normalized
+}
+
+function Resolve-UiTemplate {
+    param(
+        [object]$Manifest,
+        [string]$Framework
+    )
+
+    $template = Get-UiTemplate -Manifest $Manifest
+    if (-not [string]::IsNullOrWhiteSpace($template)) {
+        return $template.Trim().ToLowerInvariant()
+    }
+
+    if (Test-QtFramework -Framework $Framework) {
+        return "full"
+    }
+
+    return "unknown"
 }
 
 function Resolve-PythonForCategory {
@@ -472,6 +533,10 @@ function Get-AppsToTest {
 }
 
 $manifests = Get-AppsToTest
+$summaryGui = 0
+$summaryQt = 0
+$summaryNonQt = 0
+$summaryDryRun = 0
 foreach ($manifestPath in $manifests) {
     $proc = $null
     try {
@@ -479,15 +544,34 @@ foreach ($manifestPath in $manifests) {
         $appDir = Split-Path -Parent $manifestPath
         $appId = $manifest.id
         $category = $manifest.runtime.category
+        $framework = Get-UiFramework -Manifest $manifest
+        $isQtFramework = Test-QtFramework -Framework $framework
+        $template = Resolve-UiTemplate -Manifest $manifest -Framework $framework
 
         if (-not $manifest.ui.enabled -or $manifest.execution.entry_point -notlike "*.py") {
             Write-Log "[$(Get-Date -Format s)] SKIP $category/$appId - not a python gui app"
             continue
         }
 
+        $summaryGui++
+        if ($isQtFramework) {
+            $summaryQt++
+        }
+        else {
+            $summaryNonQt++
+        }
+
         $entryPath = Join-Path $appDir $manifest.execution.entry_point
         if (-not (Test-Path $entryPath)) {
             Write-Log "[$(Get-Date -Format s)] SKIP $category/$appId - missing entry point"
+            continue
+        }
+
+        if ($DryRun) {
+            $summaryDryRun++
+            $dryRunLine = "[$(Get-Date -Format s)] DRYRUN $category/$appId | framework=$framework | qt_like=$isQtFramework | template=$template | entry=$entryPath | app_dir=$appDir"
+            Write-Log $dryRunLine
+            Write-Host $dryRunLine
             continue
         }
 
@@ -525,7 +609,7 @@ foreach ($manifestPath in $manifests) {
 
         $resolvedPythonExe = Resolve-PythonForManifest -Category $category -Manifest $manifest
         $argumentList = @($entryPath) + $captureTargets
-        Write-Log "[$(Get-Date -Format s)] START $category/$appId | python=$resolvedPythonExe | entry=$entryPath | targets=$([string]::Join(';', @($captureTargets))) | stdout=$stdoutPath | stderr=$stderrPath | temp=$tmpDir"
+        Write-Log "[$(Get-Date -Format s)] START $category/$appId | python=$resolvedPythonExe | template=$template | entry=$entryPath | targets=$([string]::Join(';', @($captureTargets))) | stdout=$stdoutPath | stderr=$stderrPath | temp=$tmpDir"
         $proc = Start-Process -FilePath $resolvedPythonExe -ArgumentList $argumentList -WorkingDirectory $appDir -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
         $windowInfo = Wait-ForWindowHandle -Process $proc -TimeoutSeconds $WaitSeconds
 
@@ -538,19 +622,19 @@ foreach ($manifestPath in $manifests) {
             Save-WindowScreenshot -Handle $windowInfo.Handle -Path $imagePath
             $stdoutTail = Get-LogExcerpt -Path $stdoutPath
             $stderrTail = Get-LogExcerpt -Path $stderrPath
-            Write-Log "[$(Get-Date -Format s)] OK   $category/$appId | image=$imagePath | window_pid=$($windowInfo.WindowPid) | title=$windowTitle | class=$windowClass | bounds=$($windowRect.Left),$($windowRect.Top),$($windowRect.Right),$($windowRect.Bottom) | stdout_tail=$stdoutTail | stderr_tail=$stderrTail"
+            Write-Log "[$(Get-Date -Format s)] OK   $category/$appId | template=$template | image=$imagePath | window_pid=$($windowInfo.WindowPid) | title=$windowTitle | class=$windowClass | bounds=$($windowRect.Left),$($windowRect.Top),$($windowRect.Right),$($windowRect.Bottom) | stdout_tail=$stdoutTail | stderr_tail=$stderrTail"
         }
         else {
             $stdoutTail = Get-LogExcerpt -Path $stdoutPath
             $stderrTail = Get-LogExcerpt -Path $stderrPath
             $exitState = if ($proc.HasExited) { "exited:$($proc.ExitCode)" } else { "running" }
-            Write-Log "[$(Get-Date -Format s)] WARN $category/$appId | no window detected within ${WaitSeconds}s | proc=$exitState | stdout=$stdoutPath | stderr=$stderrPath | stdout_tail=$stdoutTail | stderr_tail=$stderrTail"
+            Write-Log "[$(Get-Date -Format s)] WARN $category/$appId | template=$template | no window detected within ${WaitSeconds}s | proc=$exitState | stdout=$stdoutPath | stderr=$stderrPath | stdout_tail=$stdoutTail | stderr_tail=$stderrTail"
         }
     }
     catch {
         $stdoutTail = Get-LogExcerpt -Path $stdoutPath
         $stderrTail = Get-LogExcerpt -Path $stderrPath
-        Write-Log "[$(Get-Date -Format s)] FAIL $manifestPath | message=$($_.Exception.Message) | stdout=$stdoutPath | stderr=$stderrPath | stdout_tail=$stdoutTail | stderr_tail=$stderrTail"
+        Write-Log "[$(Get-Date -Format s)] FAIL $manifestPath | template=$template | message=$($_.Exception.Message) | stdout=$stdoutPath | stderr=$stderrPath | stdout_tail=$stdoutTail | stderr_tail=$stderrTail"
     }
     finally {
         if ($CooldownSeconds -gt 0) {
@@ -578,4 +662,10 @@ foreach ($manifestPath in $manifests) {
         $env:TEMP = $oldTemp
         $env:TMP = $oldTmp
     }
+}
+
+if ($DryRun) {
+    $summaryLine = "DRYRUN SUMMARY | gui_candidates=$summaryGui | qt_like=$summaryQt | non_qt_like=$summaryNonQt | dryrun_entries=$summaryDryRun"
+    Write-Host $summaryLine
+    Write-Log "[$(Get-Date -Format s)] $summaryLine"
 }

@@ -54,15 +54,6 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_voice.zip"
     },
     {
-        "id": "audio_convert",
-        "name": "Audio Convert",
-        "description": "Legacy Audio tool.",
-        "version": "1.0.0",
-        "category": "audio",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/audio_convert/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/audio_convert.zip"
-    },
-    {
         "id": "extract_bgm",
         "name": "Extract BGM",
         "description": "Confirm selected audio files in a compact Qt shell, then extract BGM stems in a console flow.",
@@ -343,21 +334,12 @@
     },
     {
         "id": "comfyui_dashboard",
-        "name": "Open Web UI",
-        "description": "Open ComfyUI Web UI (starts server if needed)",
+        "name": "ComfyUI Dashboard",
+        "description": "Mini Qt dashboard for starting, stopping, and opening ComfyUI.",
         "version": "1.0.0",
         "category": "comfyui",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/comfyui_dashboard/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/comfyui_dashboard.zip"
-    },
-    {
-        "id": "ace_audio_editor",
-        "name": "Creative Audio Studio (ACE)",
-        "description": "AI Audio Generation & Editing using ACE Step",
-        "version": "1.0.0",
-        "category": "comfyui",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/ace_audio_editor/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/ace_audio_editor.zip"
     },
     {
         "id": "creative_studio_z",
@@ -367,14 +349,5 @@
         "category": "comfyui",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/creative_studio_z/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/creative_studio_z.zip"
-    },
-    {
-        "id": "seedvr2_upscaler",
-        "name": "SeedVR2 Video Upscaler",
-        "description": "Upscale videos using SeedVR2 (ComfyUI)",
-        "version": "1.0.0",
-        "category": "comfyui",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/seedvr2_upscaler/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/seedvr2_upscaler.zip"
     }
 ]

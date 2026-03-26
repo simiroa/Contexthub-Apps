@@ -42,5 +42,5 @@ def run_dry(app_id):
         print(f"Failed to run {app_id}: {e}")
 
 if __name__ == "__main__":
-    for app in ["creative_studio_z", "ace_audio_editor", "creative_studio_advanced", "seedvr2_upscaler", "comfyui_dashboard"]:
+    for app in ["creative_studio_z", "creative_studio_advanced", "comfyui_dashboard"]:
         run_dry(app)

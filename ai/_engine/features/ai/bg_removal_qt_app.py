@@ -27,6 +27,7 @@ try:
         QFrame,
         QHBoxLayout,
         QMainWindow,
+        QPushButton,
         QSplitter,
         QVBoxLayout,
         QWidget,

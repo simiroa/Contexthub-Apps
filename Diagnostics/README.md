@@ -10,3 +10,5 @@
 - `gui_runs/<category>/<app>/*`
 
 이 결과는 수동 검토와 `manual.md` 반영 자료로 사용한다.
+
+현재 Qt/shared runtime 정리와 앱 상태표는 `agent-docs/gui-runtime-status.md`를 기준으로 본다.

@@ -9,6 +9,8 @@
 - `flet-porting-template.md`: 기존 GUI 앱을 Flet으로 옮길 때 사용하는 구조/체크리스트 템플릿
 - `qt-template/`: shared Qt runtime 기반 패널형 앱을 복제해서 시작하는 템플릿
 
+Qt 계열 앱은 복제 후 `manifest.json`의 `ui.framework`, `ui.shared_theme`, `ui.template`를 같이 맞추는 것을 권장한다.
+
 Qt 템플릿을 쓸 때는 먼저 `agent-docs/qt-shared-runtime-guidelines.md`를 읽는다.
 
 ## 사용 원칙

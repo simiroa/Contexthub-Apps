@@ -28,7 +28,6 @@
 - `ai/rmbg_background`
 - `ai/whisper_subtitle`
 - `ai_light/ai_text_lab`
-- `ai_light/prompt_master`
 - `document/doc_convert`
 - `document/doc_scan`
 - `document/pdf_merge`

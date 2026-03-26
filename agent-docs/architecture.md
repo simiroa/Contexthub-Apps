@@ -45,6 +45,8 @@
 
 이 구조는 `image/image_convert/main.py`, `utilities/youtube_downloader/main.py` 같은 앱에서 확인된다.
 
+Qt shared runtime의 공통 계약과 템플릿 분류는 `agent-docs/gui-runtime-contract.md`를 기준으로 본다.
+
 ## 3. 메타데이터 위치
 
 - 루트 `market.json`: 마켓 전체 레지스트리

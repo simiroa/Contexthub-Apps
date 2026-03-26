@@ -1,16 +1,4 @@
 {
-  "audio_convert_gui": {
-    "title": "Audio Converter",
-    "format_label": "Output Format",
-    "quality_label": "Quality",
-    "copy_metadata": "Copy Metadata",
-    "save_to_folder": "Save to New Folder",
-    "delete_original": "Delete Original",
-    "convert": "Convert Audio",
-    "converting": "Converting...",
-    "conversion_cancelled": "Conversion cancelled.",
-    "no_audio_selected": "No valid audio files selected."
-  },
   "audio_separate_gui": {
     "title": "Audio Separator (Demucs)",
     "header_sep": "Audio Separator - {} files",

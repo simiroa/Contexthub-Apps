@@ -60,6 +60,7 @@
 - `execution.entry_point`: 보통 `main.py`
 - `triggers.context_menu.extensions`: 실제 처리 가능한 확장자만 명시
 - `ui.framework`: 기존 카테고리와 맞추는 편이 안전함
+- `ui.template`: `full`, `compact`, `mini`, `special` 중 하나를 명시하면 상태 분류와 캡처 규칙이 쉬워짐
 
 확장자를 과하게 넓히면 잘못된 파일이 앱으로 열릴 수 있다.
 

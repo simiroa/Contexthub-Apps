@@ -2,39 +2,16 @@
 
 ## 범위
 
-캡처 결과 기준으로 `prompt_master`, `ai` 카테고리 일부, `rigreader_vectorizer`의 GUI 문제를 분류했다.
+캡처 결과 기준으로 `ai` 카테고리 일부와 `rigreader_vectorizer`의 GUI 문제를 분류했다.
 
 관련 캡처:
 
-- `Diagnostics/gui_captures/ai_light/prompt_master.png`
 - `Diagnostics/gui_captures/ai/marigold_pbr.png`
 - `Diagnostics/gui_captures/image/rigreader_vectorizer.png`
 
 ## Findings
 
-### 1. `prompt_master`는 구형 구조와 i18n 로딩 누락이 겹쳐 있음
-
-증상:
-
-- 헤더, 섹션 제목, 버튼 설명이 `prompt_master.header` 같은 번역 키로 그대로 노출됨
-- 레이아웃이 다른 앱들과 달리 구형 블랙 패널 스타일로 보임
-- 이미지 영역 `No Image` 같은 영문 하드코딩이 남아 있음
-
-원인:
-
-- [ai_light/prompt_master/main.py](C:/Users/HG/Documents/Contexthub-Apps/ai_light/prompt_master/main.py)에는 `locales.json`을 `load_extra_strings()`로 읽는 단계가 없음
-- [ai_light/_engine/features/prompt_master/main.py#L24](C:/Users/HG/Documents/Contexthub-Apps/ai_light/_engine/features/prompt_master/main.py#L24) 에서 `ctk.CTk`를 직접 상속해 공통 `BaseWindow` 체인을 우회함
-- [ai_light/_engine/features/prompt_master/main.py#L36](C:/Users/HG/Documents/Contexthub-Apps/ai_light/_engine/features/prompt_master/main.py#L36) 의 `setup_theme()`만으로는 앱 전용 locale 로딩 문제를 해결하지 못함
-- [ai_light/_engine/features/prompt_master/main.py#L195](C:/Users/HG/Documents/Contexthub-Apps/ai_light/_engine/features/prompt_master/main.py#L195) 의 `"No Image"` 같은 하드코딩 문자열이 남아 있음
-
-수정 방향:
-
-- `main.py`에 앱 폴더 `locales.json` 로딩 추가
-- `BaseWindow` 기반으로 점진 이식 검토
-- 하드코딩 문구를 `t()` + fallback 구조로 교체
-- `place()` 기반 오버레이와 고정 폭 구성은 차후 정리 대상
-
-### 2. `ai` 툴은 좁은 헤더에 모델 관리자 프레임을 붙여 버튼/상태가 잘림
+### 1. `ai` 툴은 좁은 헤더에 모델 관리자 프레임을 붙여 버튼/상태가 잘림
 
 대표 증상:
 
@@ -57,7 +34,7 @@
 - `ModelManagerFrame`에 최소 폭, 텍스트 줄바꿈, compact 모드 또는 축약형 상태 UI 추가
 - 캡처 테스트를 `ai` 카테고리 공통 회귀 항목으로 유지
 
-### 3. `rigreader_vectorizer`는 전형적인 i18n 키 누출 상태
+### 2. `rigreader_vectorizer`는 전형적인 i18n 키 누출 상태
 
 증상:
 
@@ -85,10 +62,9 @@
 
 ## 다음 수정 우선순위
 
-1. `prompt_master` locale 로딩과 기본 문구 복구
-2. `rigreader_vectorizer` locale 키 정합성 복구
-3. `ModelManagerFrame` 또는 `ai` 헤더 레이아웃 개선
-4. 전 카테고리 GUI 캡처 재실행
+1. `rigreader_vectorizer` locale 키 정합성 복구
+2. `ModelManagerFrame` 또는 `ai` 헤더 레이아웃 개선
+3. 전 카테고리 GUI 캡처 재실행
 
 ## 재사용 문서
 
@@ -96,22 +72,7 @@
 
 ## Resolved In This Session
 
-### 1. `prompt_master`
-
-조치:
-
-- 앱 래퍼가 앱 폴더를 `CTX_APP_ROOT`로 보도록 수정
-- GUI 본체를 `BaseWindow` 기반으로 이식
-- 검색창, 이미지 영역, 툴팁, 태그 관리 창, 프리셋 가이드의 하드코딩 문자열을 `t()` + fallback으로 정리
-- 앱 전용 [locales.json](C:/Users/HG/Documents/Contexthub-Apps/ai_light/prompt_master/locales.json) 에 누락 키를 추가
-
-결과:
-
-- 번역 키 노출이 사라짐
-- 공통 타이틀 바와 카드 스타일을 사용하게 됨
-- 태그/가이드 서브 UI도 같은 locale 체인을 따르게 됨
-
-### 2. `ai` 카테고리 모델 관리자/푸터 잘림
+### 1. `ai` 카테고리 모델 관리자/푸터 잘림
 
 조치:
 
@@ -125,7 +86,7 @@
 - AI 툴의 실행/취소 버튼이 첫 화면에 노출됨
 - 캡처 결과에서 `esrgan_upscale`, `whisper_subtitle`, `rmbg_background`의 하단 액션이 확인됨
 
-### 3. `rigreader_vectorizer`
+### 2. `rigreader_vectorizer`
 
 조치:
 

@@ -12,6 +12,65 @@ def _get_tools_root():
     current_dir = Path(__file__).parent.parent.parent
     return current_dir / "tools"
 
+
+def _resolve_tool_executable(path_value, executable_name: str):
+    """Resolve a configured tool path that may point to an executable or its parent folder."""
+    if not path_value:
+        return None
+    path = Path(path_value)
+    if not path.exists():
+        return None
+    if path.is_dir():
+        candidates = [
+            path / "bin" / executable_name,
+            path / executable_name,
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                return str(candidate)
+        return None
+    return str(path)
+
+
+def _get_externals_roots():
+    """Return candidate Externals roots near the runtime and hub root."""
+    shared_root = Path(__file__).resolve().parent.parent.parent
+    candidates = []
+
+    env_root = os.environ.get("CTX_ROOT")
+    if env_root:
+        candidates.append(Path(env_root) / "Externals")
+
+    for env_key in ("CTX_RUNTIME_ROOT", "CTX_DEV_RUNTIME_ROOT", "CTX_SHARED_RUNTIME_ROOT"):
+        env_path = os.environ.get(env_key)
+        if not env_path:
+            continue
+        root = Path(env_path)
+        candidates.extend([
+            root / "Externals",
+            root.parent / "Externals",
+            root.parent.parent / "Externals",
+        ])
+
+    candidates.extend([
+        shared_root / "Externals",
+        shared_root.parent / "Externals",
+        shared_root.parent.parent / "Externals",
+        shared_root.parent.parent.parent / "Externals",
+        shared_root.parent.parent.parent / "Contexthub" / "Externals",
+        shared_root.parent.parent.parent.parent / "Contexthub" / "Externals",
+    ])
+
+    unique = []
+    seen = set()
+    for candidate in candidates:
+        key = str(candidate)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(candidate)
+    return unique
+
 def get_mayo_conv():
     """Get path to mayo-conv.exe."""
     settings = load_settings()
@@ -112,8 +171,13 @@ def get_realesrgan():
 def get_ffmpeg():
     """Get path to ffmpeg.exe."""
     settings = load_settings()
-    if settings.get("FFMPEG_PATH") and Path(settings["FFMPEG_PATH"]).exists():
-        return settings["FFMPEG_PATH"]
+    configured = _resolve_tool_executable(settings.get("FFMPEG_PATH"), "ffmpeg.exe")
+    if configured:
+        return configured
+
+    env_configured = _resolve_tool_executable(os.environ.get("FFMPEG_PATH"), "ffmpeg.exe")
+    if env_configured:
+        return env_configured
 
     # Check tools/ffmpeg/bin/ffmpeg.exe
     ffmpeg_path = _get_tools_root() / "ffmpeg" / "bin" / "ffmpeg.exe"
@@ -124,6 +188,16 @@ def get_ffmpeg():
     ffmpeg_path = _get_tools_root() / "ffmpeg" / "ffmpeg.exe"
     if ffmpeg_path.exists():
         return str(ffmpeg_path)
+
+    # Check Externals/ffmpeg/bin/ffmpeg.exe and Externals/ffmpeg/ffmpeg.exe
+    for externals_root in _get_externals_roots():
+        ffmpeg_path = externals_root / "ffmpeg" / "bin" / "ffmpeg.exe"
+        if ffmpeg_path.exists():
+            return str(ffmpeg_path)
+
+        ffmpeg_path = externals_root / "ffmpeg" / "ffmpeg.exe"
+        if ffmpeg_path.exists():
+            return str(ffmpeg_path)
         
     # Fallback to system path
     return "ffmpeg"

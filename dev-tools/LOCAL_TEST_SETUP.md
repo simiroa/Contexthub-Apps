@@ -28,7 +28,7 @@ Contexthub 앱 설치 환경 없이도, 이 저장소의 앱을 개별적으로 
 
 추가로 현재 기준:
 
-- `prompt_master`, `rigreader_vectorizer`, `doc_scan`은 GUI 규격 수정 후 캡처 검증됨
+- `rigreader_vectorizer`, `doc_scan`은 GUI 규격 수정 후 캡처 검증됨
 - `esrgan_upscale`, `rmbg_background`, `whisper_subtitle`는 하단 액션 버튼 노출까지 재검증됨
 - `ai` 카테고리 런타임은 Conda 우선 규칙을 가지지만, 로컬 캡처 테스트는 기존 Python fallback 환경에서도 가능하다
 - `ai/qwen3_tts`는 legacy GUI fallback 없이 Flet 전용으로 전환되었고, 테스트 Python 또는 `contexthub-ai` env에 `flet` 설치가 전제된다

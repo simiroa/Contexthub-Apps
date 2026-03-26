@@ -1,5 +1,0 @@
-Pillow
-customtkinter
-kornia
-torch
-transformers

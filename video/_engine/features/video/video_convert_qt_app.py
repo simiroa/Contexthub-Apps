@@ -360,6 +360,7 @@ class VideoConvertWindow(QMainWindow):
 
     def _build_left_panel(self) -> QFrame:
         m = get_shell_metrics()
+        asset_list_min_height = getattr(m, "asset_list_min_height", 260)
 
         card = QFrame()
         card.setObjectName("card")
@@ -456,7 +457,7 @@ class VideoConvertWindow(QMainWindow):
         list_layout.addLayout(list_title_row)
 
         self.input_list = QListWidget()
-        self.input_list.setMinimumHeight(m.asset_list_min_height)
+        self.input_list.setMinimumHeight(asset_list_min_height)
         list_layout.addWidget(self.input_list, 1)
 
         action_row = QHBoxLayout()

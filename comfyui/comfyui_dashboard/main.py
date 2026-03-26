@@ -1,116 +1,291 @@
-import os
+from __future__ import annotations
+
 import sys
+import shutil
+import subprocess
+import webbrowser
 from pathlib import Path
-import runpy
 
-LEGACY_ID = 'comfyui_dashboard'
-LEGACY_SCOPE = ''
-USE_MENU = False
-SCRIPT_REL = 'features/comfyui/open_dashboard.py'
-
-ROOT = Path(__file__).resolve().parents[3]
 APP_ROOT = Path(__file__).resolve().parent
-LEGACY_ROOT = APP_ROOT.parent / "_engine"
-os.chdir(LEGACY_ROOT)
-sys.path.insert(0, str(LEGACY_ROOT))
-if not os.environ.get("CTX_APP_ROOT"):
-    os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
+REPO_ROOT = APP_ROOT.parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from runtime_bootstrap import resolve_shared_runtime
+
+ENGINE_ROOT = APP_ROOT.parent / "_engine"
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
+for path in (ENGINE_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
+from contexthub.ui.qt.shell import (
+    HeaderSurface,
+    apply_app_icon,
+    build_shell_stylesheet,
+    build_size_grip,
+    get_shell_metrics,
+    qt_t,
+)
+from manager.helpers.comfyui_service import ComfyUIService
+
+try:
+    from PySide6.QtCore import QEvent, QPoint, QThread, QTimer, Signal, Qt
+    from PySide6.QtWidgets import (
+        QApplication,
+        QFrame,
+        QHBoxLayout,
+        QLabel,
+        QMainWindow,
+        QMessageBox,
+        QPushButton,
+        QVBoxLayout,
+        QWidget,
+    )
+except ImportError as exc:  # pragma: no cover
+    raise SystemExit("PySide6 is required to run the ComfyUI dashboard.") from exc
 
 
-def _capture_mode():
-    return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
-
-def _pick_targets():
-    if LEGACY_SCOPE in {"background", "tray_only", "standalone"}:
-        return []
-
-    if _capture_mode():
-        try:
-            from utils.headless_inputs import get_headless_targets
-            return get_headless_targets(LEGACY_ID, LEGACY_SCOPE, LEGACY_ROOT)
-        except Exception:
-            return []
-
-    args = [a for a in sys.argv[1:] if a]
-    if args:
-        return args
-
-    try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-
-        if LEGACY_SCOPE in {"items"}:
-            paths = filedialog.askopenfilenames(title=LEGACY_ID)
-            return list(paths)
-        if LEGACY_SCOPE in {"directory"}:
-            path = filedialog.askdirectory(title=LEGACY_ID)
-            return [path] if path else []
-        path = filedialog.askopenfilename(title=LEGACY_ID)
-        return [path] if path else []
-    except Exception:
-        return []
+APP_TITLE = qt_t("comfyui.dashboard.title", "ComfyUI Dashboard")
+APP_SUBTITLE = qt_t("comfyui.dashboard.subtitle", "Mini Qt control surface for ComfyUI")
 
 
-def _run_script(script_rel, targets):
-    script_path = LEGACY_ROOT / script_rel
-    if not script_path.exists():
-        raise FileNotFoundError("Missing script: " + str(script_path))
-    argv = [str(script_path)] + targets
-    old_argv = sys.argv
-    try:
-        sys.argv = argv
-        runpy.run_path(str(script_path), run_name="__main__")
-    finally:
-        sys.argv = old_argv
+class TaskThread(QThread):
+    finished_with_result = Signal(bool, str, object)
 
+    def __init__(self, callback):
+        super().__init__()
+        self._callback = callback
 
-def _run_menu(targets):
-    from core import menu as legacy_menu
-    handler = legacy_menu.build_handler_map().get(LEGACY_ID)
-    if handler is None:
-        raise RuntimeError("Missing legacy handler: " + LEGACY_ID)
-
-    target = targets[0] if targets else str(LEGACY_ROOT)
-    selection = targets if len(targets) > 1 else None
-    try:
-        if selection:
-            handler(target, selection)
+    def run(self) -> None:
+        result = self._callback()
+        if isinstance(result, tuple):
+            if len(result) == 3:
+                ok, message, payload = result
+            elif len(result) == 2:
+                ok, message = result
+                payload = None
+            else:
+                ok, message, payload = bool(result), "Completed", None
         else:
-            handler(target)
-    except TypeError:
-        handler(target)
+            ok, message, payload = bool(result), "Completed", None
+        self.finished_with_result.emit(ok, message, payload)
 
 
-def main():
-    # Load locales
-    try:
-        from utils.i18n import load_extra_strings
-        loc_file = LEGACY_ROOT / "locales.json"
-        if loc_file.exists():
-            load_extra_strings(loc_file)
-    except Exception: pass
+class DashboardWindow(QMainWindow):
+    def __init__(self) -> None:
+        super().__init__()
+        self.service = ComfyUIService()
+        self._task_thread: TaskThread | None = None
+        self._drag_offset: QPoint | None = None
+        self._dragging = False
+        self._drag_mode = "idle"
+        self._refresh_timer = QTimer(self)
+        self._refresh_timer.setInterval(2000)
+        self._refresh_timer.timeout.connect(self.refresh_status)
 
-    targets = _pick_targets()
-    if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
+        self.setWindowTitle(APP_TITLE)
+        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.resize(560, 320)
+        self.setMinimumSize(520, 300)
+        apply_app_icon(self, APP_ROOT)
+        self.setStyleSheet(build_shell_stylesheet())
+
+        app = QApplication.instance()
+        if app is not None:
+            app.installEventFilter(self)
+
+        self._build_ui()
+        self.refresh_status()
+        self._refresh_timer.start()
+
+    def _build_ui(self) -> None:
+        m = get_shell_metrics()
+        central = QWidget()
+        central.setObjectName("centralHost")
+        self.setCentralWidget(central)
+        root = QVBoxLayout(central)
+        root.setContentsMargins(m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2)
+        root.setSpacing(m.section_gap)
+
+        self.window_shell = QFrame()
+        self.window_shell.setObjectName("windowShell")
+        self.window_shell.setAttribute(Qt.WA_StyledBackground, True)
+        shell_layout = QVBoxLayout(self.window_shell)
+        shell_layout.setContentsMargins(m.shell_margin, m.shell_margin, m.shell_margin, m.shell_margin)
+        shell_layout.setSpacing(m.section_gap)
+
+        self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, APP_ROOT, show_webui=True)
+        self.header_surface.asset_count_badge.show()
+        self.header_surface.runtime_status_badge.show()
+        self.header_surface.open_webui_btn.hide()
+        self.header_surface.title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.header_surface.subtitle_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self._bind_drag(self.header_surface)
+        shell_layout.addWidget(self.header_surface)
+
+        self.content_card = QFrame()
+        self.content_card.setObjectName("card")
+        content_layout = QVBoxLayout(self.content_card)
+        content_layout.setContentsMargins(m.card_padding, m.card_padding, m.card_padding, m.card_padding)
+        content_layout.setSpacing(m.section_gap)
+
+        self.gpu_summary = QLabel("GPU: detecting...")
+        self.gpu_summary.setObjectName("summaryText")
+        self.gpu_summary.setWordWrap(True)
+        content_layout.addWidget(self.gpu_summary)
+
+        action_row = QHBoxLayout()
+        action_row.setSpacing(8)
+        self.start_btn = QPushButton("Start")
+        self.stop_btn = QPushButton("Stop")
+        self.open_web_btn = QPushButton("Open Web UI")
+        for btn in (self.start_btn, self.stop_btn, self.open_web_btn):
+            btn.setMinimumHeight(32)
+            action_row.addWidget(btn, 1)
+        content_layout.addLayout(action_row)
+
+        shell_layout.addWidget(self.content_card, 1)
+
+        grip_row = QHBoxLayout()
+        grip_row.setContentsMargins(0, 0, 2, 0)
+        grip_row.addStretch(1)
+        self.size_grip = build_size_grip()
+        self.size_grip.setParent(self.window_shell)
+        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
+        shell_layout.addLayout(grip_row)
+
+        root.addWidget(self.window_shell)
+
+        self.start_btn.clicked.connect(self.start_server)
+        self.stop_btn.clicked.connect(self.stop_server)
+        self.open_web_btn.clicked.connect(self.open_web_ui)
+
+    def _bind_drag(self, widget: QWidget) -> None:
+        widget.setMouseTracking(True)
+        widget.installEventFilter(self)
+
+    def _set_busy(self, busy: bool) -> None:
+        for btn in (
+            self.start_btn,
+            self.stop_btn,
+            self.open_web_btn,
+        ):
+            btn.setEnabled(not busy)
+
+    def _run_task(self, callback, done_label: str) -> None:
+        if self._task_thread and self._task_thread.isRunning():
+            QMessageBox.information(self, APP_TITLE, "Another action is already running.")
+            return
+
+        self._set_busy(True)
+        self._task_thread = TaskThread(callback)
+        self._task_thread.finished_with_result.connect(
+            lambda ok, msg, payload: self._finish_task(ok, msg, payload, done_label)
+        )
+        self._task_thread.start()
+
+    def _finish_task(self, ok: bool, message: str, payload: object, done_label: str) -> None:
+        self._set_busy(False)
+        self.refresh_status()
+
+    def eventFilter(self, obj, event):
+        event_type = event.type()
+        if obj is self.header_surface and event_type == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
+            self._dragging = True
+            self._refresh_timer.stop()
+            self.header_surface.setCursor(Qt.ClosedHandCursor)
+            self._drag_offset = None
+            self._drag_mode = "system"
+            handle = self.windowHandle()
+            if handle is not None and hasattr(handle, "startSystemMove") and handle.startSystemMove():
+                return True
+            self._drag_mode = "manual"
+            self._drag_offset = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            return True
+        if obj is self.header_surface and event_type == QEvent.MouseMove and self._drag_mode == "manual" and self._drag_offset is not None and event.buttons() & Qt.LeftButton:
+            self.move(event.globalPosition().toPoint() - self._drag_offset)
+            return True
+        if self._dragging and event_type == QEvent.MouseButtonRelease:
+            self._dragging = False
+            self._drag_mode = "idle"
+            self._drag_offset = None
+            self.header_surface.unsetCursor()
+            self._refresh_timer.start()
+            return False
+        return super().eventFilter(obj, event)
+
+    def _server_address(self) -> str:
+        address = getattr(self.service.client, "server_address", "")
+        if address:
+            return address
+        host = getattr(self.service.client, "host", "127.0.0.1")
+        port = getattr(self.service.client, "port", self.service.port)
+        return f"http://{host}:{port}"
+
+    def refresh_status(self) -> None:
+        if self._dragging:
+            return
+        running, port = self.service.is_running()
+        self.header_surface.asset_count_badge.setText(str(port or self.service.port))
+        self.header_surface.runtime_status_badge.setText("READY" if running else "STOPPED")
+        self.gpu_summary.setText(self._read_gpu_summary())
+        self.start_btn.setEnabled(not running)
+        self.stop_btn.setEnabled(running)
+
+    def start_server(self) -> None:
+        self._run_task(lambda: self.service.ensure_running(start_if_missing=True), "Start")
+
+    def stop_server(self) -> None:
+        self._run_task(lambda: self.service.stop(only_if_owned=False), "Stop")
+
+    def open_web_ui(self) -> None:
+        url = self._server_address()
+        webbrowser.open(url)
+        self.refresh_status()
+
+    def _read_gpu_summary(self) -> str:
+        if shutil.which("nvidia-smi"):
+            try:
+                result = subprocess.run(
+                    [
+                        "nvidia-smi",
+                        "--query-gpu=name,memory.total,memory.used,utilization.gpu",
+                        "--format=csv,noheader,nounits",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                    check=False,
+                )
+                line = (result.stdout or "").strip().splitlines()[0]
+                parts = [part.strip() for part in line.split(",")]
+                if len(parts) >= 4:
+                    name = parts[0]
+                    total_gb = float(parts[1]) / 1024.0
+                    used_gb = float(parts[2]) / 1024.0
+                    util = parts[3]
+                    return f"GPU: {name} | VRAM: {used_gb:.1f}/{total_gb:.1f} GB | Load: {util}%"
+            except Exception:
+                pass
         try:
-            import tkinter as tk
-            from tkinter import messagebox
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showwarning("ContextHub", "No target selected.")
+            import torch
+
+            if torch.cuda.is_available():
+                name = torch.cuda.get_device_name(0)
+                total_gb = torch.cuda.get_device_properties(0).total_memory / 1024**3
+                return f"GPU: {name} | VRAM: live stats unavailable | Total: {total_gb:.1f} GB"
         except Exception:
             pass
-        return
+        return "GPU: unavailable"
 
-    if USE_MENU:
-        _run_menu(targets)
-    else:
-        _run_script(SCRIPT_REL, targets)
+def main() -> int:
+    app = QApplication(sys.argv)
+    window = DashboardWindow()
+    window.show()
+    return app.exec()
 
 
 if __name__ == "__main__":
-    main()
-
+    raise SystemExit(main())
