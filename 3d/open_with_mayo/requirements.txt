@@ -1,1 +1,1 @@
-customtkinter
+# No additional Python packages are required.

@@ -19,21 +19,19 @@
 
 ## 3. 먼저 읽을 문서
 
-Flet 포팅 또는 Flet 공용 UI 작업이면 읽는 순서를 아래처럼 고정한다.
+Qt GUI 작업이면 아래 문서를 우선 본다.
 
-1. `agent-docs/flet-migration-guidelines.md`
-2. `agent-docs/flet-compatibility-guide.md`
-3. `agent-docs/current-dev-context.md`
-4. `agent-docs/templates/flet-porting-template.md`
-4. 대상 앱의 `manual.md`
+1. `agent-docs/gui-runtime-contract.md`
+2. `agent-docs/gui-runtime-status.md`
+3. 대상 앱의 `manifest.json`
+4. 대상 앱의 `main.py`
+5. 대상 앱의 `manual.md`
 
 - 앱/카테고리 목적: `agent-docs/app-overview.md`
 - 운영 방식과 코드 위치: `agent-docs/architecture.md`
 - 새 앱 추가 지침: `agent-docs/new-app-guidelines.md`
 - Qt shared runtime 계약과 템플릿 분류: `agent-docs/gui-runtime-contract.md`
-- Python GUI를 Flet으로 이관할 때: `agent-docs/flet-migration-guidelines.md`
-- Flet API/런타임 호환성 규칙: `agent-docs/flet-compatibility-guide.md`
-- 현재 개발 기준점과 최근 수정 상태: `agent-docs/current-dev-context.md`
+- 현재 템플릿 버킷과 위험 상태: `agent-docs/gui-runtime-status.md`
 - 안정성 제약: `agent-docs/stability-constraints.md`
 - Git 및 배포 정책: `agent-docs/git-policy.md`
 
@@ -69,10 +67,9 @@ Flet 포팅 또는 Flet 공용 UI 작업이면 읽는 순서를 아래처럼 고
 
 ## 8. 현재 작업 기준점
 
-- Python GUI 공통 규격은 `BaseWindow`, 공통 locale 체인, 공통 테마 상수 사용을 우선한다.
-- Flet 앱은 `dev-tools/runtime/Shared/contexthub/ui/flet/`의 공통 `tokens.py`, `theme.py`, `window.py`, `layout.py`를 먼저 사용한다.
-- Flet 창 크기는 앱별 숫자 하드코딩 대신 `window_profile`로 지정한다.
-- Flet 하단 실행 영역은 가능하면 공통 `action_bar()` 패턴을 사용하고, 주요 버튼은 최소폭 규칙을 따른다.
+- Python GUI 공통 규격은 shared Qt runtime 계약과 카테고리 `_engine` 패턴을 우선한다.
+- 템플릿 분류는 `full`, `compact`, `mini`, `special` 4버킷 기준으로 본다.
+- 앱별 분류는 실제 인터랙션 구조를 우선하고, `manifest.json`의 `ui.template`를 최종 선언값으로 맞춘다.
 - GUI 이슈 수정 후에는 `dev-tools/capture-python-gui-apps.ps1`로 캡처 회귀 확인을 우선한다.
 - `ai` 카테고리 실행은 이제 Conda 우선 규칙을 가진다.
   - 기본 모드: `prefer_conda`

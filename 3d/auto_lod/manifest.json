@@ -2,16 +2,14 @@
   "schema_version": "1.2",
   "id": "auto_lod",
   "name": "Auto LOD",
-  "description": "Legacy 3D tool.",
+  "description": "Generate lower-detail mesh variants in a full Qt shell with LOD controls.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,
   "runtime": {
     "category": "3d",
     "python_version": "3.11",
-    "required_binaries": [
-      "mayo"
-    ]
+    "required_binaries": []
   },
   "execution": {
     "entry_point": "main.py",
@@ -52,7 +50,8 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "flet",
-    "shared_theme": "contexthub"
+    "framework": "pyside6",
+    "shared_theme": "contexthub",
+    "template": "compact"
   }
 }

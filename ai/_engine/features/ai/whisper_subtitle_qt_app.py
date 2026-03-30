@@ -3,13 +3,14 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from contexthub.ui.qt.panels import ExportRunPanel, FixedParameterPanel
+from contexthub.ui.qt.panels import ExportFoldoutPanel, FixedParameterPanel
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
-    build_size_grip,
     build_shell_stylesheet,
     get_shell_metrics,
+    get_shell_palette,
     qt_t,
     refresh_runtime_preferences,
     runtime_settings_signature,
@@ -168,6 +169,7 @@ class WhisperSubtitleWindow(QMainWindow):
         shell_layout.setSpacing(m.section_gap)
 
         self.header = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root, show_webui=False)
+        self.header.set_header_visibility(show_subtitle=True, show_asset_count=True, show_runtime_status=True)
         self.header.open_webui_btn.hide()
         self.runtime_status_badge = self.header.runtime_status_badge
         shell_layout.addWidget(self.header)
@@ -184,18 +186,14 @@ class WhisperSubtitleWindow(QMainWindow):
         splitter.setSizes([470, 760, 360])
         shell_layout.addWidget(splitter, 1)
 
-        grip_row = QHBoxLayout()
-        grip_row.addStretch(1)
-        self.size_grip = build_size_grip()
-        self.size_grip.setParent(shell)
-        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, shell)
 
         root.addWidget(shell)
         self.setStatusBar(QStatusBar())
 
     def _build_left_panel(self) -> QWidget:
         m = get_shell_metrics()
+        p = get_shell_palette()
         panel = QFrame()
         panel.setObjectName("card")
         layout = QVBoxLayout(panel)
@@ -212,8 +210,8 @@ class WhisperSubtitleWindow(QMainWindow):
         preview_layout.addWidget(preview_title)
 
         preview_shell = QFrame()
-        preview_shell.setObjectName("subtlePanel")
-        preview_shell.setStyleSheet("QFrame#subtlePanel { background: #0b0d11; }")
+        preview_shell.setObjectName("subtitlePreviewShell")
+        preview_shell.setStyleSheet(f"QFrame#subtitlePreviewShell {{ background: {p.field_bg}; border-radius: 12px; }}")
         preview_shell_layout = QVBoxLayout(preview_shell)
         preview_shell_layout.setContentsMargins(0, 0, 0, 0)
         preview_shell_layout.setSpacing(0)
@@ -230,7 +228,7 @@ class WhisperSubtitleWindow(QMainWindow):
         self.preview_placeholder = QLabel(qt_t("whisper_subtitle.no_media", "Select media to preview"))
         self.preview_placeholder.setAlignment(Qt.AlignCenter)
         self.preview_placeholder.setWordWrap(True)
-        self.preview_placeholder.setStyleSheet("padding: 24px; color: #9ca8bc;")
+        self.preview_placeholder.setStyleSheet(f"padding: 24px; color: {p.text_muted};")
         self.preview_placeholder.setMinimumHeight(m.preview_min_height)
         self.preview_stack.addWidget(self.preview_placeholder)
 
@@ -324,7 +322,7 @@ class WhisperSubtitleWindow(QMainWindow):
         self.edit_hint.setObjectName("muted")
         self.parse_error = QLabel("")
         self.parse_error.setObjectName("muted")
-        self.parse_error.setStyleSheet("color: #f28b82;")
+        self.parse_error.setStyleSheet(f"color: {get_shell_palette().error};")
         top_row.addWidget(self.doc_state, 1)
         top_row.addWidget(self.edit_hint, 0)
         top_row.addWidget(self.parse_error, 1)
@@ -414,7 +412,7 @@ class WhisperSubtitleWindow(QMainWindow):
         self.param_panel.add_field(qt_t("whisper_subtitle.formats", "Formats"), self._formats_widget())
         layout.addWidget(self.param_panel, 1)
 
-        self.export_panel = ExportRunPanel(qt_t("whisper_subtitle.export_and_run", "Generate And Run"))
+        self.export_panel = ExportFoldoutPanel(qt_t("whisper_subtitle.export_and_run", "Generate And Run"))
         self.export_panel.set_values(
             str(self.service.state.output_options.output_dir) if self.service.state.output_options.output_dir else "",
             self.service.state.output_options.file_prefix,
@@ -455,6 +453,7 @@ class WhisperSubtitleWindow(QMainWindow):
         return wrap
 
     def _apply_compact_styles(self) -> None:
+        p = get_shell_palette()
         compact_field = """
             QComboBox {
                 min-height: 30px;
@@ -467,52 +466,55 @@ class WhisperSubtitleWindow(QMainWindow):
                 border-radius: 10px;
             }
         """
-        slider_style = """
-            QSlider::groove:horizontal {
+        slider_style = f"""
+            QSlider::groove:horizontal {{
                 height: 4px;
-                background: rgba(156, 168, 188, 0.28);
+                background: {p.button_bg};
                 border-radius: 2px;
-            }
-            QSlider::sub-page:horizontal {
-                background: #61c2ff;
+            }}
+            QSlider::sub-page:horizontal {{
+                background: {p.accent};
                 border-radius: 2px;
-            }
-            QSlider::handle:horizontal {
-                background: #8ea2b7;
+            }}
+            QSlider::handle:horizontal {{
+                background: {p.text_muted};
                 width: 14px;
                 margin: -5px 0;
                 border-radius: 7px;
-            }
+            }}
         """
-        tab_style = """
-            QTabWidget::pane {
-                border: 1px solid rgba(39, 52, 75, 0.45);
+        tab_style = f"""
+            QTabWidget::pane {{
+                border: 1px solid {p.control_border};
                 border-radius: 12px;
                 top: -1px;
-                background: rgba(18, 25, 39, 0.72);
-            }
-            QTabBar::tab {
+                background: {p.surface_bg};
+            }}
+            QTabBar::tab {{
                 min-height: 28px;
                 padding: 4px 12px;
                 border-top-left-radius: 8px;
                 border-top-right-radius: 8px;
-            }
+            }}
+            QTabBar::tab:selected {{
+                background: {p.card_bg};
+            }}
         """
-        table_style = """
-            QTableWidget {
-                border: 1px solid rgba(39, 52, 75, 0.45);
+        table_style = f"""
+            QTableWidget {{
+                border: 1px solid {p.control_border};
                 border-radius: 10px;
-                background: rgba(14, 18, 28, 0.7);
-                alternate-background-color: rgba(24, 31, 46, 0.72);
-                selection-background-color: rgba(76, 120, 180, 0.28);
-            }
-            QHeaderView::section {
+                background: {p.field_bg};
+                alternate-background-color: {p.surface_subtle};
+                selection-background-color: {p.accent_soft};
+            }}
+            QHeaderView::section {{
                 padding: 6px 8px;
                 border: none;
-                border-right: 1px solid rgba(39, 52, 75, 0.35);
-                background: rgba(31, 39, 58, 0.95);
-                color: #dbe7fb;
-            }
+                border-right: 1px solid {p.control_border};
+                background: {p.control_bg};
+                color: {p.text};
+            }}
         """
         raw_style = """
             QTextEdit#subtitleRawEditor {
@@ -587,7 +589,7 @@ class WhisperSubtitleWindow(QMainWindow):
 
     def _set_parse_hint(self, message: str) -> None:
         self.parse_error.setText(message)
-        self.parse_error.setStyleSheet("color: #f28b82;")
+        self.parse_error.setStyleSheet(f"color: {get_shell_palette().error};")
 
     def _sync_controls_from_state(self) -> None:
         state = self.service.state

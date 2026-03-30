@@ -44,7 +44,6 @@ HANDLER_MAP = {
     "mesh_convert": "features/mesh/blender.py",
     "open_with_mayo": "features/mesh/mayo.py",
     "extract_textures": "features/mesh/blender.py",
-    "blender_bake_gui": "features/mesh/bake_gui.py",
     "analyze_error": "features/system/clipboard.py",
     "doc_convert": "features/document/convert_gui.py",
     "pdf_merge": "features/system/tools.py",
@@ -52,7 +51,6 @@ HANDLER_MAP = {
     "batch_rename": "features/system/rename.py",
     "sequence_renumber": "features/system/rename.py",
     "youtube_downloader": "features/video/youtube_downloader_qt_app.py",
-    "vacance": "features/leave_manager/leave_manager_qt_app.py",
     "translator": "features/system/translator.py",
     "ai_text_lab": "features/utilities/ai_text_lab.py",
 }
@@ -79,7 +77,7 @@ LIB_MAP = {
 }
 
 # Features that should definitely have show_in_tray: true
-TRAY_FEATURES = {"ai_text_lab", "translator", "vacance", "copy_my_info", "open_from_clipboard"}
+TRAY_FEATURES = {"ai_text_lab", "translator", "copy_my_info", "open_from_clipboard"}
 
 def get_actual_imports(script_path):
     if not script_path.exists():

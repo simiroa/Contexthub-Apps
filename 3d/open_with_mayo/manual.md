@@ -12,7 +12,9 @@
 
 1. CAD 파일 선택 후 우클릭
 2. **3D → Open with Mayo** 선택
-3. Mayo에서 모델 확인
+3. mini 확인 창에서 파일 개수를 확인
+4. **Open** 실행
+5. Mayo에서 모델 확인
 
 ## 지원 포맷
 | 포맷 | 설명 |
@@ -26,6 +28,9 @@
 ## 요구사항
 - **Mayo**: 설치 필요 ([다운로드](https://github.com/fougue/mayo))
 - Manager → Settings에서 경로 설정
+
+## UI 유형
+- mini confirm Qt shell
 
 ## 활용 예시
 - CAD 파일 빠른 확인

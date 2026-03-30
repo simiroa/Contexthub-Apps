@@ -7,10 +7,11 @@ from pathlib import Path
 
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
+    get_shell_palette,
     qt_t,
     refresh_runtime_preferences,
     runtime_settings_signature,
@@ -107,25 +108,14 @@ class Qwen3TTSQtWindow(QMainWindow):
         self._runtime_timer.start()
 
     def _accent_generate_button(self, button: QPushButton) -> None:
-        button.setStyleSheet(
-            """
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6f7cff, stop:1 #5667ff);
-                color: #f7f9ff;
-                border: 1px solid rgba(255,255,255,0.08);
-                border-radius: 16px;
-                padding: 10px 18px;
-                font-weight: 700;
-            }
-            QPushButton:disabled {
-                background: #48506a;
-                color: #a6afc4;
-            }
-            """
-        )
+        button.setObjectName("primary")
+        button.setMinimumHeight(max(40, get_shell_metrics().primary_button_height - 2))
+        button.style().unpolish(button)
+        button.style().polish(button)
 
     def _build_ui(self) -> None:
         m = get_shell_metrics()
+        p = get_shell_palette()
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -140,6 +130,7 @@ class Qwen3TTSQtWindow(QMainWindow):
         shell_layout.setSpacing(m.section_gap)
 
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root, show_webui=False)
+        self.header_surface.set_header_visibility(show_subtitle=True, show_asset_count=True, show_runtime_status=True)
         self.header_surface.open_webui_btn.hide()
         self.asset_count_badge = self.header_surface.asset_count_badge
         self.runtime_status_badge = self.header_surface.runtime_status_badge
@@ -155,13 +146,7 @@ class Qwen3TTSQtWindow(QMainWindow):
         splitter.setSizes([700, 320])
         shell_layout.addWidget(splitter, 1)
 
-        grip_row = QHBoxLayout()
-        grip_row.setContentsMargins(0, 0, 2, 0)
-        grip_row.addStretch(1)
-        self.size_grip = build_size_grip()
-        self.size_grip.setParent(shell)
-        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, shell)
 
         root.addWidget(shell)
         self._build_profile_dialog()
@@ -207,6 +192,7 @@ class Qwen3TTSQtWindow(QMainWindow):
 
     def _build_bottom_panel(self) -> QFrame:
         m = get_shell_metrics()
+        p = get_shell_palette()
         container = QFrame()
         container.setObjectName("card")
         root = QVBoxLayout(container)
@@ -299,6 +285,19 @@ class Qwen3TTSQtWindow(QMainWindow):
         self.composer_text = QTextEdit()
         self.composer_text.setMinimumHeight(160)
         self.composer_text.setPlaceholderText(qt_t("qwen3_tts.compose_hint", "Enter text to generate audio..."))
+        self.composer_text.setStyleSheet(
+            f"""
+            QTextEdit {{
+                background: {p.field_bg};
+                border: 1px solid {p.control_border};
+                border-radius: 16px;
+                padding: 12px 14px;
+            }}
+            QTextEdit:focus {{
+                border: 1px solid {p.chip_border};
+            }}
+            """
+        )
         composer_layout.addWidget(self.composer_text, 1)
 
         btn_row = QHBoxLayout()

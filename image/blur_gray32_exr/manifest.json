@@ -1,0 +1,58 @@
+{
+    "schema_version": "1.2",
+    "id": "blur_gray32_exr",
+    "name": "Blur To Gray32 EXR",
+    "description": "Confirm selected images, set a smoothing radius, then convert each image to grayscale float32 EXR.",
+    "author": "ContextHub",
+    "version": "1.0.0",
+    "icon": "icon.png",
+    "runtime": {
+        "category": "image",
+        "python_version": "3.11",
+        "required_binaries": []
+    },
+    "execution": {
+        "entry_point": "main.py",
+        "arguments": "",
+        "mode": "console",
+        "working_directory": "./",
+        "auto_start": false,
+        "run_as_admin": false,
+        "single_instance": false,
+        "env_vars": {}
+    },
+    "monitoring": {
+        "enabled": false,
+        "type": "process",
+        "target": "blur_gray32_exr",
+        "interval": 5000,
+        "on_active": null,
+        "on_inactive": null,
+        "on_error": null
+    },
+    "triggers": {
+        "tray": false,
+        "quick_launcher": false,
+        "context_menu": {
+            "enabled": true,
+            "extensions": [
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".tga",
+                ".tif",
+                ".tiff",
+                ".bmp",
+                ".webp"
+            ],
+            "scopes": []
+        },
+        "sidebar_widget": null
+    },
+    "ui": {
+        "enabled": true,
+        "framework": "pyside6",
+        "shared_theme": "contexthub",
+        "template": "compact"
+    }
+}

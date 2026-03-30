@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "cad_to_obj",
   "name": "CAD to OBJ",
-  "description": "Legacy 3D tool.",
+  "description": "Convert CAD files to OBJ in a mini confirm Qt shell.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,
@@ -49,7 +49,8 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "flet",
-    "shared_theme": "contexthub"
+    "framework": "pyside6",
+    "shared_theme": "contexthub",
+    "template": "mini"
   }
 }

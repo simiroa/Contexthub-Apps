@@ -155,10 +155,10 @@
 
 ### normal_flip_green
 - 캡처: [normal_flip_green.png](/C:/Users/HG/Documents/Contexthub-Apps/Diagnostics/gui_captures/image/normal_flip_green.png)
-- 평가: 단순 유틸리티로는 충분하지만, 여전히 화면이 툴 크기에 비해 큽니다.
+- 평가: mini confirm 도구로 해석하는 것이 맞습니다. 선택 수 확인 후 바로 콘솔 흐름으로 넘기는 짧은 작업에 적합합니다.
 - 장점: 행동이 단순하고 오해 여지가 적습니다.
-- 문제: 실제 필요한 정보보다 빈 여백이 더 눈에 띕니다.
-- 제안: 작은 창 프로필로 분리하고, 출력 파일명 규칙과 처리 전후 예시를 넣으면 품질감이 올라갑니다.
+- 문제: 템플릿 분류와 문서가 이 mini 성격을 충분히 반영하지 못했습니다.
+- 제안: mini confirm-shell 기준으로 유지하고, 출력 파일명 규칙과 간단한 작업 요약만 강조하면 됩니다.
 
 ### resize_power_of_2
 - 캡처: [resize_power_of_2.png](/C:/Users/HG/Documents/Contexthub-Apps/Diagnostics/gui_captures/image/resize_power_of_2.png)

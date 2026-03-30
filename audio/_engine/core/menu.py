@@ -177,6 +177,7 @@ def build_handler_map():
         "sequence_renumber": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "system" / "rename.py"), "renumber", *([str(i) for i in s] if s else [str(p)])]),
 
         # === Audio ===
+        "audio_toolbox": lambda p, s=None: gui_popen([PYTHONW_EXE, str(app_root / "audio_toolbox" / "main.py"), *([str(i) for i in s] if s else [str(p)])]),
         "extract_bgm": lambda p, s=None: gui_popen([PYTHONW_EXE, str(app_root / "extract_bgm" / "main.py"), *([str(i) for i in s] if s else [str(p)])]),
         "extract_voice": lambda p, s=None: gui_popen([PYTHONW_EXE, str(app_root / "extract_voice" / "main.py"), *([str(i) for i in s] if s else [str(p)])]),
         "normalize_volume": lambda p, s=None: gui_popen([PYTHONW_EXE, str(app_root / "normalize_volume" / "main.py"), *([str(i) for i in s] if s else [str(p)])]),
@@ -192,7 +193,6 @@ def build_handler_map():
         "mesh_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("3d", "mesh_convert")), *([str(i) for i in s] if s else [str(p)])]),
         "open_with_mayo": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("3d", "open_with_mayo")), *([str(i) for i in s] if s else [str(p)])]),
         "extract_textures": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("3d", "extract_textures")), *([str(i) for i in s] if s else [str(p)])]),
-        "blender_bake_gui": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("3d", "blender_bake_gui")), *([str(i) for i in s] if s else [str(p)])]),
 
         # === Clipboard ===
         # copy_my_info: Launches the Info Manager GUI for editing.
@@ -211,8 +211,6 @@ def build_handler_map():
 
         # === Tools ===
         "youtube_downloader": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("utilities", "youtube_downloader"))]),
-        "vacance": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("utilities", "leave_manager"))]),
-        "leave_manager": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("utilities", "leave_manager"))]),
         "ai_text_lab": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai_lite", "ai_text_lab"))]),
         "context_flow": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "tools" / "context_flow" / "gui.py")]),
 

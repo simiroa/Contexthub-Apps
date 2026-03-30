@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/scripts/package_apps.py"
+      - ".github/workflows/market-release.yml"
       - "3d/**"
       - "ai/**"
       - "ai_lite/**"

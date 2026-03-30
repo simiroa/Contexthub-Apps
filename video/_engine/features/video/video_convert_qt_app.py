@@ -5,9 +5,9 @@ from pathlib import Path
 
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
     get_shell_palette,
     qt_t,
@@ -176,12 +176,13 @@ class ExportRunFoldout(QGroupBox):
         self._title_text = qt_t("video_convert_qt.convert_and_run", "Convert And Run")
         super().__init__(self._title_text)
         m = get_shell_metrics()
+        p = get_shell_palette()
         self._expanded = False
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         self.setObjectName("runFoldout")
         self.setStyleSheet(
-            "QGroupBox#runFoldout { margin-top: 8px; padding-top: 10px; } "
-            "QGroupBox#runFoldout::title { left: 12px; top: 6px; padding: 0 3px; color: #b8c3d4; font-size: 12px; font-weight: 600; }"
+            f"QGroupBox#runFoldout {{ margin-top: 8px; padding-top: 10px; }}"
+            f" QGroupBox#runFoldout::title {{ left: 12px; top: 6px; padding: 0 3px; color: {p.text_muted}; font-size: 12px; font-weight: 600; }}"
         )
 
         layout = QVBoxLayout(self)
@@ -334,6 +335,7 @@ class VideoConvertWindow(QMainWindow):
         shell_layout.setSpacing(m.section_gap)
 
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root)
+        self.header_surface.set_header_visibility(show_subtitle=True, show_asset_count=True, show_runtime_status=True)
         self.asset_count_badge = self.header_surface.asset_count_badge
         self.runtime_status_badge = self.header_surface.runtime_status_badge
         self.header_surface.open_webui_btn.hide()
@@ -349,13 +351,7 @@ class VideoConvertWindow(QMainWindow):
         self.splitter.setSizes([880, 540])
         shell_layout.addWidget(self.splitter, 1)
 
-        grip_row = QHBoxLayout()
-        grip_row.setContentsMargins(0, 0, 2, 0)
-        grip_row.addStretch(1)
-        self.size_grip = build_size_grip()
-        self.size_grip.setParent(self.window_shell)
-        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         root.addWidget(self.window_shell)
 
     def _build_left_panel(self) -> QFrame:
@@ -375,12 +371,13 @@ class VideoConvertWindow(QMainWindow):
         preview_layout.setSpacing(6)
         preview_title = QLabel(qt_t("video_convert_qt.preview_title", "Preview"))
         preview_title.setObjectName("sectionTitle")
-        preview_title.setStyleSheet("font-size: 15px;")
         preview_layout.addWidget(preview_title)
 
         preview_shell = QFrame()
-        preview_shell.setObjectName("subtlePanel")
-        preview_shell.setStyleSheet("QFrame#subtlePanel { background: #0b0d11; }")
+        preview_shell.setObjectName("videoPreviewShell")
+        preview_shell.setStyleSheet(
+            f"QFrame#videoPreviewShell {{ background: {get_shell_palette().field_bg}; border-radius: 12px; }}"
+        )
         preview_shell_layout = QVBoxLayout(preview_shell)
         preview_shell_layout.setContentsMargins(0, 0, 0, 0)
         preview_shell_layout.setSpacing(0)
@@ -390,7 +387,7 @@ class VideoConvertWindow(QMainWindow):
         self.preview_placeholder = QLabel(qt_t("video_convert_qt.preview_empty", "Select a video from the list below to preview it here."))
         self.preview_placeholder.setAlignment(Qt.AlignCenter)
         self.preview_placeholder.setWordWrap(True)
-        self.preview_placeholder.setStyleSheet("padding: 24px; color: #9ca8bc;")
+        self.preview_placeholder.setStyleSheet(f"padding: 24px; color: {get_shell_palette().text_muted};")
         self.preview_stack.addWidget(self.preview_placeholder)
 
         self.video_surface = None
@@ -448,7 +445,6 @@ class VideoConvertWindow(QMainWindow):
         list_title_row.setSpacing(6)
         list_title = QLabel(qt_t("video_convert_qt.queue", "Queued Videos"))
         list_title.setObjectName("sectionTitle")
-        list_title.setStyleSheet("font-size: 15px;")
         list_hint = QLabel(qt_t("video_convert_qt.queue_hint", "Select an item to update the preview above."))
         list_hint.setObjectName("muted")
         list_title_row.addWidget(list_title, 0)
@@ -546,8 +542,9 @@ class VideoConvertWindow(QMainWindow):
 
     def _create_group(self, title: str, palette) -> QGroupBox:
         group = QGroupBox("")
+        group.setObjectName("compactOptionGroup")
         group.setStyleSheet(
-            f"QGroupBox {{ background: {palette.surface_subtle}; border: 1px solid rgba(39, 52, 75, 0.4); border-radius: 10px; margin-top: 0px; padding-top: 0px; }}"
+            f"QGroupBox#compactOptionGroup {{ background: {palette.surface_subtle}; border: 1px solid {palette.control_border}; border-radius: 10px; margin-top: 0px; padding-top: 0px; }}"
         )
         inner = QVBoxLayout(group)
         inner.setContentsMargins(8, 6, 8, 8)
@@ -558,6 +555,7 @@ class VideoConvertWindow(QMainWindow):
         return group
 
     def _apply_compact_styles(self) -> None:
+        p = get_shell_palette()
         compact_field = """
             QComboBox {
                 min-height: 30px;
@@ -570,20 +568,20 @@ class VideoConvertWindow(QMainWindow):
                 border-radius: 10px;
             }
         """
-        segment_style = """
-            QPushButton#segmentBtn {
+        segment_style = f"""
+            QPushButton#segmentBtn {{
                 min-height: 32px;
                 padding: 4px 12px;
                 border-radius: 12px;
-                background: #1a2230;
-                border: 1px solid rgba(118, 132, 156, 0.24);
-            }
-            QPushButton#segmentBtn:checked {
-                background: #2a3547;
-                border: 1px solid rgba(173, 188, 209, 0.34);
-                color: #f1f5fb;
+                background: {p.control_bg};
+                border: 1px solid {p.control_border};
+            }}
+            QPushButton#segmentBtn:checked {{
+                background: {p.card_bg};
+                border: 1px solid {p.chip_border};
+                color: {p.text};
                 font-weight: 600;
-            }
+            }}
         """
         self.preset_combo.setStyleSheet(compact_field)
         self.format_combo.setStyleSheet(compact_field)
@@ -592,22 +590,22 @@ class VideoConvertWindow(QMainWindow):
         self.run_card.output_dir_edit.setStyleSheet(compact_field)
         self.run_card.source_btn.setStyleSheet(segment_style)
         self.run_card.converted_btn.setStyleSheet(segment_style)
-        slider_style = """
-            QSlider::groove:horizontal {
+        slider_style = f"""
+            QSlider::groove:horizontal {{
                 height: 4px;
-                background: rgba(156, 168, 188, 0.28);
+                background: {p.button_bg};
                 border-radius: 2px;
-            }
-            QSlider::sub-page:horizontal {
-                background: #61c2ff;
+            }}
+            QSlider::sub-page:horizontal {{
+                background: {p.accent};
                 border-radius: 2px;
-            }
-            QSlider::handle:horizontal {
-                background: #8ea2b7;
+            }}
+            QSlider::handle:horizontal {{
+                background: {p.text_muted};
                 width: 14px;
                 margin: -5px 0;
                 border-radius: 7px;
-            }
+            }}
         """
         self.position_slider.setStyleSheet(slider_style)
         self.volume_slider.setStyleSheet(slider_style)

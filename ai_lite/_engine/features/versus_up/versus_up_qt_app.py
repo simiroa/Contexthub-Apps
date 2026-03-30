@@ -4,11 +4,11 @@ import sys
 from pathlib import Path
 
 from contexthub.ui.qt.shell import (
-    CollapsibleSection,
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
+    get_shell_accent_cycle,
     get_shell_metrics,
     get_shell_palette,
     refresh_runtime_preferences,
@@ -16,43 +16,42 @@ from contexthub.ui.qt.shell import (
 )
 from features.versus_up import versus_up_matrix_controller as matrix_controller
 from features.versus_up import versus_up_project_controller as project_controller
+from features.versus_up import versus_up_workspace_controller as workspace_controller
 from features.versus_up.versus_up_service import PROJECT_EXTENSION, VersusUpService
 from features.versus_up.versus_up_qt_panels import (
-    CompareSummaryPanel,
-    CriterionDetailPanel,
-    HistoryPanel,
-    ServerStatusPanel,
+    HeaderUtilityPanel,
     WorkspacePanel,
 )
 from features.versus_up import versus_up_vision_controller as vision_controller
 from features.versus_up.versus_up_qt_widgets import (
     CriterionMatrixCellWidget,
-    DONUT_COLORS,
     EdgeAddButton,
     ProductMatrixCellWidget,
-    ProposalReviewDialog,
-    TemplatePickerDialog,
-    TextEntryDialog,
-    VisionPopup,
     VisionWorker,
 )
 from features.versus_up.versus_up_state import CriterionRecord, ProductRecord
+from features.versus_up.versus_up_qt_window_support import (
+    PanelDialog,
+    apply_explicit_base_font,
+    build_window_dialogs,
+    install_qt_warning_probe,
+    normalize_font_tree,
+    open_panel_dialog,
+    selection_summary,
+)
 
 try:
     from PySide6.QtCore import QPoint, QSettings, QSize, Qt, QThread, QTimer
-    from PySide6.QtGui import QAction, QColor, QIcon, QPixmap
+    from PySide6.QtGui import QAction, QIcon, QPixmap
     from PySide6.QtWidgets import (
         QApplication,
-        QDialog,
         QFileDialog,
         QFrame,
-        QHBoxLayout,
         QListWidgetItem,
         QMenu,
         QMainWindow,
         QMessageBox,
         QPushButton,
-        QSplitter,
         QTableWidgetItem,
         QVBoxLayout,
         QWidget,
@@ -63,7 +62,7 @@ except ImportError as exc:  # pragma: no cover
 APP_ID = "versus_up"
 APP_TITLE = "VersusUp"
 APP_SUBTITLE = "Weighted decision support with OCR and hover vision review."
-PRODUCT_PALETTE = ["#7f8a96", "#5e9777", "#b49563", "#7797c6", "#9b8fd8", "#c97d5a", "#6f9b32", "#c28a3a"]
+LAYOUT_STATE_VERSION = 3
 
 
 class VersusUpWindow(QMainWindow):
@@ -77,23 +76,27 @@ class VersusUpWindow(QMainWindow):
         self._runtime_timer.setInterval(1500)
         self._runtime_timer.timeout.connect(self._check_runtime_preferences)
         self._vision_threads: dict[str, tuple[QThread, VisionWorker]] = {}
-        self._popup_product_id: str | None = None
+        self._vision_focus_product_id: str | None = None
+        self._vision_focus_criterion_id: str | None = None
         self._product_header_cards: dict[str, ProductMatrixCellWidget] = {}
         self._criterion_header_cards: dict[str, CriterionMatrixCellWidget] = {}
         self._building_matrix = False
         self._detail_mode = "criterion"
         self._history_mode = "recent"
-        self.vision_popup = VisionPopup(self)
-        self.vision_popup.apply_requested.connect(self._review_popup_product)
-        self.vision_popup.dismissed.connect(self._clear_popup_product)
+        install_qt_warning_probe()
         self.setWindowTitle(APP_TITLE)
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1560, 940)
         self.setMinimumSize(1380, 920)
         apply_app_icon(self, self.app_root)
+        apply_explicit_base_font(self)
         self.setStyleSheet(build_shell_stylesheet())
+        self._build_dialogs()
         self._build_ui()
+        normalize_font_tree(self.window_shell)
+        for dialog in self._all_dialogs():
+            normalize_font_tree(dialog)
         self._bind_actions()
         self._build_history_menu()
         self._build_product_palette()
@@ -101,6 +104,19 @@ class VersusUpWindow(QMainWindow):
         self.service.open_recent_or_default()
         self._refresh_all()
         self._runtime_timer.start()
+
+    def _build_dialogs(self) -> None:
+        dialogs = build_window_dialogs(self, self._settings)
+        self.history_dialog = dialogs.history_dialog
+        self.detail_dialog = dialogs.detail_dialog
+        self.radar_dialog = dialogs.radar_dialog
+        self.server_dialog = dialogs.server_dialog
+        self.vision_dialog = dialogs.vision_dialog
+        self.history_panel = dialogs.history_panel
+        self.detail_panel = dialogs.detail_panel
+        self.compare_panel = dialogs.compare_panel
+        self.server_panel = dialogs.server_panel
+        self.vision_panel = dialogs.vision_panel
 
     def _build_ui(self) -> None:
         m = get_shell_metrics()
@@ -116,67 +132,33 @@ class VersusUpWindow(QMainWindow):
         shell_layout.setContentsMargins(m.shell_margin, m.shell_margin, m.shell_margin, m.shell_margin)
         shell_layout.setSpacing(m.section_gap)
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root, show_webui=False)
+        self.header_surface.set_header_visibility(
+            show_subtitle=False,
+            show_asset_count=False,
+            show_runtime_status=False,
+        )
         self.runtime_status_badge = self.header_surface.runtime_status_badge
         self.asset_count_badge = self.header_surface.asset_count_badge
         shell_layout.addWidget(self.header_surface)
-        self.main_splitter = QSplitter(Qt.Horizontal)
-        self.main_splitter.setChildrenCollapsible(False)
-        self.main_splitter.addWidget(self._build_left_panel())
-        self.main_splitter.addWidget(self._build_center_panel())
-        self.main_splitter.addWidget(self._build_right_panel())
-        self.main_splitter.setSizes([340, 790, 400])
-        shell_layout.addWidget(self.main_splitter, 1)
-        grip_row = QHBoxLayout()
-        grip_row.setContentsMargins(0, 0, 2, 0)
-        grip_row.addStretch(1)
-        self.size_grip = build_size_grip()
-        self.size_grip.setParent(self.window_shell)
-        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
-        shell_layout.addLayout(grip_row)
+        self.utility_panel = HeaderUtilityPanel()
+        shell_layout.addWidget(self.utility_panel, 0)
+        self.workspace_panel = WorkspacePanel()
+        shell_layout.addWidget(self.workspace_panel, 1)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         root.addWidget(self.window_shell)
         self.workspace_panel.matrix_table.setStyleSheet(
-            f"QTableWidget {{ background: {p.field_bg}; border: 1px solid {p.border}; border-radius: 14px; gridline-color: {p.border}; font-size: 15px; }}"
+            f"QTableWidget {{ background: {p.field_bg}; border: 1px solid {p.border}; border-radius: 14px; gridline-color: {p.border}; }}"
             f"QTableWidget::item {{ padding: 6px; }}"
+            f"QTableWidget::item:selected {{ background: {p.card_bg}; color: {p.text}; }}"
         )
         self.workspace_panel.matrix_table.setWordWrap(True)
         list_style = (
-            "QListWidget { background:#111722; border:1px solid #2a3852; border-radius:14px; padding:6px; }"
-            "QListWidget::item { margin:4px 2px; padding:10px 10px; border-radius:10px; }"
-            "QListWidget::item:selected { background:#253246; }"
+            f"QListWidget {{ background:{p.field_bg}; border:1px solid {p.control_border}; border-radius:14px; padding:6px; }}"
+            f"QListWidget::item {{ margin:4px 2px; padding:10px 10px; border-radius:10px; }}"
+            f"QListWidget::item:selected {{ background:{p.card_bg}; }}"
         )
         self.history_panel.recent_list.setStyleSheet(list_style)
         self.history_panel.preset_list.setStyleSheet(list_style)
-
-    def _build_left_panel(self) -> QWidget:
-        m = get_shell_metrics()
-        card = QFrame()
-        card.setObjectName("card")
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
-        layout.setSpacing(10)
-        self.history_panel = HistoryPanel()
-        layout.addWidget(self.history_panel, 1)
-        return card
-
-    def _build_center_panel(self) -> QWidget:
-        self.workspace_panel = WorkspacePanel()
-        return self.workspace_panel
-
-    def _build_right_panel(self) -> QWidget:
-        m = get_shell_metrics()
-        card = QFrame()
-        card.setObjectName("card")
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
-        layout.setSpacing(10)
-        self.compare_panel = CompareSummaryPanel()
-        self.compare_panel.setMaximumHeight(318)
-        self.detail_panel = CriterionDetailPanel()
-        self.server_panel = ServerStatusPanel()
-        layout.addWidget(self.compare_panel, 0)
-        layout.addWidget(self.detail_panel, 1)
-        layout.addWidget(self.server_panel, 0)
-        return card
 
     def _bind_actions(self) -> None:
         self.history_panel.new_btn.clicked.connect(self._new_project)
@@ -185,6 +167,10 @@ class VersusUpWindow(QMainWindow):
         self.history_panel.remove_preset_btn.clicked.connect(self._remove_preset)
         self.history_panel.recent_tab_btn.clicked.connect(lambda: self._set_history_mode("recent"))
         self.history_panel.presets_tab_btn.clicked.connect(lambda: self._set_history_mode("presets"))
+        self.utility_panel.history_btn.clicked.connect(self._open_history_dialog)
+        self.utility_panel.detail_btn.clicked.connect(self._open_detail_dialog)
+        self.utility_panel.radar_btn.clicked.connect(self._open_radar_dialog)
+        self.utility_panel.server_btn.clicked.connect(self._open_server_dialog)
         self.detail_panel.criterion_label_edit.editingFinished.connect(self._commit_criterion_detail)
         self.detail_panel.criterion_description_edit.textChanged.connect(self._commit_criterion_detail)
         self.detail_panel.criterion_type_combo.currentTextChanged.connect(self._commit_criterion_detail)
@@ -196,18 +182,26 @@ class VersusUpWindow(QMainWindow):
         self.detail_panel.product_color_edit.editingFinished.connect(self._commit_product_detail)
         self.detail_panel.product_notes_edit.textChanged.connect(self._commit_product_detail)
         self.detail_panel.product_favorite_box.toggled.connect(self._commit_product_detail)
+        self.detail_panel.cell_value_edit.editingFinished.connect(self._commit_cell_detail)
         self.detail_panel.product_image_btn.clicked.connect(self._attach_image)
         self.detail_panel.product_vision_btn.clicked.connect(self._run_selected_product_vision)
+        self.detail_panel.open_vision_btn.clicked.connect(self._run_selected_product_vision)
         self.detail_panel.product_delete_btn.clicked.connect(self._remove_selected_product)
         self.detail_panel.product_remove_image_btn.clicked.connect(self._remove_selected_product_image)
         self.detail_panel.product_thumbnail.mousePressEvent = lambda _event: self._attach_image()
         self.server_panel.ollama_host_edit.editingFinished.connect(self._commit_runtime_settings)
         self.server_panel.vision_model_edit.editingFinished.connect(self._commit_runtime_settings)
         self.server_panel.classifier_model_edit.editingFinished.connect(self._commit_runtime_settings)
+        self.vision_panel.attach_image_btn.clicked.connect(self._attach_image_for_focus)
+        self.vision_panel.run_btn.clicked.connect(self._run_vision_for_focus)
+        self.vision_panel.review_btn.clicked.connect(self._review_popup_product)
         self.history_panel.recent_list.itemDoubleClicked.connect(self._open_recent_item)
         self.history_panel.preset_list.itemDoubleClicked.connect(self._open_preset_item)
         self.workspace_panel.matrix_table.currentCellChanged.connect(self._sync_selection_from_table)
         self.workspace_panel.matrix_table.itemChanged.connect(self._handle_matrix_item_changed)
+        self.workspace_panel.matrix_table.cellDoubleClicked.connect(self._open_detail_from_matrix_cell)
+        self.workspace_panel.matrix_table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.workspace_panel.matrix_table.customContextMenuRequested.connect(self._open_detail_from_context_menu)
         save_shortcut = QAction(self)
         save_shortcut.setShortcut("Ctrl+S")
         save_shortcut.triggered.connect(self._save_project)
@@ -224,13 +218,14 @@ class VersusUpWindow(QMainWindow):
         self.history_panel.project_menu_btn.setMenu(menu)
 
     def _build_product_palette(self) -> None:
+        product_palette = get_shell_accent_cycle()
         self.detail_panel.product_color_buttons = []
         while self.detail_panel.product_palette_row.count():
             item = self.detail_panel.product_palette_row.takeAt(0)
             widget = item.widget()
             if widget is not None:
                 widget.deleteLater()
-        for color in PRODUCT_PALETTE:
+        for color in product_palette:
             button = QPushButton("")
             button.setFixedSize(34, 34)
             button.clicked.connect(lambda _=False, c=color: self._select_product_color(c))
@@ -250,14 +245,20 @@ class VersusUpWindow(QMainWindow):
         self._refresh_header()
         self._refresh_server_status()
         self._refresh_compare_summary()
+        self._refresh_vision_panel()
+        normalize_font_tree(self.window_shell)
+
+    def _all_dialogs(self) -> list[QWidget]:
+        return [self.history_dialog, self.detail_dialog, self.radar_dialog, self.server_dialog, self.vision_dialog]
 
     def _refresh_history_card(self) -> None:
         self.server_panel.ollama_host_edit.blockSignals(True)
         self.server_panel.vision_model_edit.blockSignals(True)
         self.server_panel.classifier_model_edit.blockSignals(True)
-        self.history_panel.current_project_label.setText(
-            f"{self.service.state.project_meta.name}\n{self.service.state.project_meta.category}"
-        )
+        project_title = self.service.state.project_meta.name.strip()
+        project_category = self.service.state.project_meta.category.strip()
+        history_label = " / ".join(part for part in (project_title, project_category) if part) or "No project loaded"
+        self.history_panel.current_project_label.setText(history_label)
         self.server_panel.ollama_host_edit.setText(self.service.state.ollama_host)
         self.server_panel.vision_model_edit.setText(self.service.state.vision_model)
         self.server_panel.classifier_model_edit.setText(self.service.state.classifier_model)
@@ -291,9 +292,30 @@ class VersusUpWindow(QMainWindow):
         self.history_panel.project_menu_btn.setText("More")
         self.history_panel.add_preset_btn.setText("Preset")
 
+    def _current_selection_summary(self) -> str:
+        return selection_summary(self)
+
     def _set_history_mode(self, mode: str) -> None:
         self._history_mode = mode
         self._refresh_history_card()
+
+    def _open_panel_dialog(self, dialog: PanelDialog, refresh_callback=None) -> None:
+        open_panel_dialog(self, dialog, refresh_callback)
+
+    def _open_history_dialog(self) -> None:
+        self._open_panel_dialog(self.history_dialog, self._refresh_history_card)
+
+    def _open_detail_dialog(self) -> None:
+        self._open_panel_dialog(self.detail_dialog, self._refresh_detail_panel)
+
+    def _open_radar_dialog(self) -> None:
+        self._open_panel_dialog(self.radar_dialog, self._refresh_compare_summary)
+
+    def _open_server_dialog(self) -> None:
+        self._open_panel_dialog(self.server_dialog, self._refresh_server_status)
+
+    def _open_vision_dialog(self) -> None:
+        self._open_panel_dialog(self.vision_dialog, self._refresh_vision_panel)
 
     def _matrix_row_count(self) -> int:
         return matrix_controller.matrix_row_count(self)
@@ -358,22 +380,16 @@ class VersusUpWindow(QMainWindow):
         return self.service.criterion_by_id(self.service.state.selected_criterion_id)
 
     def _sync_selection_from_product_list(self) -> None:
-        product_id = self.service.state.selected_product_id or (self.service.state.products[0].id if self.service.state.products else None)
-        if product_id is None:
-            return
-        self.service.state.selected_product_id = product_id
-        product_index = next((i for i, product in enumerate(self._display_products()) if product.id == product_id), 0)
-        row = next((i for i, criterion in enumerate(self.service.state.criteria) if criterion.id == self.service.state.selected_criterion_id), 0)
-        if self.service.state.criteria:
-            self.workspace_panel.matrix_table.setCurrentCell(row + 1, product_index + 1)
-        self._refresh_detail_panel()
-        self._refresh_server_status()
+        workspace_controller.sync_selection_from_product_list(self)
 
     def _sync_selection_from_table(self, current_row: int, current_column: int, _previous_row: int, _previous_column: int) -> None:
         matrix_controller.sync_selection_from_table(self, current_row, current_column, _previous_row, _previous_column)
 
     def _handle_matrix_item_changed(self, item: QTableWidgetItem) -> None:
         matrix_controller.handle_matrix_item_changed(self, item)
+
+    def _commit_cell_detail(self) -> None:
+        matrix_controller.commit_cell_detail(self)
 
     def _commit_criterion_detail(self) -> None:
         matrix_controller.commit_criterion_detail(self)
@@ -385,23 +401,17 @@ class VersusUpWindow(QMainWindow):
         matrix_controller.select_product_color(self, color)
 
     def _product_accent(self, product: ProductRecord | None, fallback_index: int | None = None) -> str:
+        accent_cycle = get_shell_accent_cycle()
         if product and product.color:
             return product.color
         if product:
             products = self._display_products()
             index = next((i for i, item in enumerate(products) if item.id == product.id), 0)
-            return DONUT_COLORS[index % len(DONUT_COLORS)]
-        return DONUT_COLORS[(fallback_index or 0) % len(DONUT_COLORS)]
+            return accent_cycle[index % len(accent_cycle)]
+        return accent_cycle[(fallback_index or 0) % len(accent_cycle)]
 
     def _refresh_palette_selection(self, selected_color: str | None) -> None:
-        normalized = (selected_color or "").lower()
-        for button in self.detail_panel.product_color_buttons:
-            color = str(button.property("swatchColor"))
-            is_selected = color.lower() == normalized
-            button.setStyleSheet(
-                f"background:{color}; border:{'3px solid #f3f7ff' if is_selected else '1px solid ' + color}; "
-                f"border-radius:17px; {'padding:1px;' if is_selected else ''}"
-            )
+        workspace_controller.refresh_palette_selection(self, selected_color)
 
     def _refresh_product_header_selection(self) -> None:
         selected = self._selected_product().id if self._selected_product() else None
@@ -414,9 +424,7 @@ class VersusUpWindow(QMainWindow):
             widget.set_selected(criterion_id == selected and self._detail_mode != "product")
 
     def _select_product_header(self, column: int, product_id: str) -> None:
-        self.service.state.selected_product_id = product_id
-        self._detail_mode = "product"
-        self.workspace_panel.matrix_table.setCurrentCell(0, column)
+        workspace_controller.select_product_header(self, column, product_id)
 
     def _commit_runtime_settings(self) -> None:
         project_controller.commit_runtime_settings(self)
@@ -492,10 +500,11 @@ class VersusUpWindow(QMainWindow):
             button.setText("")
         else:
             button.setText(Path(image_path).name[:10] or "IMG")
-        border = "2px solid #f3f7ff" if is_main else f"1px solid {accent}55"
+        palette = get_shell_palette()
+        border = f"2px solid {palette.text}" if is_main else f"1px solid {accent}55"
         button.setStyleSheet(
-            f"QPushButton {{ background:#111722; border:{border}; border-radius:16px; padding:6px; text-align:center; }}"
-            f"QPushButton:hover {{ border-color:{accent}; background:#172131; }}"
+            f"QPushButton {{ background:{palette.field_bg}; border:{border}; border-radius:16px; padding:6px; text-align:center; }}"
+            f"QPushButton:hover {{ border-color:{accent}; background:{palette.control_bg}; }}"
         )
         button.clicked.connect(self._select_gallery_image)
         row = index // 4
@@ -509,30 +518,22 @@ class VersusUpWindow(QMainWindow):
         vision_controller.run_product_vision(self, product_id)
 
     def _rename_product(self, product_id: str, value: str) -> None:
-        product = self.service.product_by_id(product_id)
-        if product is None:
-            return
-        self.service.update_product(product_id, name=value.strip() or product.name)
-        self._refresh_all()
+        workspace_controller.rename_product(self, product_id, value)
+
+    def _rename_criterion(self, criterion_id: str, value: str) -> None:
+        workspace_controller.rename_criterion(self, criterion_id, value)
 
     def _toggle_product_favorite(self, product_id: str, favorite: bool) -> None:
-        self.service.update_product(product_id, favorite=favorite)
-        self._refresh_all()
+        workspace_controller.toggle_product_favorite(self, product_id, favorite)
 
     def _delete_product_from_header(self, product_id: str) -> None:
-        self.service.remove_product(product_id)
-        self._refresh_all()
+        workspace_controller.delete_product_from_header(self, product_id)
 
     def _add_criterion(self) -> None:
-        self.service.add_criterion(description="Describe how this field should be judged.")
-        self._refresh_all()
+        workspace_controller.add_criterion(self)
 
     def _remove_selected_criterion(self) -> None:
-        criterion = self._selected_criterion()
-        if criterion is None:
-            return
-        self.service.remove_criterion(criterion.id)
-        self._refresh_all()
+        workspace_controller.remove_selected_criterion(self)
 
     def _open_recent_item(self, item: QListWidgetItem) -> None:
         project_controller.open_recent_item(self, item)
@@ -542,12 +543,6 @@ class VersusUpWindow(QMainWindow):
 
     def _start_vision_thread(self, product_id: str) -> None:
         vision_controller.start_vision_thread(self, product_id)
-
-    def _on_product_hovered(self, product_id: str, global_pos: QPoint) -> None:
-        vision_controller.on_product_hovered(self, product_id, global_pos)
-
-    def _clear_popup_product(self) -> None:
-        vision_controller.clear_popup_product(self)
 
     def _cleanup_vision_thread(self, product_id: str) -> None:
         vision_controller.cleanup_vision_thread(self, product_id)
@@ -561,6 +556,24 @@ class VersusUpWindow(QMainWindow):
     def _review_popup_product(self) -> None:
         vision_controller.review_popup_product(self, APP_TITLE)
 
+    def _refresh_vision_panel(self) -> None:
+        vision_controller.refresh_vision_panel(self)
+
+    def _run_vision_for_focus(self) -> None:
+        vision_controller.run_vision_for_focus(self)
+
+    def _attach_image_for_focus(self) -> None:
+        vision_controller.attach_image_for_focus(self)
+
+    def _open_detail_for_cell(self, row: int, column: int) -> None:
+        workspace_controller.open_detail_for_cell(self, row, column)
+
+    def _open_detail_from_matrix_cell(self, row: int, column: int) -> None:
+        workspace_controller.open_detail_from_matrix_cell(self, row, column)
+
+    def _open_detail_from_context_menu(self, pos: QPoint) -> None:
+        workspace_controller.open_detail_from_context_menu(self, pos)
+
     def _check_runtime_preferences(self) -> None:
         current = runtime_settings_signature()
         if current == self._runtime_signature:
@@ -568,20 +581,20 @@ class VersusUpWindow(QMainWindow):
         self._runtime_signature = current
         refresh_runtime_preferences()
         self.setStyleSheet(build_shell_stylesheet())
+        for dialog in self._all_dialogs():
+            dialog.setStyleSheet(build_shell_stylesheet())
+            normalize_font_tree(dialog)
 
     def _restore_window_state(self) -> None:
         geometry = self._settings.value("geometry")
         if geometry:
             self.restoreGeometry(geometry)
-        splitter = self._settings.value("splitter")
-        if splitter:
-            self.main_splitter.restoreState(splitter)
         if self._settings.value("is_maximized", False, bool):
             self.showMaximized()
 
     def closeEvent(self, event) -> None:
         self._settings.setValue("geometry", self.saveGeometry())
-        self._settings.setValue("splitter", self.main_splitter.saveState())
+        self._settings.setValue("layout_state_version", LAYOUT_STATE_VERSION)
         self._settings.setValue("is_maximized", self.isMaximized())
         super().closeEvent(event)
 

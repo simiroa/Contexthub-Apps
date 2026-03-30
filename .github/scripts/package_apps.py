@@ -1,8 +1,6 @@
 import os
 import json
 import zipfile
-import shutil
-
 def package_apps():
     dist_dir = "dist"
     market_file = "market.json"
@@ -36,7 +34,9 @@ def package_apps():
             if not os.path.exists(manifest_path):
                 continue
 
-            with open(manifest_path, 'r', encoding='utf-8') as f:
+            # Accept UTF-8 manifests with or without BOM to avoid CI failures
+            # caused by editor-dependent JSON encoding.
+            with open(manifest_path, 'r', encoding='utf-8-sig') as f:
                 manifest = json.load(f)
 
             app_id = manifest.get("id", app_folder)

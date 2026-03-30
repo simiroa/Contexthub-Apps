@@ -6,9 +6,9 @@ from pathlib import Path
 from contexthub.ui.qt.panels import ExportRunPanel, FixedParameterPanel, PreviewListPanel
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
     get_shell_palette,
     qt_t,
@@ -82,7 +82,7 @@ class ImageConvertWindow(QMainWindow):
                 max-height: 30px;
                 padding: 2px 10px;
                 border-radius: {m.field_radius - 4}px;
-                background: rgba(15, 17, 20, 0.6);
+                background: {p.field_bg};
             }}
             QGroupBox#exportRunPanel QLineEdit {{
                 min-height: 26px;
@@ -90,7 +90,7 @@ class ImageConvertWindow(QMainWindow):
             }}
             #card QFrame#subtlePanel {{
                 background: transparent;
-                border: 1px solid rgba(255, 255, 255, 0.05);
+                border: 1px solid {p.control_border};
                 margin-bottom: -6px;
             }}
             QLabel#eyebrow {{
@@ -98,8 +98,8 @@ class ImageConvertWindow(QMainWindow):
             }}
             /* Finishing for Gallery */
             QListWidget {{
-                background: rgba(0, 0, 0, 0.1);
-                border: 1px solid rgba(118, 132, 156, 0.15);
+                background: {p.field_bg};
+                border: 1px solid {p.control_border};
                 padding: 4px;
             }}
             QListWidget::item {{
@@ -108,7 +108,7 @@ class ImageConvertWindow(QMainWindow):
                 border-radius: 8px;
             }}
             QListWidget::item:hover {{
-                background: rgba(255, 255, 255, 0.04);
+                background: {p.button_hover};
             }}
             /* Pill Button Style */
             QPushButton#pillBtn {{
@@ -149,6 +149,11 @@ class ImageConvertWindow(QMainWindow):
         shell_layout.setSpacing(m.section_gap)
 
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root)
+        self.header_surface.set_header_visibility(
+            show_subtitle=False,
+            show_asset_count=True,
+            show_runtime_status=False,
+        )
         self.asset_count_badge = self.header_surface.asset_count_badge
         self.runtime_status_badge = self.header_surface.runtime_status_badge
         self.header_surface.open_webui_btn.hide()
@@ -165,13 +170,7 @@ class ImageConvertWindow(QMainWindow):
         self.splitter.setStretchFactor(1, 2)
         shell_layout.addWidget(self.splitter, 1)
 
-        grip_row = QHBoxLayout()
-        grip_row.setContentsMargins(0, 0, 2, 0)
-        grip_row.addStretch(1)
-        self.size_grip = build_size_grip()
-        self.size_grip.setParent(self.window_shell)
-        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         root.addWidget(self.window_shell)
 
     def _build_left_panel(self) -> PreviewListPanel:

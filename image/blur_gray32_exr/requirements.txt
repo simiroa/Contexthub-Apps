@@ -1,0 +1,4 @@
+numpy
+OpenEXR
+opencv-python
+Pillow

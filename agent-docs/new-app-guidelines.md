@@ -29,7 +29,9 @@
 
 배포 안정성 관점에서 `manual.md`는 사실상 필수다.
 
-바로 시작할 때는 `agent-docs/templates/new-app-template/`를 복제해 사용하는 것을 권장한다.
+바로 시작할 때는 템플릿을 바로 복제하기보다, 앱 유형을 먼저 판단한다.
+새 PySide6 Qt 앱이면 사용자 skill 라이브러리의 `qt-app-builder-contexthub`를 우선 기준으로 본다.
+legacy wrapper 계열이면 `agent-docs/templates/new-app-template/`를 검토한다.
 
 ## 3. 권장 개발 방식
 
@@ -38,7 +40,8 @@
 - 앱 전용 로직이 작으면 앱 폴더 안에 둔다.
 - 여러 앱이 재사용할 기능은 카테고리 `_engine/features` 또는 `_engine/utils`로 올린다.
 - 사용자 설정, 이력, 샘플 데이터가 공용이면 `_engine` 쪽에 둔다.
-- Flet 앱이거나 Flet 포팅이면 `agent-docs/templates/flet-porting-template.md`를 먼저 읽고 시작한다.
+- GUI 앱이면 먼저 `agent-docs/gui-runtime-contract.md`, `agent-docs/gui-runtime-status.md`를 보고 템플릿 버킷을 정한다.
+- 새 Qt 앱은 가능하면 기존 앱 복제보다 `qt-app-builder-contexthub`의 템플릿 자산을 시작점으로 삼는다.
 
 ## 4. main.py 권장 패턴
 

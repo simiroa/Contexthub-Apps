@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from features.audio.normalize_service import AudioNormalizeService
+from features.audio.audio_toolbox_service import run_console_task
+from features.audio.audio_toolbox_state import TASK_NORMALIZE_VOLUME
 
 
 AUDIO_EXTENSIONS = {".wav", ".mp3", ".ogg", ".flac", ".m4a", ".aac", ".wma"}
@@ -29,34 +30,4 @@ def _pick_supported(targets: list[Path]) -> list[Path]:
 
 
 def run_normalize_volume_console(targets: list[Path]) -> int:
-    files = _pick_supported(targets)
-    if not files:
-        _echo("No supported audio files were provided.")
-        return 1
-
-    service = AudioNormalizeService()
-    result = {"success": 0, "total": len(files), "errors": [], "last_output": None}
-
-    def on_progress(current: int, total: int, name: str) -> None:
-        _echo(f"[{current + 1}/{total}] Normalizing volume: {name}")
-
-    def on_complete(success: int, total: int, errors: list[str], last_output: Path | None) -> None:
-        result["success"] = success
-        result["total"] = total
-        result["errors"] = errors
-        result["last_output"] = last_output
-
-    _echo("Normalize Volume started.")
-    _echo(f"Files: {len(files)}")
-    _echo("Output: source folder / *_normalized")
-    service.normalize_audio(files, on_progress=on_progress, on_complete=on_complete)
-
-    if result["last_output"] is not None:
-        _echo(f"Last output: {result['last_output']}")
-    _echo(f"Finished: {result['success']}/{result['total']} succeeded.")
-    if result["errors"]:
-        _echo("Failures:")
-        for line in result["errors"]:
-            _echo(f"  - {line}")
-        return 2
-    return 0
+    return run_console_task(TASK_NORMALIZE_VOLUME, _pick_supported(targets))

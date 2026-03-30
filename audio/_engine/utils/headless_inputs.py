@@ -21,6 +21,7 @@ IMAGE_IDS = {
 }
 
 AUDIO_IDS = {
+    "audio_toolbox",
     "extract_bgm",
     "extract_voice",
     "normalize_volume",
@@ -52,7 +53,6 @@ SEQUENCE_IDS = {
 MESH_IDS = {
     "auto_lod",
     "mesh_convert",
-    "blender_bake_gui",
     "cad_to_obj",
     "extract_textures",
     "open_with_mayo",

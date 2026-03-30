@@ -56,6 +56,6 @@
                "enabled":  true,
                "framework":  "pyside6",
                "shared_theme":  "contexthub",
-               "template":  "special"
+               "template":  "full"
            }
 }

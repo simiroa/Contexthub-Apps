@@ -27,7 +27,7 @@ from contexthub.ui.qt.shell import (
     build_shell_stylesheet,
     qt_t,
     apply_app_icon,
-    build_size_grip,
+    attach_size_grip,
 )
 from contexthub.ui.qt.panels import (
     ComparativePreviewWidget,
@@ -69,6 +69,11 @@ class ImageCompareWindow(QMainWindow):
             title="Image Compare",
             subtitle="Compare two images with split-slider, side-by-side, or difference views",
             app_root=self.app_root
+        )
+        self.header.set_header_visibility(
+            show_subtitle=False,
+            show_asset_count=False,
+            show_runtime_status=False,
         )
         self.main_layout.addWidget(self.header)
 
@@ -137,8 +142,8 @@ class ImageCompareWindow(QMainWindow):
         self.main_layout.addWidget(self.body_container, 1)
         
         # Shell Closing
+        self.size_grip = attach_size_grip(self.main_layout, self.window_shell)
         self.root_layout.addWidget(self.window_shell)
-        self.main_layout.addWidget(build_size_grip(), 0, Qt.AlignRight)
 
         self.setStyleSheet(build_shell_stylesheet())
         self._bind_actions()
@@ -160,7 +165,6 @@ class ImageCompareWindow(QMainWindow):
     def _on_clear_clicked(self):
         self.state.files.clear()
         self.input_list.clear()
-        self.header.set_asset_count(0)
         self.comp_preview.set_pixmaps(QPixmap(), QPixmap())
         self.metrics_label.setText("Select two files to compare")
 
@@ -186,8 +190,6 @@ class ImageCompareWindow(QMainWindow):
 
         self.input_list.setIconSize(QSize(100, 100))
         self.input_list.setSpacing(4)
-        self.header.set_asset_count(len(self.state.files))
-        
         if self.input_list.count() > 0 and not self.input_list.selectedItems():
             self.input_list.setCurrentRow(0)
             self._on_selection_changed()

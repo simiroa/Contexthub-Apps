@@ -52,11 +52,18 @@ def display_cell_value(window, product_id: str, criterion) -> str:
 
 
 def make_table_item(window, text: str, *, role: str, raw_value: str = "", criterion=None) -> QTableWidgetItem:
+    palette = get_shell_palette()
     item = QTableWidgetItem(text)
     item.setTextAlignment(Qt.AlignCenter)
     item.setData(Qt.UserRole, role)
     if raw_value:
         item.setData(Qt.UserRole + 1, raw_value)
+    if role == "corner":
+        item.setForeground(QColor(palette.muted))
+    elif role in {"add_product", "add_criterion", "filler"}:
+        item.setForeground(QColor(palette.muted))
+    else:
+        item.setForeground(QColor(palette.text))
     if criterion is not None:
         item.setToolTip(f"{criterion.label}\n{criterion.description or 'No description'}\nWeight: {criterion.weight:.2f} / {criterion.direction}")
     return item
@@ -64,7 +71,7 @@ def make_table_item(window, text: str, *, role: str, raw_value: str = "", criter
 
 def apply_data_cell_style(window, item: QTableWidgetItem, criterion, raw_value: str) -> None:
     palette = get_shell_palette()
-    item.setForeground(Qt.white)
+    item.setForeground(QColor(palette.text))
     if criterion.type == "number" and criterion.include_in_score:
         values = []
         for product in window._display_products():
@@ -80,10 +87,10 @@ def apply_data_cell_style(window, item: QTableWidgetItem, criterion, raw_value: 
             best = max(values) if criterion.direction == "high" else min(values)
             worst = min(values) if criterion.direction == "high" else max(values)
             if current == best:
-                item.setBackground(QColor("#1d4a33"))
+                item.setBackground(QColor(palette.success))
                 return
             if current == worst and len(values) > 1:
-                item.setBackground(QColor("#573035"))
+                item.setBackground(QColor(palette.error))
                 return
     item.setBackground(QColor(palette.field_bg))
 
@@ -97,15 +104,16 @@ def rebuild_matrix(window) -> None:
     table.setColumnCount(matrix_col_count(window))
     window._product_header_cards = {}
     window._criterion_header_cards = {}
-    window.workspace_panel.matrix_context_label.setText(f"{window.service.state.project_meta.name} / {window.service.state.project_meta.category}")
+    context_parts = [window.service.state.project_meta.name.strip(), window.service.state.project_meta.category.strip()]
+    window.workspace_panel.matrix_context_label.setText(" / ".join(part for part in context_parts if part))
     products = window._display_products()
     product_count = max(1, len(products))
-    product_width = 196 if product_count <= 2 else 170 if product_count <= 4 else 152
+    product_width = 178 if product_count <= 2 else 158 if product_count <= 4 else 144
     for row in range(matrix_row_count(window)):
-        table.setRowHeight(row, 158 if row == 0 else 56)
+        table.setRowHeight(row, 84 if row == 0 else 50)
     for column in range(matrix_col_count(window)):
         if column == 0:
-            table.setColumnWidth(column, 250)
+            table.setColumnWidth(column, 214)
         elif column == matrix_col_count(window) - 1:
             table.setColumnWidth(column, 110)
         else:
@@ -117,6 +125,7 @@ def rebuild_matrix(window) -> None:
         accent = product.color or DONUT_COLORS[(product_index - 1) % len(DONUT_COLORS)]
         widget.set_product(product, window.service.state.scores.get(product.id, 0.0), accent)
         widget.selected.connect(lambda product_id, column=product_index: window._select_product_header(column, product_id))
+        widget.rename_requested.connect(window._rename_product)
         table.setCellWidget(0, product_index, widget)
         window._product_header_cards[product.id] = widget
     table.setItem(0, matrix_col_count(window) - 1, make_table_item(window, "", role="add_product"))
@@ -127,6 +136,7 @@ def rebuild_matrix(window) -> None:
         table.setItem(row_index, 0, make_table_item(window, "", role="criterion_header", criterion=criterion))
         criterion_widget = CriterionMatrixCellWidget(criterion.id, table)
         criterion_widget.set_criterion(criterion)
+        criterion_widget.rename_requested.connect(window._rename_criterion)
         table.setCellWidget(row_index, 0, criterion_widget)
         window._criterion_header_cards[criterion.id] = criterion_widget
         for col_index, product in enumerate(products, start=1):
@@ -164,17 +174,26 @@ def refresh_detail_panel(window) -> None:
         panel.product_color_edit,
         panel.product_notes_edit,
         panel.product_favorite_box,
+        panel.cell_value_edit,
     ):
         widget.blockSignals(True)
+    raw_value = window.service.cell_value(product.id, criterion.id) if product and criterion else ""
     panel.mode_label.setText("Editing product" if product_mode else "Editing criterion")
-    panel.title.setText(product.name if product_mode and product else criterion.label if criterion else "Selection")
-    panel.selected_product_label.setText(f"Product: {product.name if product else '-'}")
-    panel.selected_criterion_label.setText(f"Criterion: {criterion.label if (criterion and not product_mode) else '-'}")
+    panel.selected_product_label.setText(product.name if product else "No product selected")
+    panel.selected_criterion_label.setText(criterion.label if criterion else "No criterion selected")
+    panel.cell_value_edit.setText(raw_value)
+    if product and criterion:
+        panel.cell_value_hint.setText("Edit the current matrix value here. Vision opens from this cell context.")
+    elif product:
+        panel.cell_value_hint.setText("Select a criterion row as well to edit a cell value.")
+    else:
+        panel.cell_value_hint.setText("Double-click a matrix cell or right-click to open this panel.")
     panel.product_name_edit.setText(product.name if product else "")
     panel.product_color_edit.setText(product.color if product else "")
     panel.product_notes_edit.setPlainText(product.notes if product else "")
     panel.product_favorite_box.setChecked(product.favorite if product else False)
     product_color = window._product_accent(product)
+    palette = get_shell_palette()
     window._clear_product_gallery()
     if product:
         for image_path in product.image_paths or ([product.image_path] if product.image_path else []):
@@ -188,21 +207,21 @@ def refresh_detail_panel(window) -> None:
         else:
             panel.product_thumbnail.setPixmap(QPixmap())
             panel.product_thumbnail.setText("Image unavailable")
-            panel.product_thumbnail.setStyleSheet(f"background:{product_color}2E; border:1px solid {product_color}88; border-radius:18px; color:{product_color}; font-weight:600; padding:8px;")
+            panel.product_thumbnail.setStyleSheet(f"background:{palette.field_bg}; border:1px solid {product_color}88; border-radius:18px; color:{product_color}; font-weight:600; padding:8px;")
     else:
         panel.product_thumbnail.setPixmap(QPixmap())
         panel.product_thumbnail.setText("No image")
-        panel.product_thumbnail.setStyleSheet(f"background:{product_color}2E; border:1px solid {product_color}88; border-radius:18px; color:{product_color}; font-weight:600; padding:8px;")
+        panel.product_thumbnail.setStyleSheet(f"background:{palette.field_bg}; border:1px solid {product_color}88; border-radius:18px; color:{product_color}; font-weight:600; padding:8px;")
     panel.product_color_chip.setText("Color")
-    panel.product_color_chip.setStyleSheet(f"background:{product_color}22; color:{product_color}; border:1px solid {product_color}66; border-radius:10px; padding:4px 8px; font-weight:600;")
-    panel.product_preview_card.setStyleSheet(f"QFrame#card {{ background: #162033; border:1px solid {product_color}44; border-radius:18px; }}")
+    panel.product_color_chip.setStyleSheet(f"background:{palette.button_bg}; color:{product_color}; border:1px solid {product_color}66; border-radius:10px; padding:4px 8px; font-weight:600;")
+    panel.product_preview_card.setStyleSheet(f"QFrame#card {{ background: {palette.card_bg}; border:1px solid {product_color}44; border-radius:18px; }}")
     panel.product_identity_card.setStyleSheet("QFrame#subtlePanel { border-radius:18px; }")
-    panel.product_notes_edit.setStyleSheet("QPlainTextEdit { background:#111722; border:1px solid #2a3852; border-radius:14px; padding:10px; color:#edf3ff; }")
-    panel.product_image_btn.setStyleSheet("QPushButton { background:#192436; border:1px solid #334767; border-radius:16px; padding:10px 14px; }")
-    panel.product_remove_image_btn.setStyleSheet("QPushButton { background:#192436; border:1px solid #334767; border-radius:16px; padding:10px 14px; }")
-    panel.product_delete_btn.setStyleSheet("QPushButton { background:#1b2231; border:1px solid #42506a; border-radius:16px; padding:10px 14px; }")
-    panel.criterion_card.setStyleSheet("QFrame#subtlePanel { background:#162033; border:1px solid #2a3852; border-radius:18px; }")
-    panel.criterion_description_edit.setStyleSheet("QPlainTextEdit { background:#111722; border:1px solid #2a3852; border-radius:14px; padding:10px; color:#edf3ff; }")
+    panel.product_notes_edit.setStyleSheet(f"QPlainTextEdit {{ background:{palette.field_bg}; border:1px solid {palette.control_border}; border-radius:14px; padding:10px; color:{palette.text}; }}")
+    panel.product_image_btn.setStyleSheet(f"QPushButton {{ background:{palette.control_bg}; border:1px solid {palette.control_border}; border-radius:16px; padding:10px 14px; }}")
+    panel.product_remove_image_btn.setStyleSheet(f"QPushButton {{ background:{palette.control_bg}; border:1px solid {palette.control_border}; border-radius:16px; padding:10px 14px; }}")
+    panel.product_delete_btn.setStyleSheet(f"QPushButton {{ background:{palette.card_bg}; border:1px solid {palette.control_border}; border-radius:16px; padding:10px 14px; }}")
+    panel.criterion_card.setStyleSheet(f"QFrame#subtlePanel {{ background:{palette.surface_subtle}; border:1px solid {palette.control_border}; border-radius:18px; }}")
+    panel.criterion_description_edit.setStyleSheet(f"QPlainTextEdit {{ background:{palette.field_bg}; border:1px solid {palette.control_border}; border-radius:14px; padding:10px; color:{palette.text}; }}")
     panel.criterion_label_edit.setText(criterion.label if criterion else "")
     panel.criterion_description_edit.setPlainText(criterion.description if criterion else "")
     panel.criterion_type_combo.setCurrentText(criterion.type if criterion else "number")
@@ -219,8 +238,8 @@ def refresh_detail_panel(window) -> None:
     panel.product_thumbnail.setEnabled(product_enabled)
     panel.product_gallery_scroll.setEnabled(product_enabled)
     panel.product_remove_image_btn.setEnabled(product_enabled and product is not None and bool(product.image_path))
-    panel.selected_product_label.setVisible(not product_mode)
-    panel.selected_criterion_label.setVisible(not product_mode)
+    panel.cell_value_edit.setEnabled(product is not None and criterion is not None)
+    panel.open_vision_btn.setEnabled(product is not None)
     for widget in (panel.criterion_label_edit, panel.criterion_description_edit, panel.criterion_type_combo, panel.criterion_direction_combo, panel.criterion_unit_edit, panel.criterion_include_box, panel.criterion_weight_slider):
         widget.setEnabled(criterion_enabled)
     panel.detail_stack.setCurrentIndex(0 if product_mode else 1)
@@ -239,6 +258,7 @@ def refresh_detail_panel(window) -> None:
         panel.product_color_edit,
         panel.product_notes_edit,
         panel.product_favorite_box,
+        panel.cell_value_edit,
     ):
         widget.blockSignals(False)
 
@@ -276,9 +296,16 @@ def refresh_compare_summary(window) -> None:
 
 
 def refresh_header(window) -> None:
-    window.asset_count_badge.setText(f"{len(window.service.state.products)} products / {len(window.service.state.criteria)} criteria")
+    product_count = len(window.service.state.products)
+    criterion_count = len(window.service.state.criteria)
+    window.asset_count_badge.setText(f"{product_count} products / {criterion_count} criteria")
     status, _mode = window.service.build_runtime_status()
     window.runtime_status_badge.setText(status)
+    project_name = window.service.state.project_meta.name.strip() or "No project loaded"
+    category = window.service.state.project_meta.category.strip() or "-"
+    window.utility_panel.project_label.setText(project_name)
+    window.utility_panel.meta_label.setText(f"{category} / {product_count} products / {criterion_count} criteria")
+    window.utility_panel.selection_label.setText(window._current_selection_summary())
 
 
 def refresh_server_status(window) -> None:
@@ -361,6 +388,21 @@ def commit_product_detail(window) -> None:
         notes=window.detail_panel.product_notes_edit.toPlainText().strip(),
         favorite=window.detail_panel.product_favorite_box.isChecked(),
     )
+    rebuild_matrix(window)
+    refresh_compare_summary(window)
+    refresh_header(window)
+    refresh_server_status(window)
+    refresh_detail_panel(window)
+
+
+def commit_cell_detail(window) -> None:
+    product = window._selected_product()
+    criterion = window._selected_criterion()
+    if product is None or criterion is None:
+        return
+    value = window.detail_panel.cell_value_edit.text().strip()
+    window.service.set_cell_value(product.id, criterion.id, value)
+    window.service.recalculate_scores()
     rebuild_matrix(window)
     refresh_compare_summary(window)
     refresh_header(window)

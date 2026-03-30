@@ -47,7 +47,7 @@
   "ui": {
     "enabled": true,
     "framework": "pyside6",
-    "shared_theme": "comfyui_dashboard_qt",
+    "shared_theme": "contexthub",
     "template": "mini"
   }
 }

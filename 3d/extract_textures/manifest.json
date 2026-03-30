@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "extract_textures",
   "name": "Extract Textures",
-  "description": "Legacy 3D tool.",
+  "description": "Confirm selected 3D files in a mini Qt shell, then extract embedded textures.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,
@@ -46,7 +46,8 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "flet",
-    "shared_theme": "contexthub"
+    "framework": "pyside6",
+    "shared_theme": "contexthub",
+    "template": "mini"
   }
 }

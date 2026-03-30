@@ -2,55 +2,71 @@ import os
 import sys
 from pathlib import Path
 
-LEGACY_ID = 'cad_to_obj'
-LEGACY_SCOPE = 'file'
-
-ROOT = Path(__file__).resolve().parents[2]
 APP_ROOT = Path(__file__).resolve().parent
-REPO_ROOT = APP_ROOT.resolve().parents[1]
+ENGINE_ROOT = APP_ROOT.parent / "_engine"
+REPO_ROOT = APP_ROOT.parents[1]
+
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
 from runtime_bootstrap import resolve_shared_runtime
-LEGACY_ROOT = APP_ROOT.parent / "_engine"
-os.chdir(LEGACY_ROOT)
-sys.path.insert(0, str(LEGACY_ROOT))
+
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
+for entry in (ENGINE_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    if entry.exists():
+        path_str = str(entry)
+        if path_str not in sys.path:
+            sys.path.insert(0, path_str)
 
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
-# Ensure Shared runtime is in path for i18n and Flet tokens
-SHARED_PATH, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
-for path in (SHARED_PATH, SHARED_PACKAGE_ROOT):
-    path_str = str(path)
-    if path.exists() and path_str not in sys.path:
-        sys.path.insert(0, path_str)
 
-try:
-    from utils.i18n import load_extra_strings
-    load_extra_strings(LEGACY_ROOT / "locales.json")
-except Exception:
-    pass
+def _pick_targets() -> list[str]:
+    return [arg for arg in sys.argv[1:] if arg and Path(arg).exists()]
 
-def _capture_mode():
+
+def _capture_mode() -> bool:
     return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
 
-def _pick_targets():
+
+def _load_locales() -> None:
+    try:
+        from features.mesh.mesh_qt_shared import load_mesh_locales
+
+        load_mesh_locales(ENGINE_ROOT)
+    except Exception:
+        pass
+
+
+def _show_confirm(targets: list[Path]) -> bool:
+    from contexthub.ui.qt.confirm_dialog import ConfirmRequest, run_confirm_dialog
+
+    request = ConfirmRequest(
+        app_root=APP_ROOT,
+        title="CAD to OBJ",
+        subtitle="Confirm the selected CAD files, then continue in a console conversion flow.",
+        item_count=len(targets),
+        item_label="files",
+        output_rule="Creates OBJ files next to each source CAD file.",
+        confirm_label="Convert",
+    )
+    return run_confirm_dialog(request) is not None
+
+
+def main() -> int:
+    _load_locales()
+    targets = [Path(arg) for arg in _pick_targets()]
+    if not targets and not _capture_mode():
+        return 0
+    if not _show_confirm(targets):
+        return 0
     if _capture_mode():
-        return []
-    
-    args = [a for a in sys.argv[1:] if Path(a).exists()]
-    if args:
-        return args
-    return []
+        return 0
 
-def _run_flet(targets):
-    from features.mesh.mesh_flet import start_app
-    # mode='cad' for cad_to_obj
-    start_app(targets, mode='cad')
+    from features.mesh.mesh_console import run_cad_to_obj_console
 
-def main():
-    targets = _pick_targets()
-    _run_flet(targets)
+    return run_cad_to_obj_console(targets)
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

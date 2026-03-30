@@ -2,7 +2,7 @@
     "schema_version":  "1.2",
     "id":  "normal_flip_green",
     "name":  "Normal Flip Green",
-    "description":  "Confirm selected images in a compact Qt shell, then flip green channels in a console flow.",
+    "description":  "Confirm selected images in a mini confirm Qt shell, then flip green channels in a console flow.",
     "author":  "ContextHub",
     "version":  "1.1.0",
     "icon":  "icon.png",
@@ -57,6 +57,6 @@
                "enabled":  true,
                "framework":  "pyside6",
                "shared_theme":  "contexthub",
-               "template":  "full"
+               "template":  "mini"
            }
 }

@@ -8,7 +8,7 @@ param(
     [string[]]$OnlyApps = @(),
     [int]$WaitSeconds = 20,
     [int]$CooldownSeconds = 2,
-    [int]$PaintWaitMilliseconds = 1200,
+    [int]$PaintWaitMilliseconds = 100,
     [string]$PythonExe = "python",
     [switch]$DryRun,
     [switch]$Clean
@@ -450,17 +450,25 @@ function Get-DescendantPids {
 function Wait-ForWindowHandle {
     param(
         [System.Diagnostics.Process]$Process,
-        [int]$TimeoutSeconds
+        [int]$TimeoutSeconds,
+        [string]$Framework = ""
     )
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
         if ($Process.HasExited) { return $null }
         $Process.Refresh()
-        $pids = Get-DescendantPids -RootPid $Process.Id
+        $descendantPids = Get-DescendantPids -RootPid $Process.Id | Where-Object { $_ -ne $Process.Id } | Sort-Object
+        $pids = @($Process.Id) + @($descendantPids)
         foreach ($candidatePid in $pids) {
             $handle = [Win32Capture]::FindWindowForProcess($candidatePid)
             if ($handle -and $handle -ne [IntPtr]::Zero) {
+                if (Test-QtFramework -Framework $Framework) {
+                    $windowClass = [Win32Capture]::GetWindowClass($handle)
+                    if ([string]::IsNullOrWhiteSpace($windowClass) -or -not $windowClass.StartsWith("Qt")) {
+                        continue
+                    }
+                }
                 return @{ Process = $Process; WindowPid = $candidatePid; Handle = $handle }
             }
         }
@@ -645,7 +653,7 @@ foreach ($manifestPath in $manifests) {
         $argumentList = @($entryPath) + $captureTargets
         Write-Log "[$(Get-Date -Format s)] START $category/$appId | python=$resolvedPythonExe | template=$template | entry=$entryPath | targets=$([string]::Join(';', @($captureTargets))) | stdout=$stdoutPath | stderr=$stderrPath | temp=$tmpDir"
         $proc = Start-Process -FilePath $resolvedPythonExe -ArgumentList $argumentList -WorkingDirectory $appDir -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
-        $windowInfo = Wait-ForWindowHandle -Process $proc -TimeoutSeconds $WaitSeconds
+        $windowInfo = Wait-ForWindowHandle -Process $proc -TimeoutSeconds $WaitSeconds -Framework $framework
 
         if ($windowInfo) {
             Start-Sleep -Milliseconds $PaintWaitMilliseconds

@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "mesh_convert",
   "name": "Mesh Convert",
-  "description": "Legacy 3D tool.",
+  "description": "Batch-convert mesh files in a full Qt shell backed by Blender.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,
@@ -53,7 +53,8 @@
   },
   "ui": {
     "enabled": true,
-    "framework": "flet",
-    "shared_theme": "contexthub"
+    "framework": "pyside6",
+    "shared_theme": "contexthub",
+    "template": "mini"
   }
 }

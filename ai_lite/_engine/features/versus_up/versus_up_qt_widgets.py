@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contexthub.ui.qt.shell import build_shell_stylesheet, get_shell_palette
+from contexthub.ui.qt.shell import build_shell_stylesheet, get_shell_accent_cycle, get_shell_palette
 from features.versus_up.versus_up_state import CriterionRecord, ProductRecord, VisionProposal
 
 try:
@@ -26,7 +26,17 @@ try:
 except ImportError as exc:  # pragma: no cover
     raise ImportError("PySide6 is required for versus_up.") from exc
 
-DONUT_COLORS = ["#7f8a96", "#5e9777", "#b49563", "#7797c6", "#9b8fd8", "#c97d5a"]
+def donut_colors() -> list[str]:
+    return get_shell_accent_cycle()[:6]
+
+
+DONUT_COLORS = donut_colors()
+
+
+def alpha_hex(color_value: str, alpha: int) -> str:
+    color = QColor(color_value)
+    color.setAlpha(max(0, min(255, alpha)))
+    return color.name(QColor.HexArgb)
 
 
 class HoverProductList(QListWidget):
@@ -124,17 +134,19 @@ class MatrixTableModel(QAbstractTableModel):
             product = self.product_at_column(column)
             if product is None:
                 return None
+            palette = get_shell_palette()
             if role == Qt.DisplayRole:
                 return f"{product.name}\n{self.service.state.scores.get(product.id, 0.0):.2f}"
             if role == Qt.ToolTipRole:
                 return product.vision_summary or "Product header"
             if role == Qt.BackgroundRole:
-                return QColor("#1c2638")
+                return QColor(palette.card_bg)
             return None
         if self.is_criterion_header(row, column):
             criterion = self.criterion_at_row(row)
             if criterion is None:
                 return None
+            palette = get_shell_palette()
             meta = []
             if criterion.unit:
                 meta.append(criterion.unit)
@@ -148,7 +160,7 @@ class MatrixTableModel(QAbstractTableModel):
             if role == Qt.TextAlignmentRole:
                 return Qt.AlignLeft | Qt.AlignVCenter
             if role == Qt.BackgroundRole:
-                return QColor("#1c2638")
+                return QColor(palette.card_bg)
             return None
         if not self.is_data_cell(row, column):
             return None
@@ -165,11 +177,13 @@ class MatrixTableModel(QAbstractTableModel):
             desc = criterion.description.strip() or "No description"
             return f"{criterion.label}\n{desc}\nWeight: {criterion.weight:.2f} / {criterion.direction}"
         if role == Qt.BackgroundRole:
+            palette = get_shell_palette()
             if self.is_corner_cell(row, column) or self.is_product_header(row, column) or self.is_criterion_header(row, column):
-                return QColor("#1c2638")
+                return QColor(palette.card_bg)
             if self.is_add_product_cell(row, column) or self.is_add_criterion_cell(row, column):
-                return QColor("#182233")
+                return QColor(palette.control_bg)
         if role == Qt.BackgroundRole and criterion.type == "number" and criterion.include_in_score:
+            palette = get_shell_palette()
             values: list[float] = []
             for candidate in self.service.state.products:
                 try:
@@ -184,9 +198,9 @@ class MatrixTableModel(QAbstractTableModel):
                 best = max(values) if criterion.direction == "high" else min(values)
                 worst = min(values) if criterion.direction == "high" else max(values)
                 if current == best:
-                    return QColor("#1b3b2d")
+                    return QColor(palette.success)
                 if current == worst and len(values) > 1:
-                    return QColor("#402326")
+                    return QColor(palette.error)
         return None
 
     def setData(self, index: QModelIndex, value, role: int = Qt.EditRole):  # noqa: N802
@@ -391,7 +405,8 @@ class DonutWidget(QWidget):
             start = 90 * 16
             for index, (_label, value, color) in enumerate(self.values):
                 span = -max(1, int(360 * 16 * value))
-                painter.setPen(QPen(QColor(color or DONUT_COLORS[index % len(DONUT_COLORS)]), 14))
+                colors = donut_colors()
+                painter.setPen(QPen(QColor(color or colors[index % len(colors)]), 14))
                 painter.drawArc(rect, start, span)
                 start += span
         painter.setPen(QColor(palette.text))
@@ -407,7 +422,6 @@ class InsightCard(QFrame):
         layout.setSpacing(8)
         self.title = QLabel("")
         self.title.setObjectName("sectionTitle")
-        self.title.setStyleSheet("font-size: 15px;")
         self.subtitle = QLabel("")
         self.subtitle.setObjectName("muted")
         self.subtitle.setWordWrap(True)
@@ -455,13 +469,13 @@ class RadarCompareWidget(QWidget):
                 points.append(
                     QPoint(int(center.x() + r * __import__("math").cos(angle)), int(center.y() + r * __import__("math").sin(angle)))
                 )
-            painter.setPen(QPen(QColor("#334156"), 1))
+            painter.setPen(QPen(QColor(palette.border), 1))
             for index in range(count):
                 painter.drawLine(points[index], points[(index + 1) % count])
         for index, label in enumerate(self.axes):
             angle = (-90 + (360 / count) * index) * 3.141592 / 180.0
             end = QPoint(int(center.x() + radius * __import__("math").cos(angle)), int(center.y() + radius * __import__("math").sin(angle)))
-            painter.setPen(QPen(QColor("#334156"), 1))
+            painter.setPen(QPen(QColor(palette.border), 1))
             painter.drawLine(center, end)
             label_point = QPoint(int(center.x() + (radius + 18) * __import__("math").cos(angle)), int(center.y() + (radius + 18) * __import__("math").sin(angle)))
             painter.setPen(QColor(palette.muted))
@@ -552,67 +566,88 @@ class TemplatePickerDialog(QDialog):
 
 class ProductMatrixCellWidget(QFrame):
     selected = Signal(str)
+    rename_requested = Signal(str, str)
 
     def __init__(self, product_id: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.product_id = product_id
         self.setObjectName("subtlePanel")
-        self._accent = "#7f8a96"
+        self._accent = donut_colors()[0]
         self._selected = False
+        self._score = 0.0
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        self.accent_bar = QFrame()
-        self.accent_bar.setFixedHeight(4)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(4)
         self.body = QFrame()
         self.body.setObjectName("productHeaderBody")
         body_layout = QVBoxLayout(self.body)
-        body_layout.setContentsMargins(8, 8, 8, 8)
-        body_layout.setSpacing(8)
-        self.name_label = QLabel("Product")
-        self.name_label.setAlignment(Qt.AlignCenter)
-        self.name_label.setMinimumHeight(32)
-        self.name_label.setMaximumHeight(32)
-        self.name_label.setStyleSheet(
-            "background:rgba(18, 25, 36, 0.92); border:1px solid #41506a; border-radius:16px; padding:6px 12px; font-weight:600;"
+        body_layout.setContentsMargins(8, 7, 8, 7)
+        body_layout.setSpacing(5)
+        top_row = QHBoxLayout()
+        top_row.setContentsMargins(0, 0, 0, 0)
+        top_row.setSpacing(6)
+        self.name_edit = QLineEdit("Product")
+        self.name_edit.setFrame(False)
+        self.name_edit.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.name_edit.setPlaceholderText("Product")
+        self.name_edit.setStyleSheet(
+            "QLineEdit { background:transparent; border:none; font-weight:600; padding:0px; }"
+            "QLineEdit:hover { border-bottom:1px solid rgba(255,255,255,0.18); }"
+            "QLineEdit:focus { border-bottom:1px solid rgba(255,255,255,0.35); }"
         )
-        self.thumbnail = QLabel("--")
-        self.thumbnail.setAlignment(Qt.AlignCenter)
-        self.thumbnail.setMinimumHeight(92)
-        self.thumbnail.setCursor(Qt.PointingHandCursor)
-        body_layout.addWidget(self.name_label, 0)
-        body_layout.addWidget(self.thumbnail, 1)
-        layout.addWidget(self.accent_bar)
-        layout.addWidget(self.body)
+        self.score_chip = QLabel("0.00")
+        self.score_chip.setAlignment(Qt.AlignCenter)
+        self.score_chip.setMinimumWidth(40)
+        self.score_chip.setObjectName("mutedSmall")
+        top_row.addWidget(self.name_edit, 1)
+        top_row.addWidget(self.score_chip, 0)
+        self.preview_strip = QLabel("")
+        self.preview_strip.setAlignment(Qt.AlignCenter)
+        self.preview_strip.setMinimumHeight(22)
+        self.preview_strip.setMaximumHeight(22)
+        self.preview_strip.setCursor(Qt.PointingHandCursor)
+        top_row_widget = QWidget()
+        top_row_widget.setLayout(top_row)
+        body_layout.addWidget(top_row_widget, 0)
+        body_layout.addWidget(self.preview_strip, 0)
+        layout.addWidget(self.body, 1)
         self.body.mousePressEvent = self._select_requested  # type: ignore[method-assign]
-        self.thumbnail.mousePressEvent = self._select_requested  # type: ignore[method-assign]
-        self.name_label.mousePressEvent = self._select_requested  # type: ignore[method-assign]
+        self.preview_strip.mousePressEvent = self._select_requested  # type: ignore[method-assign]
+        self.score_chip.mousePressEvent = self._select_requested  # type: ignore[method-assign]
+        self.name_edit.editingFinished.connect(self._emit_rename_requested)
 
     def _select_requested(self, _event) -> None:
         self.selected.emit(self.product_id)
 
+    def _emit_rename_requested(self) -> None:
+        self.rename_requested.emit(self.product_id, self.name_edit.text().strip())
+
     def set_product(self, product: ProductRecord, score: float, accent_color: str) -> None:
         self._accent = accent_color
-        self.name_label.setText(product.name)
+        self._score = score
+        self.name_edit.blockSignals(True)
+        self.name_edit.setText(product.name)
+        self.name_edit.blockSignals(False)
+        self.score_chip.setText(f"{score:.1f}")
+        palette = get_shell_palette()
         if product.image_path:
             pixmap = QPixmap(product.image_path)
             if not pixmap.isNull():
-                self.thumbnail.setPixmap(pixmap.scaled(220, 132, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
-                self.thumbnail.setText("")
-                self.thumbnail.setStyleSheet("background:transparent; border:none; border-radius:18px;")
+                self.preview_strip.setPixmap(pixmap.scaled(220, 22, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+                self.preview_strip.setText("")
+                self.preview_strip.setStyleSheet("background:transparent; border:none; border-radius:8px;")
             else:
-                self.thumbnail.setPixmap(QPixmap())
-                self.thumbnail.setText("IMG")
-                self.thumbnail.setStyleSheet(
-                    f"background:{accent_color}2E; color:{accent_color}; border:1px solid {accent_color}88; border-radius:18px; font-weight:600;"
+                self.preview_strip.setPixmap(QPixmap())
+                self.preview_strip.setText("Preview")
+                self.preview_strip.setStyleSheet(
+                    f"background:{palette.control_bg}; color:{accent_color}; border:1px solid {alpha_hex(accent_color, 72)}; border-radius:8px; font-size:11px;"
                 )
         else:
-            self.thumbnail.setPixmap(QPixmap())
-            self.thumbnail.setText("--")
-            self.thumbnail.setStyleSheet(
-                f"background:{accent_color}2E; color:{accent_color}; border:1px solid {accent_color}88; border-radius:18px; font-weight:600;"
+            self.preview_strip.setPixmap(QPixmap())
+            self.preview_strip.setText("No image")
+            self.preview_strip.setStyleSheet(
+                f"background:{palette.control_bg}; color:{palette.muted}; border:1px solid {palette.control_border}; border-radius:8px; font-size:11px;"
             )
-        self.accent_bar.setStyleSheet(f"background:{accent_color}; border-top-left-radius: 10px; border-top-right-radius: 10px;")
         self._apply_selected_style()
 
     def set_selected(self, selected: bool) -> None:
@@ -620,50 +655,82 @@ class ProductMatrixCellWidget(QFrame):
         self._apply_selected_style()
 
     def _apply_selected_style(self) -> None:
-        border = f"2px solid {self._accent}" if self._selected else "1px solid #25324a"
-        glow = (
-            f"background:#18253a; border:{border}; border-radius:14px;"
-            if self._selected
-            else f"background:#162033; border:{border}; border-radius:14px;"
-        )
-        self.setStyleSheet(glow)
+        palette = get_shell_palette()
+        border = f"1px solid {alpha_hex(self._accent, 145)}" if self._selected else f"1px solid {palette.control_border}"
+        background = alpha_hex(self._accent, 12) if self._selected else palette.surface_subtle
+        self.setStyleSheet(f"background:{background}; border:{border}; border-radius:10px;")
         self.body.setStyleSheet(
-            "QFrame#productHeaderBody { background:#162033; border:none; border-bottom-left-radius:14px; border-bottom-right-radius:14px; }"
+            f"QFrame#productHeaderBody {{ background:transparent; border:none; }}"
+        )
+        self.name_edit.setStyleSheet(
+            "QLineEdit { background:transparent; border:none; font-weight:600; padding:0px; }"
+            f"QLineEdit:hover {{ border-bottom:1px solid {alpha_hex(self._accent, 80) if self._selected else alpha_hex(palette.text, 45)}; }}"
+            f"QLineEdit:focus {{ border-bottom:1px solid {alpha_hex(self._accent, 140) if self._selected else palette.text}; }}"
+        )
+        self.score_chip.setStyleSheet(
+            f"background:{alpha_hex(self._accent, 12) if self._selected else palette.control_bg}; "
+            f"color:{self._accent if self._selected else palette.muted}; "
+            f"border:1px solid {alpha_hex(self._accent, 48) if self._selected else palette.control_border}; "
+            "border-radius:9px; padding:1px 7px; font-weight:600;"
         )
 
 
 class CriterionMatrixCellWidget(QFrame):
+    rename_requested = Signal(str, str)
+
     def __init__(self, criterion_id: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.criterion_id = criterion_id
         self._selected = False
+        self._direction = "high"
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 4, 8, 4)
+        layout.setContentsMargins(10, 7, 10, 7)
         layout.setSpacing(2)
-        self.label = QLabel("Criterion")
-        self.label.setAlignment(Qt.AlignCenter)
-        self.label.setStyleSheet("background:transparent; border:none; font-weight:600; font-size:13px;")
+        self.label_edit = QLineEdit("Criterion")
+        self.label_edit.setFrame(False)
+        self.label_edit.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.label_edit.setStyleSheet(
+            "QLineEdit { background:transparent; border:none; font-weight:600; padding:0px; }"
+            "QLineEdit:hover { border-bottom:1px solid rgba(255,255,255,0.18); }"
+            "QLineEdit:focus { border-bottom:1px solid rgba(255,255,255,0.35); }"
+        )
         self.meta = QLabel("")
-        self.meta.setAlignment(Qt.AlignCenter)
-        self.meta.setStyleSheet("background:transparent; border:none; font-size:11px; color:#aebbd0;")
-        layout.addWidget(self.label)
+        self.meta.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.meta.setObjectName("mutedSmall")
+        self.meta.setStyleSheet("background:transparent; border:none;")
+        layout.addWidget(self.label_edit)
         layout.addWidget(self.meta)
         self._apply_style()
+        self.label_edit.editingFinished.connect(self._emit_rename_requested)
+
+    def _emit_rename_requested(self) -> None:
+        self.rename_requested.emit(self.criterion_id, self.label_edit.text().strip())
 
     def set_criterion(self, criterion: CriterionRecord) -> None:
-        self.label.setText(criterion.label)
+        self._direction = criterion.direction
+        self.label_edit.blockSignals(True)
+        self.label_edit.setText(criterion.label)
+        self.label_edit.blockSignals(False)
         unit = criterion.unit if criterion.unit else "-"
         direction = "High" if criterion.direction == "high" else "Low"
-        self.meta.setText(f"{unit} / {direction} / W{criterion.weight:.1f}")
+        self.meta.setText(f"{unit}  •  {direction}  •  W{criterion.weight:.1f}")
 
     def set_selected(self, selected: bool) -> None:
         self._selected = selected
         self._apply_style()
 
     def _apply_style(self) -> None:
-        border = "2px solid #73c2ff" if self._selected else "1px solid #2a3852"
-        bg = "#1a2740" if self._selected else "#182338"
-        self.setStyleSheet(f"background:{bg}; border:{border}; border-radius:12px;")
+        palette = get_shell_palette()
+        accent = palette.accent if self._direction == "high" else palette.muted
+        border = f"1px solid {alpha_hex(accent, 120)}" if self._selected else f"1px solid {palette.control_border}"
+        bg = alpha_hex(accent, 10) if self._selected else palette.surface_subtle
+        self.setStyleSheet(f"background:{bg}; border:{border}; border-radius:10px;")
+        self.label_edit.setStyleSheet(
+            "QLineEdit { background:transparent; border:none; font-weight:600; padding:0px; }"
+            f"QLineEdit:hover {{ border-bottom:1px solid {alpha_hex(accent, 70) if self._selected else alpha_hex(palette.text, 45)}; }}"
+            f"QLineEdit:focus {{ border-bottom:1px solid {alpha_hex(accent, 120) if self._selected else palette.text}; }}"
+        )
+        self.meta.setStyleSheet(f"background:transparent; border:none; color:{palette.muted}; font-size:11px;")
 
 
 class EdgeAddButton(QPushButton):
@@ -671,9 +738,10 @@ class EdgeAddButton(QPushButton):
         super().__init__(label, parent)
         self.setObjectName("ghostAddButton")
         self.setCursor(Qt.PointingHandCursor)
+        palette = get_shell_palette()
         self.setStyleSheet(
-            "QPushButton#ghostAddButton { border: 1px dashed #41526d; border-radius: 14px; padding: 10px 12px; color: #d9e4f2; background: #1b2433; }"
-            "QPushButton#ghostAddButton:hover { border-color: #5f7699; background: #202b3d; }"
+            f"QPushButton#ghostAddButton {{ border: 1px dashed {palette.control_border}; border-radius: 12px; padding: 8px 10px; color: {palette.muted}; background: {palette.surface_subtle}; }}"
+            f"QPushButton#ghostAddButton:hover {{ border-color: {palette.chip_border}; color: {palette.text}; background: {palette.control_bg}; }}"
         )
 
 

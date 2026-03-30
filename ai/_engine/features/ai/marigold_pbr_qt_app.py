@@ -3,12 +3,12 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from contexthub.ui.qt.panels import ExportRunPanel, FixedParameterPanel
+from contexthub.ui.qt.panels import ExportFoldoutPanel, FixedParameterPanel
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
     get_shell_palette,
     qt_t,
@@ -42,8 +42,8 @@ except ImportError as exc:
     raise ImportError("PySide6 is required for marigold_pbr.") from exc
 
 APP_ID = "marigold_pbr"
-APP_TITLE = qt_t("marigold_gui.title", "ContextUp PBR Generator (Marigold)")
-APP_SUBTITLE = qt_t("marigold_gui.header", "Extract Depth, Normal and PBR maps from a single image.")
+APP_TITLE = qt_t("marigold_gui.title", "Marigold PBR")
+APP_SUBTITLE = qt_t("marigold_gui.header", "Generate depth, normal, and material maps from a single image.")
 
 
 class ResultMapSwitcher(QFrame):
@@ -124,17 +124,8 @@ class MarigoldPBRWindow(QMainWindow):
         shell_layout.setSpacing(m.section_gap)
 
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root, show_webui=False)
+        self.header_surface.set_header_visibility(show_subtitle=True, show_asset_count=False, show_runtime_status=True)
         self.runtime_status_badge = self.header_surface.runtime_status_badge
-        
-        # Add Download Button to Header Row
-        # HeaderSurface layout is root (V) -> row (H)
-        header_row = self.header_surface.layout().itemAt(0).layout()
-        self.download_btn = QPushButton("📥")
-        self.download_btn.setObjectName("chipBtn")
-        self.download_btn.setToolTip(qt_t("marigold_gui.download_models", "Download/Check Models"))
-        # Insert before min/max/close buttons (which are the last 3)
-        header_row.insertWidget(header_row.count() - 3, self.download_btn)
-        
         shell_layout.addWidget(self.header_surface)
 
         # Splitter Layout
@@ -178,16 +169,26 @@ class MarigoldPBRWindow(QMainWindow):
         settings_layout.setContentsMargins(15, 15, 15, 15)
         settings_layout.setSpacing(m.section_gap)
 
+        settings_header = QHBoxLayout()
+        settings_header.setContentsMargins(0, 0, 0, 0)
+        settings_header.setSpacing(8)
+        self.download_btn = QPushButton(qt_t("marigold_gui.download_models", "Check Models"))
+        self.download_btn.setObjectName("pillBtn")
+        self.download_btn.setToolTip(qt_t("marigold_gui.download_models", "Download/Check Models"))
+        settings_header.addStretch(1)
+        settings_header.addWidget(self.download_btn, 0)
+        settings_layout.addLayout(settings_header)
+
         self.param_panel = FixedParameterPanel(
             title=qt_t("marigold_gui.settings", "Generation Control"),
             description="",
             preset_label=qt_t("marigold_gui.quality_label", "Quality Preset"),
         )
         self.workflow_description = self.param_panel.description_label
-        self.workflow_description.setStyleSheet("margin-top: -5px; margin-bottom: 5px;")
+        self.workflow_description.setStyleSheet(f"margin-top: -5px; margin-bottom: 5px; color: {p.text_muted};")
         settings_layout.addWidget(self.param_panel, 1)
 
-        self.export_panel = ExportRunPanel(qt_t("marigold_gui.export", "Export Options"))
+        self.export_panel = ExportFoldoutPanel(qt_t("marigold_gui.export", "Export Options"))
         settings_layout.addWidget(self.export_panel, 0)
 
         self.main_split.addWidget(self.workspace)
@@ -198,13 +199,7 @@ class MarigoldPBRWindow(QMainWindow):
         
         shell_layout.addWidget(self.main_split, 1)
 
-        grip_row = QHBoxLayout()
-        grip_row.setContentsMargins(0, 0, 2, 0)
-        grip_row.addStretch(1)
-        self.size_grip = build_size_grip()
-        self.size_grip.setParent(self.window_shell)
-        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         
         root.addWidget(self.window_shell)
 
@@ -240,7 +235,7 @@ class MarigoldPBRWindow(QMainWindow):
             
             title = QLabel(section_def["section"].upper())
             title.setObjectName("eyebrow")
-            title.setStyleSheet("color: #7289da; font-weight: bold;")
+            title.setStyleSheet(f"color: {get_shell_palette().accent}; font-weight: bold;")
             section_layout.addWidget(title)
 
             # Use Grid for bools if multiple, else vertical

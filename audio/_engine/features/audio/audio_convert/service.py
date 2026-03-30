@@ -78,6 +78,11 @@ class AudioConvertService:
                     if quality == "High": cmd.extend(["-b:a", "256k"])
                     elif quality == "Medium": cmd.extend(["-b:a", "192k"])
                     else: cmd.extend(["-b:a", "128k"])
+                elif fmt == "aac":
+                    cmd.extend(["-acodec", "aac"])
+                    if quality == "High": cmd.extend(["-b:a", "256k"])
+                    elif quality == "Medium": cmd.extend(["-b:a", "192k"])
+                    else: cmd.extend(["-b:a", "128k"])
 
                 if not copy_metadata:
                     cmd.extend(["-map_metadata", "-1"])

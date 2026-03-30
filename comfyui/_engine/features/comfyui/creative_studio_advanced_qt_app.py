@@ -4,14 +4,16 @@ import sys
 from pathlib import Path
 
 from features.comfyui.creative_studio_advanced_service import CreativeStudioAdvancedService
-from contexthub.ui.qt.panels import AssetWorkspacePanel, ExportRunPanel
+from contexthub.ui.qt.panels import AssetWorkspacePanel, ExportFoldoutPanel
 from contexthub.ui.qt.shell import (
     apply_app_icon,
     CollapsibleSection,
     HeaderSurface,
+    attach_size_grip,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_palette,
+    set_badge_role,
+    set_surface_role,
     qt_t,
     refresh_runtime_preferences,
     runtime_settings_signature,
@@ -108,6 +110,7 @@ class CreativeStudioAdvancedWindow(QMainWindow):
         shell_layout.setSpacing(12)
 
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root, show_webui=True)
+        self.header_surface.set_header_visibility(show_subtitle=True, show_asset_count=True, show_runtime_status=True)
         self.asset_count_badge = self.header_surface.asset_count_badge
         self.runtime_status_badge = self.header_surface.runtime_status_badge
         self.open_webui_btn = self.header_surface.open_webui_btn
@@ -128,13 +131,7 @@ class CreativeStudioAdvancedWindow(QMainWindow):
         self.splitter.setSizes([880, 560])
         shell_layout.addWidget(self.splitter, 1)
 
-        grip_row = QHBoxLayout()
-        grip_row.setContentsMargins(0, 0, 2, 0)
-        grip_row.addStretch(1)
-        self.size_grip = build_size_grip()
-        self.size_grip.setParent(self.window_shell)
-        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
 
         root.addWidget(self.window_shell)
 
@@ -176,6 +173,8 @@ class CreativeStudioAdvancedWindow(QMainWindow):
         scroll.setWidgetResizable(True)
         scroll_body = QWidget()
         scroll_body.setObjectName("paramScrollBody")
+        set_surface_role(scroll.viewport(), "content")
+        set_surface_role(scroll_body, "content")
         self.param_layout = QVBoxLayout(scroll_body)
         self.param_layout.setContentsMargins(0, 0, 0, 0)
         self.param_layout.setSpacing(10)
@@ -183,7 +182,7 @@ class CreativeStudioAdvancedWindow(QMainWindow):
         scroll.viewport().setObjectName("paramScrollViewport")
         layout.addWidget(scroll, 1)
 
-        self.export_panel = ExportRunPanel(qt_t("comfyui.qt_panels.export_and_run", "Export And Run"))
+        self.export_panel = ExportFoldoutPanel(qt_t("comfyui.qt_panels.export_and_run", "Export And Run"))
         self.export_panel.set_values(
             str(self.service.state.output_options.output_dir),
             self.service.state.output_options.file_prefix,
@@ -389,11 +388,8 @@ class CreativeStudioAdvancedWindow(QMainWindow):
 
     def _refresh_status(self, text: str, level: str) -> None:
         self.runtime_status_badge.setText(text)
-        palette = get_shell_palette()
-        color = {"ready": palette.success, "warning": palette.warning, "error": palette.error}.get(level, palette.accent)
-        self.runtime_status_badge.setStyleSheet(
-            f"border-radius: 12px; padding: 0px 12px; min-height: 42px; background: {color}; border: 1px solid rgba(255,255,255,0.04); color: {palette.text}; font-weight: 600;"
-        )
+        tone = {"ready": "success", "warning": "warning", "error": "error"}.get(level, "accent")
+        set_badge_role(self.runtime_status_badge, "status", tone)
         self.export_panel.status_label.setText(text)
 
     def _check_runtime_preferences(self) -> None:

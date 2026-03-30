@@ -7,12 +7,14 @@ FBX 파일 내부에 임베드된 텍스처들을 외부 이미지 파일로 분
 
 1. FBX 파일 선택 후 우클릭
 2. **3D → Extract Textures** 선택
-3. 추출 완료 대기
+3. mini 확인 창에서 파일 개수를 확인
+4. **Extract** 실행
+5. 원본 파일과 같은 위치의 `textures` 폴더에 추출 결과 저장
 
 ## 출력 파일
-FBX 파일과 같은 폴더에 텍스처 폴더 생성:
+원본 파일과 같은 폴더의 `textures` 폴더에 저장:
 ```
-모델명_textures/
+textures/
 ├── diffuse.png
 ├── normal.png
 ├── roughness.png
@@ -31,3 +33,6 @@ FBX 파일과 같은 폴더에 텍스처 폴더 생성:
 
 ## 의존성
 - Blender 또는 pymeshlab
+
+## UI 유형
+- mini confirm Qt shell

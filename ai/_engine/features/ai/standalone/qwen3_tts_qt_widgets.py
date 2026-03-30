@@ -3,6 +3,8 @@ from __future__ import annotations
 import wave
 from pathlib import Path
 
+from contexthub.ui.qt.shell import get_shell_accent_cycle, get_shell_palette
+
 try:
     from PySide6.QtCore import Qt, Signal
     from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout
@@ -15,7 +17,13 @@ def status_text(status: str) -> str:
 
 
 def status_color(status: str) -> str:
-    return {"ready": "#8ea5d6", "queued": "#f2bd1d", "done": "#66c6a3", "error": "#f28b82"}.get(status, "#c6d3ea")
+    p = get_shell_palette()
+    return {
+        "ready": p.text_muted,
+        "queued": p.warning,
+        "done": p.success,
+        "error": p.error,
+    }.get(status, p.text)
 
 
 def safe_prefix(value: str, limit: int = 80) -> str:
@@ -24,7 +32,7 @@ def safe_prefix(value: str, limit: int = 80) -> str:
 
 
 def profile_accent(name: str) -> str:
-    accents = ["#7c8cff", "#f58bd7", "#65d1c7", "#f6b25f", "#9b8bff", "#5fb5ff"]
+    accents = get_shell_accent_cycle()
     return accents[sum(ord(ch) for ch in (name or "profile")) % len(accents)]
 
 
@@ -66,18 +74,20 @@ class MessageBubbleWidget(QFrame):
     def __init__(self, message, profiles: list[str], selected: bool = False, expanded: bool = False, media_enabled: bool = False) -> None:
         super().__init__()
         self.message_id = message.id
+        self.setObjectName("messageBubbleRoot")
+        p = get_shell_palette()
         accent = profile_accent(message.profile)
-        bubble_bg = "#252938" if not selected else "#2d3244"
-        border = accent if selected else "rgba(255,255,255,0.05)"
+        bubble_bg = p.status_card_bg if not selected else p.card_bg
+        border = accent if selected else p.control_border
         self.setStyleSheet(
             f"""
-            QFrame {{
+            QFrame#messageBubbleRoot {{
                 background: transparent;
                 border: none;
             }}
             QLabel#avatar {{
                 background: {accent};
-                color: #101320;
+                color: {p.app_bg};
                 border-radius: 20px;
                 font-size: 13px;
                 font-weight: 700;
@@ -88,16 +98,16 @@ class MessageBubbleWidget(QFrame):
                 border-radius: 18px;
             }}
             QLabel#name {{
-                color: #f4f7ff;
+                color: {p.text};
                 font-size: 14px;
                 font-weight: 700;
             }}
             QLabel#time {{
-                color: #97a0ba;
+                color: {p.text_muted};
                 font-size: 11px;
             }}
             QLabel#body {{
-                color: #edf1fb;
+                color: {p.text};
                 font-size: 15px;
                 line-height: 1.35;
             }}
@@ -107,26 +117,29 @@ class MessageBubbleWidget(QFrame):
                 font-weight: 700;
             }}
             QLabel#meta {{
-                color: #8f97ad;
+                color: {p.text_muted};
                 font-size: 11px;
             }}
             QPushButton#expandBtn {{
                 background: transparent;
-                color: #99a4c4;
+                color: {p.text_muted};
                 border: none;
                 font-size: 13px;
                 font-weight: 700;
                 padding: 2px 4px;
             }}
             QPushButton#ghostBtn {{
-                background: rgba(255,255,255,0.06);
-                color: #edf1fb;
-                border: 1px solid rgba(255,255,255,0.04);
+                background: {p.control_bg};
+                color: {p.text};
+                border: 1px solid {p.control_border};
                 border-radius: 12px;
                 padding: 6px 10px;
             }}
+            QPushButton#ghostBtn:hover {{
+                background: {p.button_hover};
+            }}
             QLabel#chip {{
-                background: rgba(255,255,255,0.06);
+                background: {p.button_bg};
                 border-radius: 10px;
                 color: {status_color(message.status)};
                 padding: 3px 8px;

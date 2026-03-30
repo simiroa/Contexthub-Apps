@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "app_id": "subtitle_qc",
+  "asset_path": "C:\\Users\\HG\\Documents\\Contexthub-Apps\\_tmp_meeting_test.wav",
+  "file_prefix": "_tmp_meeting_test",
+  "updated_at": "2026-03-29T17:06:10.248687+00:00",
+  "generation": {
+    "status": "Ready",
+    "status_tone": "ready",
+    "is_processing": false
+  },
+  "generation_options": {
+    "provider": "whisper",
+    "model": "small",
+    "task": "transcribe",
+    "device": "cuda",
+    "language": "Auto",
+    "output_formats": [
+      "srt",
+      "vtt",
+      "txt"
+    ]
+  },
+  "output_options": {
+    "output_dir": "",
+    "file_prefix": "subtitle",
+    "open_folder_after_run": true,
+    "export_session_json": true
+  },
+  "review": {
+    "status": "review_ready",
+    "approved": false,
+    "offset_ms": 0,
+    "issues": [
+      "[1] too short",
+      "[1] dense text",
+      "[2] too short",
+      "[2] dense text",
+      "[3] too short",
+      "[3] dense text"
+    ],
+    "confidence_summary": "low"
+  },
+  "generated": {
+    "generated_language": "",
+    "language_probability": null,
+    "generated_formats": [
+      "srt",
+      "vtt",
+      "txt"
+    ],
+    "segments": [
+      {
+        "segment_id": 0,
+        "start": 0.0,
+        "end": 0.0,
+        "text": "회의 시작입니다. 오늘 안건은 예산 검토와 출시 일정입니다.",
+        "is_generated": false,
+        "review_flags": [
+          "too_short",
+          "dense_text"
+        ]
+      },
+      {
+        "segment_id": 1,
+        "start": 0.0,
+        "end": 0.0,
+        "text": "김팀장: 이번 주까지 초안을 마무리합니다.",
+        "is_generated": false,
+        "review_flags": [
+          "too_short",
+          "dense_text"
+        ]
+      },
+      {
+        "segment_id": 2,
+        "start": 0.0,
+        "end": 0.0,
+        "text": "박PM: 출시 리스크는 번역 일정입니다.",
+        "is_generated": false,
+        "review_flags": [
+          "too_short",
+          "dense_text"
+        ]
+      }
+    ],
+    "output_paths": {},
+    "dirty": true
+  },
+  "metadata": {
+    "ai_summary": "# Summary  \nMeeting focused on budget review and release schedule. Kim Team Leader committed to finalize draft by end of week, while Park PM identified translation schedule as the primary release risk.  \n\n# Key Points  \n- Agenda: Budget review and release schedule  \n- Kim Team Leader: Draft finalized by end of week  \n- Park PM: Translation schedule is key release risk  \n\n# Action Items  \n- [김팀장] Finalize draft by end of week  \n\n# Risks  \n- Translation schedule delays may impact release timeline",
+    "ai_summary_model": "qwen3:4b",
+    "ai_summary_instruction": "Summarize the meeting transcript. Return concise markdown with sections: Summary, Key Points, Action Items, Risks."
+  }
+}

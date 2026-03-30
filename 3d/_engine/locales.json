@@ -10,33 +10,9 @@
   "3d_mesh_gui": {
     "title_convert": "Mesh Format Converter",
     "title_cad": "CAD to OBJ Converter",
-    "title_bake": "Blender Texture Baker",
     "title_extract": "Texture Extractor",
     "title_lod": "Auto LOD Generator",
     "title_mayo": "Open with Mayo Viewer"
-  },
-  "blender_bake": {
-    "title": "블렌더 텍스처 베이커 (Blender Baker)",
-    "header": "Remesh & Bake",
-    "bake_settings": "베이크 설정",
-    "resolution": "해상도",
-    "samples": "샘플 수",
-    "margin": "여백 (Margin)",
-    "bake_type": "베이크 유형",
-    "start_bake": "베이크 시작",
-    "no_selection": "선택된 오브젝트가 없습니다.",
-    "no_files": "처리할 수 있는 메시 파일이 선택되지 않았습니다.",
-    "target_faces": "대상 폴리곤 수",
-    "preservation": "보존 옵션",
-    "uvs": "UV 유지",
-    "boundary": "경계선 보존",
-    "normal": "노멀 (Normal)",
-    "output_maps": "출력 맵",
-    "flip_green": "Normal Green 채널 반전",
-    "diffuse": "Diffuse (Color)",
-    "orm_pack": "ORM Pack (AO/Rough/Metal)",
-    "run_btn": "프로세스 및 베이크 시작",
-    "ray_dist": "Ray 거리"
   },
   "mesh_lod_gui": {
     "title": "ContextUp Auto LOD 생성기",

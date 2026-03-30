@@ -3,13 +3,14 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from contexthub.ui.qt.panels import ExportRunPanel
+from contexthub.ui.qt.panels import ExportFoldoutPanel
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
+    set_surface_role,
     qt_t,
 )
 from features.image.merge_to_exr.service import ExrMergeService
@@ -140,6 +141,7 @@ class MergeToExrWindow(QMainWindow):
         shell_layout.setSpacing(m.section_gap)
 
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root)
+        self.header_surface.set_header_visibility(show_subtitle=True, show_asset_count=True, show_runtime_status=True)
         self.header_surface.open_webui_btn.hide()
         shell_layout.addWidget(self.header_surface)
 
@@ -200,16 +202,13 @@ class MergeToExrWindow(QMainWindow):
 
         shell_layout.addWidget(self.layer_card, 1)
 
-        self.export_panel = ExportRunPanel(qt_t("merge_to_exr.run", "Export EXR"))
+        self.export_panel = ExportFoldoutPanel(qt_t("merge_to_exr.run", "Export EXR"))
         self.export_panel.export_btn.hide()
         self.export_panel.export_session_checkbox.hide()
         self.export_panel.set_expanded(False)
         shell_layout.addWidget(self.export_panel, 0)
 
-        grip_row = QHBoxLayout()
-        grip_row.addStretch(1)
-        grip_row.addWidget(build_size_grip())
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         root.addWidget(self.window_shell)
         self._set_drop_highlight(False)
 
@@ -414,10 +413,10 @@ class MergeToExrWindow(QMainWindow):
 
     def _set_drop_highlight(self, active: bool) -> None:
         if active:
-            self.layer_card.setStyleSheet("QFrame#card { border: 2px solid rgba(61, 139, 255, 0.9); }")
+            set_surface_role(self.layer_card, "card", "accent")
             self.drop_hint.setText("Drop image files to append new EXR layers.")
         else:
-            self.layer_card.setStyleSheet("")
+            set_surface_role(self.layer_card, "card", "default")
             self.drop_hint.setText(
                 qt_t("merge_to_exr.drop_hint_empty", "Drop image files anywhere in this window to add EXR layers.")
                 if not self.service.state.channels

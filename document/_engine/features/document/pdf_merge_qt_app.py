@@ -4,14 +4,15 @@ import sys
 import threading
 from pathlib import Path
 
-from contexthub.ui.qt.panels import ExportRunPanel
+from contexthub.ui.qt.panels import ExportFoldoutPanel
 from contexthub.ui.qt.shell import (
     DropListWidget,
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
+    set_surface_role,
     qt_t,
 )
 from features.document.pdf_merge.service import PdfMergeService
@@ -78,6 +79,11 @@ class PdfMergeWindow(QMainWindow):
 
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root)
         self.header_surface.open_webui_btn.hide()
+        self.header_surface.set_header_visibility(
+            show_subtitle=False,
+            show_asset_count=True,
+            show_runtime_status=False,
+        )
         shell_layout.addWidget(self.header_surface)
 
         self.list_card = QFrame()
@@ -134,15 +140,12 @@ class PdfMergeWindow(QMainWindow):
 
         shell_layout.addWidget(self.list_card, 1)
 
-        self.export_panel = ExportRunPanel(qt_t("pdf_merge.run", "Merge PDFs"))
+        self.export_panel = ExportFoldoutPanel(qt_t("pdf_merge.run", "Merge PDFs"))
         self.export_panel.export_btn.hide()
         self.export_panel.export_session_checkbox.hide()
         shell_layout.addWidget(self.export_panel, 0)
 
-        grip_row = QHBoxLayout()
-        grip_row.addStretch(1)
-        grip_row.addWidget(build_size_grip())
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         root.addWidget(self.window_shell)
         self._set_drop_highlight(False)
 
@@ -248,7 +251,6 @@ class PdfMergeWindow(QMainWindow):
 
     def _refresh_header(self) -> None:
         self.header_surface.set_asset_count(len(self.service.state.files))
-        self.header_surface.runtime_status_badge.setText("Error" if self.service.state.error else "Ready")
 
     def _toggle_export_details(self) -> None:
         if hasattr(self.export_panel, "details") and hasattr(self.export_panel, "set_expanded"):
@@ -361,10 +363,10 @@ class PdfMergeWindow(QMainWindow):
 
     def _set_drop_highlight(self, active: bool) -> None:
         if active:
-            self.list_card.setStyleSheet("QFrame#card { border: 2px solid rgba(61, 139, 255, 0.9); }")
+            set_surface_role(self.list_card, "card", "accent")
             self.drop_hint.setText("Drop PDF files to append them to the merge order.")
         else:
-            self.list_card.setStyleSheet("")
+            set_surface_role(self.list_card, "card", "default")
             self.drop_hint.setText(
                 qt_t("pdf_merge.drop_hint_empty", "Drop PDF files here or use Add PDFs.")
                 if not self.service.state.files

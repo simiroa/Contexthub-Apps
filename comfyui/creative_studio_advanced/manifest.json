@@ -51,7 +51,7 @@
     "ui":  {
                "enabled":  true,
                "framework":  "pyside6",
-               "shared_theme":  "creative_studio_qt_pilot",
-               "template":  "special"
+               "shared_theme":  "contexthub",
+               "template":  "full"
            }
 }

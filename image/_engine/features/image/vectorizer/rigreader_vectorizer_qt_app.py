@@ -4,12 +4,12 @@ import sys
 from pathlib import Path
 from typing import List, Optional, Dict, Callable
 
-from contexthub.ui.qt.panels import ExportRunPanel, FixedParameterPanel, ComparativePreviewWidget
+from contexthub.ui.qt.panels import ExportFoldoutPanel, FixedParameterPanel, ComparativePreviewWidget
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
     get_shell_palette,
     qt_t,
@@ -170,10 +170,11 @@ class LayerNavigatorPanel(QFrame):
         
         self.list_widget = QListWidget()
         self.list_widget.setObjectName("navigatorList")
+        palette = get_shell_palette()
         ss = "QListWidget#navigatorList { border: none; background: transparent; } "
         ss += "QListWidget#navigatorList::item { padding: 8px; border-radius: 4px; margin-bottom: 2px; } "
-        ss += "QListWidget#navigatorList::item:selected { background: rgba(0, 255, 255, 0.15); color: #00FFFF; } "
-        ss += "QListWidget#navigatorList::item:hover:!selected { background: rgba(255, 255, 255, 0.05); }"
+        ss += f"QListWidget#navigatorList::item:selected {{ background: {palette.accent_soft}; color: {palette.chip_text}; }} "
+        ss += f"QListWidget#navigatorList::item:hover:!selected {{ background: {palette.button_hover}; }}"
         self.list_widget.setStyleSheet(ss)
         layout.addWidget(self.list_widget, 1)
         
@@ -240,6 +241,7 @@ class VectorizerWindow(QMainWindow):
         
         # 1. Header with Source Loading
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root, show_webui=True)
+        self.header_surface.set_header_visibility(show_subtitle=True, show_asset_count=True, show_runtime_status=True)
         self.header_surface.open_webui_btn.setText("Open Artwork")
         self.header_surface.open_webui_btn.setToolTip("Select source character artwork")
         shell_layout.addWidget(self.header_surface)
@@ -271,7 +273,7 @@ class VectorizerWindow(QMainWindow):
         self.param_panel = FixedParameterPanel("Tracer Config", "Tweak rigging & path generation.")
         rp_layout.addWidget(self.param_panel, 1)
         
-        self.export_panel = ExportRunPanel("Execution")
+        self.export_panel = ExportFoldoutPanel("Execution")
         for w in [self.export_panel.output_prefix_label, self.export_panel.output_prefix_edit,
                  self.export_panel.toggle_btn, self.export_panel.export_btn, self.export_panel.export_session_checkbox]:
             w.hide()
@@ -285,10 +287,7 @@ class VectorizerWindow(QMainWindow):
         self.main_splitter.setStretchFactor(2, 2)
         shell_layout.addWidget(self.main_splitter, 1)
         
-        grip_row = QHBoxLayout()
-        grip_row.addStretch(1)
-        grip_row.addWidget(build_size_grip())
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         root.addWidget(self.window_shell)
 
     def _bind_actions(self) -> None:

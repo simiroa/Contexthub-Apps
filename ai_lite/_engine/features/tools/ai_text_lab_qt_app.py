@@ -198,7 +198,11 @@ class AITextLabWindow(QMainWindow):
         # --- Unified Header ---
         self.header = HeaderSurface(self, APP_TITLE, "", self.app_root)
         self.header.open_webui_btn.hide()
-        self.header.manual_btn.hide()
+        self.header.set_header_visibility(
+            show_subtitle=False,
+            show_asset_count=False,
+            show_runtime_status=False,
+        )
         
         # Apply Ghost Style to Header Buttons
         header_btns = [self.header.min_btn, self.header.max_btn, self.header.close_btn]
@@ -230,10 +234,8 @@ class AITextLabWindow(QMainWindow):
         self.pin_btn.setCheckable(True)
         self.pin_btn.setFixedSize(28, 28)
 
-        h_row = self.header.findChild(QHBoxLayout)
+        h_row = self.header.chrome_row
         if h_row:
-            if hasattr(self.header, 'asset_count_badge'): self.header.asset_count_badge.hide()
-            if hasattr(self.header, 'runtime_status_badge'): self.header.runtime_status_badge.hide()
             # Title spatial fix
             h_row.setContentsMargins(0, 0, 0, 0)
             c_idx = h_row.indexOf(self.header.close_btn)

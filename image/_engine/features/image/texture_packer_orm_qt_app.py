@@ -23,15 +23,15 @@ from PySide6.QtWidgets import (
 from contexthub.ui.qt.shell import (
     HeaderSurface,
     get_shell_metrics,
+    get_shell_palette,
     build_shell_stylesheet,
     qt_t,
     apply_app_icon,
-    build_size_grip,
+    attach_size_grip,
 )
 from contexthub.ui.qt.panels import (
     PreviewListPanel,
     FixedParameterPanel,
-    ExportRunPanel,
 )
 
 from .texture_packer_orm_state import PackerState, SlotState
@@ -70,6 +70,11 @@ class TexturePackerWindow(QMainWindow):
             title="Texture Packer",
             subtitle="Channel-based Map Packing Tool",
             app_root=self.app_root
+        )
+        self.header.set_header_visibility(
+            show_subtitle=False,
+            show_asset_count=False,
+            show_runtime_status=False,
         )
         self.main_layout.addWidget(self.header)
         
@@ -114,6 +119,7 @@ class TexturePackerWindow(QMainWindow):
         self.body_layout.addWidget(self.slots_card, 1)
         
         # Compact Export
+        palette = get_shell_palette()
         self.pack_save_btn = QPushButton("Pack & Save Image")
         self.pack_save_btn.setObjectName("primary")
         self.pack_save_btn.setMinimumHeight(50)
@@ -128,8 +134,8 @@ class TexturePackerWindow(QMainWindow):
         self.main_layout.addWidget(self.body_container, 1)
         
         # Shell Closing
+        self.size_grip = attach_size_grip(self.main_layout, self.window_shell)
         self.root_layout.addWidget(self.window_shell)
-        self.main_layout.addWidget(build_size_grip(), 0, Qt.AlignRight)
 
         self.setStyleSheet(build_shell_stylesheet())
         self._bind_actions()
@@ -155,6 +161,7 @@ class TexturePackerWindow(QMainWindow):
         ]
         
         for key, row_idx, col_idx in slots_info:
+            palette = get_shell_palette()
             slot_frame = QFrame()
             slot_frame.setObjectName("subtlePanel")
             slot_layout = QVBoxLayout(slot_frame)
@@ -165,7 +172,9 @@ class TexturePackerWindow(QMainWindow):
             header_row = QHBoxLayout()
             name_edit = QLineEdit(self.state.slots[key].label)
             name_edit.setObjectName("eyebrow")
-            name_edit.setStyleSheet("border: none; background: transparent; font-weight: bold; font-size: 13px; color: #aaa;")
+            name_edit.setStyleSheet(
+                f"border: none; background: transparent; font-weight: bold; font-size: 13px; color: {palette.text_muted};"
+            )
             header_row.addWidget(name_edit)
             header_row.addStretch(1)
             slot_layout.addLayout(header_row)
@@ -175,7 +184,9 @@ class TexturePackerWindow(QMainWindow):
             preview_container.setObjectName("imagePreview")
             preview_container.setMinimumHeight(120)
             preview_container.setCursor(Qt.PointingHandCursor)
-            preview_container.setStyleSheet("border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05);")
+            preview_container.setStyleSheet(
+                f"border-radius: 8px; background: {palette.field_bg}; border: 1px solid {palette.control_border};"
+            )
             
             pc_layout = QVBoxLayout(preview_container)
             pc_layout.setContentsMargins(5, 5, 5, 5)
@@ -189,14 +200,16 @@ class TexturePackerWindow(QMainWindow):
             
             # Overlay Row (Hidden by default)
             overlay_frame = QFrame(preview_container)
-            overlay_frame.setStyleSheet("background: rgba(0,0,0,0.6); border-radius: 8px;")
+            overlay_frame.setStyleSheet(
+                f"background: {palette.window_shell_bg}; border-radius: 8px; border: 1px solid {palette.control_border};"
+            )
             overlay_frame.hide()
             
             overlay_layout = QHBoxLayout(overlay_frame)
             overlay_layout.setContentsMargins(10, 0, 10, 0)
             
             label_hint = QLabel("Click to Change")
-            label_hint.setStyleSheet("color: white; font-size: 11px; font-weight: bold;")
+            label_hint.setStyleSheet(f"color: {palette.text}; font-size: 11px; font-weight: bold;")
             overlay_layout.addWidget(label_hint, 1, Qt.AlignCenter)
             
             invert_btn = QPushButton("±")
@@ -255,8 +268,11 @@ class TexturePackerWindow(QMainWindow):
     def _toggle_invert(self, key):
         self.state.slots[key].invert = not self.state.slots[key].invert
         btn = self.slot_widgets[key]["invert"]
+        palette = get_shell_palette()
         if self.state.slots[key].invert:
-            btn.setStyleSheet("background: #00e5ff; color: black; border-radius: 4px;")
+            btn.setStyleSheet(
+                f"background: {palette.accent}; color: {palette.accent_text}; border-radius: 4px; border: 1px solid {palette.accent};"
+            )
         else:
             btn.setStyleSheet("")
         self._update_slot_visuals(key, self.state.slots[key].path)
@@ -338,8 +354,7 @@ class TexturePackerWindow(QMainWindow):
                 self._update_slot_visuals(k, p)
 
     def _update_title(self):
-        count = sum(1 for s in self.state.slots.values() if s.path)
-        self.header.set_asset_count(count)
+        return None
 
     def _on_run_clicked(self):
         # Validation

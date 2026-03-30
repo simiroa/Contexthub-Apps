@@ -3,13 +3,14 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from contexthub.ui.qt.panels import ExportRunPanel, FixedParameterPanel, PreviewListPanel
+from contexthub.ui.qt.panels import ExportFoldoutPanel, FixedParameterPanel, PreviewListPanel
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
+    get_shell_palette,
     qt_t,
     refresh_runtime_preferences,
     runtime_settings_signature,
@@ -74,17 +75,18 @@ class ResizePowerOf2Window(QMainWindow):
 
     def _apply_compact_styles(self) -> None:
         m = get_shell_metrics()
+        p = get_shell_palette()
         compact_styles = f"""
             QComboBox, QLineEdit {{
                 min-height: 30px;
                 max-height: 30px;
                 padding: 2px 10px;
                 border-radius: {m.field_radius - 4}px;
-                background: rgba(15, 17, 20, 0.6);
+                background: {p.field_bg};
             }}
             #card QFrame#subtlePanel {{
                 background: transparent;
-                border: 1px solid rgba(255, 255, 255, 0.05);
+                border: 1px solid {p.control_border};
                 margin-bottom: -6px;
             }}
         """
@@ -102,6 +104,11 @@ class ResizePowerOf2Window(QMainWindow):
         shell_layout = QVBoxLayout(self.window_shell)
         
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root)
+        self.header_surface.set_header_visibility(
+            show_subtitle=False,
+            show_asset_count=False,
+            show_runtime_status=False,
+        )
         shell_layout.addWidget(self.header_surface)
 
         self.splitter = QSplitter(Qt.Horizontal)
@@ -116,7 +123,7 @@ class ResizePowerOf2Window(QMainWindow):
         self.param_panel.preset_combo.hide()
         right_layout.addWidget(self.param_panel, 1)
 
-        self.export_panel = ExportRunPanel("Execution")
+        self.export_panel = ExportFoldoutPanel("Execution")
         self.export_panel.set_values("", "resized_", True, False)
         self.export_panel.set_expanded(False)
         right_layout.addWidget(self.export_panel, 0)
@@ -128,10 +135,7 @@ class ResizePowerOf2Window(QMainWindow):
         
         shell_layout.addWidget(self.splitter, 1)
         
-        grip_row = QHBoxLayout()
-        grip_row.addStretch(1)
-        grip_row.addWidget(build_size_grip())
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         root.addWidget(self.window_shell)
 
     def _bind_actions(self) -> None:
@@ -186,7 +190,6 @@ class ResizePowerOf2Window(QMainWindow):
     def _refresh_assets(self) -> None:
         items = [(a.path.name, str(a.path)) for a in self.service.state.input_assets]
         self.preview_list_panel.set_items(items)
-        self.header_surface.asset_count_badge.setText(f"{len(items)} images")
         self._refresh_preview()
 
     def _refresh_preview(self) -> None:

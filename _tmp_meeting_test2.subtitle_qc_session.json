@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "app_id": "subtitle_qc",
+  "asset_path": "C:\\Users\\HG\\Documents\\Contexthub-Apps\\_tmp_meeting_test2.wav",
+  "file_prefix": "_tmp_meeting_test2",
+  "updated_at": "2026-03-29T17:02:23.336815+00:00",
+  "generation": {
+    "status": "Ready",
+    "status_tone": "ready",
+    "is_processing": false
+  },
+  "generation_options": {
+    "provider": "whisper",
+    "model": "small",
+    "task": "transcribe",
+    "device": "cuda",
+    "language": "Auto",
+    "output_formats": [
+      "srt",
+      "vtt",
+      "txt"
+    ]
+  },
+  "output_options": {
+    "output_dir": "",
+    "file_prefix": "subtitle",
+    "open_folder_after_run": true,
+    "export_session_json": true
+  },
+  "review": {
+    "status": "review_ready",
+    "approved": false,
+    "offset_ms": 0,
+    "issues": [
+      "[1] too short",
+      "[1] dense text",
+      "[2] too short",
+      "[2] dense text"
+    ],
+    "confidence_summary": "medium"
+  },
+  "generated": {
+    "generated_language": "",
+    "language_probability": null,
+    "generated_formats": [
+      "srt",
+      "vtt",
+      "txt"
+    ],
+    "segments": [
+      {
+        "segment_id": 0,
+        "start": 5.0,
+        "end": 5.0,
+        "text": "일정 논의",
+        "is_generated": false,
+        "review_flags": [
+          "too_short",
+          "dense_text"
+        ]
+      },
+      {
+        "segment_id": 1,
+        "start": 12.0,
+        "end": 12.0,
+        "text": "리스크 점검",
+        "is_generated": false,
+        "review_flags": [
+          "too_short",
+          "dense_text"
+        ]
+      }
+    ],
+    "output_paths": {},
+    "dirty": true
+  },
+  "metadata": {}
+}

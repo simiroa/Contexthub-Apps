@@ -3,12 +3,12 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from contexthub.ui.qt.panels import ExportRunPanel, FixedParameterPanel, PreviewListPanel
+from contexthub.ui.qt.panels import ExportFoldoutPanel, FixedParameterPanel, PreviewListPanel
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
     qt_t,
     refresh_runtime_preferences,
@@ -87,6 +87,11 @@ class DocConvertWindow(QMainWindow):
         shell_layout.setSpacing(m.section_gap)
 
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root)
+        self.header_surface.set_header_visibility(
+            show_subtitle=False,
+            show_asset_count=True,
+            show_runtime_status=False,
+        )
         self.asset_count_badge = self.header_surface.asset_count_badge
         self.runtime_status_badge = self.header_surface.runtime_status_badge
         shell_layout.addWidget(self.header_surface)
@@ -116,7 +121,7 @@ class DocConvertWindow(QMainWindow):
         self.param_panel.preset_combo.hide() # We don't really have multiple presets yet, just one.
         self.param_panel.preset_label.hide()
         
-        self.export_panel = ExportRunPanel(qt_t("doc_convert.export_and_run", "Export And Run"))
+        self.export_panel = ExportFoldoutPanel(qt_t("doc_convert.export_and_run", "Export And Run"))
         self.export_panel.set_values(
             str(self.service.state.output_options.output_dir),
             self.service.state.output_options.file_prefix,
@@ -135,13 +140,7 @@ class DocConvertWindow(QMainWindow):
         
         shell_layout.addWidget(self.splitter, 1)
 
-        grip_row = QHBoxLayout()
-        grip_row.setContentsMargins(0, 0, 2, 0)
-        grip_row.addStretch(1)
-        self.size_grip = build_size_grip()
-        self.size_grip.setParent(self.window_shell)
-        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         
         root.addWidget(self.window_shell)
 
@@ -239,9 +238,6 @@ class DocConvertWindow(QMainWindow):
             self.export_panel.run_btn.setEnabled(True)
             self.export_panel.progress_bar.setVisible(False)
             self.export_panel.status_label.setText(message)
-            if ok:
-                self.runtime_status_badge.setText(qt_t("doc_convert.ready", "Ready"))
-
         # In a real app, this should be in a separate thread
         ok, message, last_dir = self.service.run_workflow()
         on_done(ok, message, last_dir)

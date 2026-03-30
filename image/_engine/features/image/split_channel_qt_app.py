@@ -21,10 +21,10 @@ from contexthub.ui.qt.shell import (
     build_shell_stylesheet,
     qt_t,
     apply_app_icon,
-    build_size_grip,
+    attach_size_grip,
 )
 from contexthub.ui.qt.panels import (
-    ExportRunPanel,
+    ExportFoldoutPanel,
 )
 
 from .split_exr_state import SplitExrState
@@ -99,14 +99,14 @@ class SplitChannelWindow(QMainWindow):
         self.body_layout.addWidget(self.list_frame, 1)
         
         # Export & Process Panel
-        self.export_panel = ExportRunPanel(title="Execution")
+        self.export_panel = ExportFoldoutPanel(title="Execution")
         self.body_layout.addWidget(self.export_panel)
         
         self.main_layout.addWidget(self.body_container, 1)
         
         # Shell Closing
+        self.size_grip = attach_size_grip(self.main_layout, self.window_shell)
         self.root_layout.addWidget(self.window_shell)
-        self.main_layout.addWidget(build_size_grip(), 0, Qt.AlignRight)
 
         self.setStyleSheet(build_shell_stylesheet())
         self._bind_actions()

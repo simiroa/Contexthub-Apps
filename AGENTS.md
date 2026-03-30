@@ -2,7 +2,7 @@
 
 이 저장소에서 작업하는 AI 에이전트는 먼저 `agent-docs/agent.md`를 읽고, 필요한 세부 규칙을 같은 폴더의 문서에서 추가로 확인한다.
 
-Flet 포팅 작업이나 Flet 공용 UI 작업이면, 시작 문서는 `agent-docs/flet-migration-guidelines.md` 로 본다. 그 다음 `agent-docs/current-dev-context.md`, `agent-docs/templates/flet-porting-template.md`, 마지막으로 대상 앱 `manual.md` 를 읽는다.
+Qt GUI 작업이면 시작 문서는 `agent-docs/gui-runtime-contract.md`, 다음은 `agent-docs/gui-runtime-status.md`, 그 다음 대상 앱 `manifest.json`, `main.py`, `manual.md` 순서로 본다.
 
 핵심 원칙:
 
@@ -18,9 +18,7 @@ Flet 포팅 작업이나 Flet 공용 UI 작업이면, 시작 문서는 `agent-do
 - `agent-docs/app-overview.md`
 - `agent-docs/architecture.md`
 - `agent-docs/new-app-guidelines.md`
-- `agent-docs/current-dev-context.md`
 - `agent-docs/gui-issue-playbook.md`
-- `agent-docs/flet-migration-guidelines.md`
 - `agent-docs/templates/README.md`
 - `agent-docs/stability-constraints.md`
 - `agent-docs/git-policy.md`

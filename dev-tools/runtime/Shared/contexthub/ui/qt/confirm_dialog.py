@@ -4,7 +4,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import sys
 
-from PySide6.QtCore import QPoint, Qt
+import os
+
+from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication,
@@ -19,9 +21,9 @@ from PySide6.QtWidgets import (
 )
 
 from .shell import (
-    ManualDialog,
     build_shell_stylesheet,
     get_shell_metrics,
+    open_manual_dialog,
     qt_t,
     resolve_app_icon,
     resolve_manual_path,
@@ -54,7 +56,6 @@ class ConfirmDialog(QDialog):
         self.request = request
         self.selected_value = request.option_value
         self._drag_offset: QPoint | None = None
-        self._manual_dialog: ManualDialog | None = None
         self.setWindowTitle(request.title)
         self.setModal(True)
         self.setMinimumWidth(420)
@@ -207,19 +208,11 @@ class ConfirmDialog(QDialog):
         super().mouseReleaseEvent(event)
 
     def _show_manual(self) -> None:
-        manual_path = resolve_manual_path(Path(self.request.app_root))
-        if not manual_path:
-            return
-        if self._manual_dialog is None:
-            self._manual_dialog = ManualDialog(
-                self,
-                qt_t("comfyui.qt_shell.manual_title", "App Manual"),
-                manual_path,
-            )
-            self._manual_dialog.setStyleSheet(build_shell_stylesheet())
-        self._manual_dialog.show()
-        self._manual_dialog.raise_()
-        self._manual_dialog.activateWindow()
+        open_manual_dialog(
+            self,
+            Path(self.request.app_root),
+            qt_t("comfyui.qt_shell.manual_title", "App Manual"),
+        )
 
 
 def run_confirm_dialog(request: ConfirmRequest) -> dict[str, str] | None:
@@ -229,6 +222,8 @@ def run_confirm_dialog(request: ConfirmRequest) -> dict[str, str] | None:
         app = QApplication(sys.argv)
     app.setStyleSheet(build_shell_stylesheet())
     dialog = ConfirmDialog(request)
+    if os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1":
+        QTimer.singleShot(2500, dialog.accept)
     if dialog.exec() != QDialog.DialogCode.Accepted:
         if owns_app:
             app.quit()

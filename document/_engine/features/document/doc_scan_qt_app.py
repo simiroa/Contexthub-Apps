@@ -7,10 +7,11 @@ from typing import List, Optional, Tuple
 from contexthub.ui.qt.panels import FixedParameterPanel
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
+    get_shell_palette,
     qt_t,
     refresh_runtime_preferences,
     runtime_settings_signature,
@@ -96,10 +97,11 @@ class InteractivePreview(QWidget):
     def paintEvent(self, event) -> None: # noqa: N802
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        
+        palette = get_shell_palette()
+
         # Background
-        painter.fillRect(self.rect(), QColor("#0b0d11"))
-        
+        painter.fillRect(self.rect(), QColor(palette.field_bg))
+
         rect = self._get_pixmap_rect()
         if self.pixmap:
             painter.drawPixmap(rect.toRect(), self.pixmap)
@@ -111,7 +113,8 @@ class InteractivePreview(QWidget):
         
         # Draw Unwarp Handles if unwarp is NOT active (editing mode)
         if not item.unwarp_active and item.corners:
-            painter.setPen(QPen(QColor("#00ff00"), 2))
+            accent = QColor(palette.accent)
+            painter.setPen(QPen(accent, 2))
             pts = [self._map_to_ui(c, rect) for c in item.corners]
             
             # Connect corners
@@ -122,7 +125,10 @@ class InteractivePreview(QWidget):
             
             # Draw Handles
             for i, p in enumerate(pts):
-                painter.setBrush(QBrush(QColor("#00ff00") if self.active_handle == i else QColor(0, 255, 0, 100)))
+                handle_color = QColor(accent if self.active_handle == i else accent)
+                if self.active_handle != i:
+                    handle_color.setAlpha(100)
+                painter.setBrush(QBrush(handle_color))
                 painter.drawEllipse(p, self.handle_size/2, self.handle_size/2)
 
         # Draw Signature Overlay Handle
@@ -226,6 +232,11 @@ class DocScanWindow(QMainWindow):
 
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root)
         self.header_surface.open_webui_btn.hide()
+        self.header_surface.set_header_visibility(
+            show_subtitle=False,
+            show_asset_count=True,
+            show_runtime_status=False,
+        )
         shell_layout.addWidget(self.header_surface)
 
         self.splitter = QSplitter(Qt.Horizontal)
@@ -368,13 +379,7 @@ class DocScanWindow(QMainWindow):
         
         shell_layout.addWidget(self.splitter, 1)
 
-        grip_row = QHBoxLayout()
-        grip_row.setContentsMargins(0, 0, 2, 0)
-        grip_row.addStretch(1)
-        self.size_grip = build_size_grip()
-        self.size_grip.setParent(self.window_shell)
-        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         root.addWidget(self.window_shell)
 
     def _bind_actions(self) -> None:

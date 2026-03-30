@@ -21,9 +21,9 @@ for path in (ENGINE_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
 
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
     qt_t,
 )
@@ -138,13 +138,7 @@ class DashboardWindow(QMainWindow):
 
         shell_layout.addWidget(self.content_card, 1)
 
-        grip_row = QHBoxLayout()
-        grip_row.setContentsMargins(0, 0, 2, 0)
-        grip_row.addStretch(1)
-        self.size_grip = build_size_grip()
-        self.size_grip.setParent(self.window_shell)
-        grip_row.addWidget(self.size_grip, 0, Qt.AlignRight | Qt.AlignBottom)
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
 
         root.addWidget(self.window_shell)
 

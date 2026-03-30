@@ -3,12 +3,12 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from contexthub.ui.qt.panels import ExportRunPanel, FixedParameterPanel, PreviewListPanel
+from contexthub.ui.qt.panels import ExportFoldoutPanel, FixedParameterPanel, PreviewListPanel
 from contexthub.ui.qt.shell import (
     HeaderSurface,
+    attach_size_grip,
     apply_app_icon,
     build_shell_stylesheet,
-    build_size_grip,
     get_shell_metrics,
     get_shell_palette,
     qt_t,
@@ -84,16 +84,16 @@ class SimpleNormalRoughnessWindow(QMainWindow):
                 max-height: 30px;
                 padding: 2px 10px;
                 border-radius: {m.field_radius - 4}px;
-                background: rgba(15, 17, 20, 0.6);
+                background: {p.field_bg};
             }}
             #card QFrame#subtlePanel {{
                 background: transparent;
-                border: 1px solid rgba(255, 255, 255, 0.05);
+                border: 1px solid {p.control_border};
                 margin-bottom: -6px;
             }}
             QListWidget {{
-                background: rgba(0, 0, 0, 0.1);
-                border: 1px solid rgba(118, 132, 156, 0.15);
+                background: {p.field_bg};
+                border: 1px solid {p.control_border};
                 padding: 4px;
             }}
             QPushButton#pillBtn {{
@@ -123,6 +123,11 @@ class SimpleNormalRoughnessWindow(QMainWindow):
         shell_layout.setSpacing(m.section_gap)
 
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root)
+        self.header_surface.set_header_visibility(
+            show_subtitle=False,
+            show_asset_count=False,
+            show_runtime_status=False,
+        )
         shell_layout.addWidget(self.header_surface)
 
         self.splitter = QSplitter(Qt.Horizontal)
@@ -150,7 +155,7 @@ class SimpleNormalRoughnessWindow(QMainWindow):
         
         right_layout.addWidget(self.param_panel, 1)
 
-        self.export_panel = ExportRunPanel(qt_t("pbr.run_panel", "Process & Export"))
+        self.export_panel = ExportFoldoutPanel(qt_t("pbr.run_panel", "Process & Export"))
         self.export_panel.set_values(
             "", "pbr_", True, False
         )
@@ -164,10 +169,7 @@ class SimpleNormalRoughnessWindow(QMainWindow):
         
         shell_layout.addWidget(self.splitter, 1)
         
-        grip_row = QHBoxLayout()
-        grip_row.addStretch(1)
-        grip_row.addWidget(build_size_grip())
-        shell_layout.addLayout(grip_row)
+        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         root.addWidget(self.window_shell)
 
     def _bind_actions(self) -> None:
@@ -230,7 +232,6 @@ class SimpleNormalRoughnessWindow(QMainWindow):
     def _refresh_assets(self) -> None:
         items = [(a.path.name, str(a.path)) for a in self.service.state.input_assets]
         self.preview_list_panel.set_items(items)
-        self.header_surface.asset_count_badge.setText(f"{len(items)} images")
         self._refresh_preview()
 
     def _refresh_preview(self) -> None:
