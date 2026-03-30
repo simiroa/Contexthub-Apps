@@ -1,95 +1,5 @@
 [
     {
-        "id": "auto_lod",
-        "name": "Auto LOD",
-        "description": "Generate lower-detail mesh variants in a full Qt shell with LOD controls.",
-        "version": "1.0.0",
-        "category": "3d",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/auto_lod/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/auto_lod.zip"
-    },
-    {
-        "id": "cad_to_obj",
-        "name": "CAD to OBJ",
-        "description": "Convert CAD files to OBJ in a mini confirm Qt shell.",
-        "version": "1.0.0",
-        "category": "3d",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/cad_to_obj/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/cad_to_obj.zip"
-    },
-    {
-        "id": "extract_textures",
-        "name": "Extract Textures",
-        "description": "Confirm selected 3D files in a mini Qt shell, then extract embedded textures.",
-        "version": "1.0.0",
-        "category": "3d",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/extract_textures/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_textures.zip"
-    },
-    {
-        "id": "mesh_convert",
-        "name": "Mesh Convert",
-        "description": "Batch-convert mesh files in a full Qt shell backed by Blender.",
-        "version": "1.0.0",
-        "category": "3d",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/mesh_convert/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/mesh_convert.zip"
-    },
-    {
-        "id": "open_with_mayo",
-        "name": "Open with Mayo",
-        "description": "Confirm selected 3D files in a mini Qt shell, then open them in Mayo.",
-        "version": "1.0.0",
-        "category": "3d",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/open_with_mayo/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/open_with_mayo.zip"
-    },
-    {
-        "id": "marigold_pbr",
-        "name": "Marigold PBR",
-        "description": "Generate PBR maps such as albedo, normal, and depth from a single image.",
-        "version": "2.1.0",
-        "category": "ai",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/marigold_pbr/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/marigold_pbr.zip"
-    },
-    {
-        "id": "qwen3_tts",
-        "name": "Qwen3 TTS",
-        "description": "Generate speech with Qwen3-TTS custom voice or voice clone.",
-        "version": "1.0.1",
-        "category": "ai",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/qwen3_tts/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/qwen3_tts.zip"
-    },
-    {
-        "id": "subtitle_qc",
-        "name": "Subtitle QC AI (Qt)",
-        "description": "Batch subtitle generation with real-time playback review, quick timing fixes, and approval workflow.",
-        "version": "1.0.0",
-        "category": "ai",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/subtitle_qc/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/subtitle_qc.zip"
-    },
-    {
-        "id": "whisper_subtitle",
-        "name": "Whisper Subtitle AI (Qt)",
-        "description": "Queue-based subtitle generation with editable SRT/VTT/TXT/JSON outputs and per-asset session recovery.",
-        "version": "1.0.0",
-        "category": "ai",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/whisper_subtitle/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/whisper_subtitle.zip"
-    },
-    {
-        "id": "ai_text_lab",
-        "name": "AI Text Lab",
-        "description": "Legacy Utilities tool.",
-        "version": "1.0.0",
-        "category": "ai_lite",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai_lite/ai_text_lab/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/ai_text_lab.zip"
-    },
-    {
         "id": "versus_up",
         "name": "VersusUp",
         "description": "Qt-based product decision support system with weighted scoring and Ollama Vision review.",
@@ -99,40 +9,13 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/versus_up.zip"
     },
     {
-        "id": "audio_toolbox",
-        "name": "Audio Toolbox",
-        "description": "Advanced audio toolbox for stem separation, loudness normalization, and format conversion in one compact Qt shell.",
+        "id": "ai_text_lab",
+        "name": "AI Text Lab",
+        "description": "Legacy Utilities tool.",
         "version": "1.0.0",
-        "category": "audio",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/audio_toolbox/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/audio_toolbox.zip"
-    },
-    {
-        "id": "extract_bgm",
-        "name": "Extract BGM",
-        "description": "Confirm selected audio files in a compact Qt shell, then extract BGM stems in a console flow.",
-        "version": "1.1.0",
-        "category": "audio",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_bgm/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_bgm.zip"
-    },
-    {
-        "id": "extract_voice",
-        "name": "Extract Voice",
-        "description": "Confirm selected audio files in a compact Qt shell, then extract voice stems in a console flow.",
-        "version": "1.1.0",
-        "category": "audio",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_voice/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_voice.zip"
-    },
-    {
-        "id": "normalize_volume",
-        "name": "Normalize Volume",
-        "description": "Confirm selected audio files in a compact Qt shell, then normalize loudness in a console flow.",
-        "version": "1.1.0",
-        "category": "audio",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/normalize_volume/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normalize_volume.zip"
+        "category": "ai_lite",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai_lite/ai_text_lab/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/ai_text_lab.zip"
     },
     {
         "id": "comfyui_dashboard",
@@ -162,6 +45,195 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/creative_studio_z.zip"
     },
     {
+        "id": "youtube_downloader",
+        "name": "Video Downloader",
+        "description": "Legacy Utilities tool.",
+        "version": "1.0.1",
+        "category": "utilities",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/utilities/youtube_downloader/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/youtube_downloader.zip"
+    },
+    {
+        "id": "leave_manager_C",
+        "name": "Leave Manager (C)",
+        "description": "Manage your vacation days and countdown to freedom.",
+        "version": "1.0.0",
+        "category": "utilities",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/utilities/leave_manager/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/leave_manager_C.zip"
+    },
+    {
+        "id": "image_compare",
+        "name": "Compare Images",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_compare/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_compare.zip"
+    },
+    {
+        "id": "normal_flip_green",
+        "name": "Normal Flip Green",
+        "description": "Confirm selected images in a mini confirm Qt shell, then flip green channels in a console flow.",
+        "version": "1.1.0",
+        "category": "image",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/normal_flip_green/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normal_flip_green.zip"
+    },
+    {
+        "id": "split_exr",
+        "name": "Split EXR",
+        "description": "Confirm selected EXR files in a compact Qt shell, then split layers in a console flow.",
+        "version": "1.1.0",
+        "category": "image",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/split_exr/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/split_exr.zip"
+    },
+    {
+        "id": "rigreader_vectorizer",
+        "name": "RigReady Vectorizer",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/rigreader_vectorizer/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/rigreader_vectorizer.zip"
+    },
+    {
+        "id": "image_convert",
+        "name": "Image Convert",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_convert/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_convert.zip"
+    },
+    {
+        "id": "merge_to_exr",
+        "name": "Merge to EXR",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/merge_to_exr/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/merge_to_exr.zip"
+    },
+    {
+        "id": "resize_power_of_2",
+        "name": "Resize Power of 2",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/resize_power_of_2/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/resize_power_of_2.zip"
+    },
+    {
+        "id": "texture_packer_orm",
+        "name": "Texture Packer ORM",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/texture_packer_orm/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/texture_packer_orm.zip"
+    },
+    {
+        "id": "simple_normal_roughness",
+        "name": "Simple Normal Roughness",
+        "description": "Legacy Image tool.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/simple_normal_roughness/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/simple_normal_roughness.zip"
+    },
+    {
+        "id": "blur_gray32_exr",
+        "name": "Blur To Gray32 EXR",
+        "description": "Confirm selected images, set a smoothing radius, then convert each image to grayscale float32 EXR.",
+        "version": "1.0.0",
+        "category": "image",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/blur_gray32_exr/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/blur_gray32_exr.zip"
+    },
+    {
+        "id": "subtitle_qc",
+        "name": "Meeting Notes AI (Qt)",
+        "description": "Transcribe meetings, review audio/video alongside the transcript, and organize summary, decisions, and action items.",
+        "version": "1.0.0",
+        "category": "ai",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/subtitle_qc/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/subtitle_qc.zip"
+    },
+    {
+        "id": "marigold_pbr",
+        "name": "Marigold PBR",
+        "description": "Generate PBR maps such as albedo, normal, and depth from a single image.",
+        "version": "2.1.0",
+        "category": "ai",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/marigold_pbr/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/marigold_pbr.zip"
+    },
+    {
+        "id": "qwen3_tts",
+        "name": "Qwen3 TTS",
+        "description": "Generate speech with Qwen3-TTS custom voice or voice clone.",
+        "version": "1.0.1",
+        "category": "ai",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/qwen3_tts/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/qwen3_tts.zip"
+    },
+    {
+        "id": "whisper_subtitle",
+        "name": "Whisper Subtitle AI (Qt)",
+        "description": "Queue-based subtitle generation with editable SRT/VTT/TXT/JSON outputs and per-asset session recovery.",
+        "version": "1.0.0",
+        "category": "ai",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/whisper_subtitle/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/whisper_subtitle.zip"
+    },
+    {
+        "id": "extract_bgm",
+        "name": "Extract BGM",
+        "description": "Confirm selected audio files in a compact Qt shell, then extract BGM stems in a console flow.",
+        "version": "1.1.0",
+        "category": "audio",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_bgm/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_bgm.zip"
+    },
+    {
+        "id": "normalize_volume",
+        "name": "Normalize Volume",
+        "description": "Confirm selected audio files in a compact Qt shell, then normalize loudness in a console flow.",
+        "version": "1.1.0",
+        "category": "audio",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/normalize_volume/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normalize_volume.zip"
+    },
+    {
+        "id": "extract_voice",
+        "name": "Extract Voice",
+        "description": "Confirm selected audio files in a compact Qt shell, then extract voice stems in a console flow.",
+        "version": "1.1.0",
+        "category": "audio",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_voice/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_voice.zip"
+    },
+    {
+        "id": "audio_toolbox",
+        "name": "Audio Toolbox",
+        "description": "Advanced audio toolbox for stem separation, loudness normalization, and format conversion in one compact Qt shell.",
+        "version": "1.0.0",
+        "category": "audio",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/audio_toolbox/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/audio_toolbox.zip"
+    },
+    {
+        "id": "pdf_split",
+        "name": "PDF Split",
+        "description": "Confirm selected PDFs in a compact Qt shell, choose a simple output format, then split in a console flow.",
+        "version": "1.1.0",
+        "category": "document",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/pdf_split/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/pdf_split.zip"
+    },
+    {
         "id": "doc_convert",
         "name": "Convert Docs",
         "description": "Legacy Document tool.",
@@ -189,130 +261,49 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/pdf_merge.zip"
     },
     {
-        "id": "pdf_split",
-        "name": "PDF Split",
-        "description": "Confirm selected PDFs in a compact Qt shell, choose a simple output format, then split in a console flow.",
-        "version": "1.1.0",
-        "category": "document",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/pdf_split/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/pdf_split.zip"
-    },
-    {
-        "id": "blur_gray32_exr",
-        "name": "Blur To Gray32 EXR",
-        "description": "Confirm selected images, set a smoothing radius, then convert each image to grayscale float32 EXR.",
+        "id": "auto_lod",
+        "name": "Auto LOD",
+        "description": "Generate lower-detail mesh variants in a full Qt shell with LOD controls.",
         "version": "1.0.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/blur_gray32_exr/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/blur_gray32_exr.zip"
+        "category": "3d",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/auto_lod/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/auto_lod.zip"
     },
     {
-        "id": "image_compare",
-        "name": "Compare Images",
-        "description": "Legacy Image tool.",
+        "id": "mesh_convert",
+        "name": "Mesh Convert",
+        "description": "Batch-convert mesh files in a full Qt shell backed by Blender.",
         "version": "1.0.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_compare/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_compare.zip"
+        "category": "3d",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/mesh_convert/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/mesh_convert.zip"
     },
     {
-        "id": "image_convert",
-        "name": "Image Convert",
-        "description": "Legacy Image tool.",
+        "id": "cad_to_obj",
+        "name": "CAD to OBJ",
+        "description": "Convert CAD files to OBJ in a mini confirm Qt shell.",
         "version": "1.0.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_convert/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_convert.zip"
+        "category": "3d",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/cad_to_obj/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/cad_to_obj.zip"
     },
     {
-        "id": "merge_to_exr",
-        "name": "Merge to EXR",
-        "description": "Legacy Image tool.",
+        "id": "extract_textures",
+        "name": "Extract Textures",
+        "description": "Confirm selected 3D files in a mini Qt shell, then extract embedded textures.",
         "version": "1.0.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/merge_to_exr/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/merge_to_exr.zip"
+        "category": "3d",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/extract_textures/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_textures.zip"
     },
     {
-        "id": "normal_flip_green",
-        "name": "Normal Flip Green",
-        "description": "Confirm selected images in a mini confirm Qt shell, then flip green channels in a console flow.",
-        "version": "1.1.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/normal_flip_green/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normal_flip_green.zip"
-    },
-    {
-        "id": "resize_power_of_2",
-        "name": "Resize Power of 2",
-        "description": "Legacy Image tool.",
+        "id": "open_with_mayo",
+        "name": "Open with Mayo",
+        "description": "Confirm selected 3D files in a mini Qt shell, then open them in Mayo.",
         "version": "1.0.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/resize_power_of_2/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/resize_power_of_2.zip"
-    },
-    {
-        "id": "rigreader_vectorizer",
-        "name": "RigReady Vectorizer",
-        "description": "Legacy Image tool.",
-        "version": "1.0.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/rigreader_vectorizer/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/rigreader_vectorizer.zip"
-    },
-    {
-        "id": "simple_normal_roughness",
-        "name": "Simple Normal Roughness",
-        "description": "Legacy Image tool.",
-        "version": "1.0.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/simple_normal_roughness/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/simple_normal_roughness.zip"
-    },
-    {
-        "id": "split_exr",
-        "name": "Split EXR",
-        "description": "Confirm selected EXR files in a compact Qt shell, then split layers in a console flow.",
-        "version": "1.1.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/split_exr/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/split_exr.zip"
-    },
-    {
-        "id": "texture_packer_orm",
-        "name": "Texture Packer ORM",
-        "description": "Legacy Image tool.",
-        "version": "1.0.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/texture_packer_orm/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/texture_packer_orm.zip"
-    },
-    {
-        "id": "leave_manager_C",
-        "name": "Leave Manager (C)",
-        "description": "Manage your vacation days and countdown to freedom.",
-        "version": "1.0.0",
-        "category": "utilities",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/utilities/leave_manager/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/leave_manager_C.zip"
-    },
-    {
-        "id": "youtube_downloader",
-        "name": "Video Downloader",
-        "description": "Legacy Utilities tool.",
-        "version": "1.0.1",
-        "category": "utilities",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/utilities/youtube_downloader/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/youtube_downloader.zip"
-    },
-    {
-        "id": "extract_audio",
-        "name": "Extract Audio",
-        "description": "Confirm selected videos in a compact Qt shell, then extract audio in a console flow.",
-        "version": "1.1.0",
-        "category": "video",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/extract_audio/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_audio.zip"
+        "category": "3d",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/open_with_mayo/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/open_with_mayo.zip"
     },
     {
         "id": "interpolate_30fps",
@@ -324,6 +315,15 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/interpolate_30fps.zip"
     },
     {
+        "id": "video_convert",
+        "name": "Video Convert",
+        "description": "Qt video conversion shell with FFmpeg presets and batch queue controls.",
+        "version": "1.0.0",
+        "category": "video",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/video_convert/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/video_convert.zip"
+    },
+    {
         "id": "remove_audio",
         "name": "Remove Audio",
         "description": "Confirm selected videos in a compact Qt shell, then remove audio in a console flow.",
@@ -333,12 +333,12 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/remove_audio.zip"
     },
     {
-        "id": "video_convert",
-        "name": "Video Convert",
-        "description": "Qt video conversion shell with FFmpeg presets and batch queue controls.",
-        "version": "1.0.0",
+        "id": "extract_audio",
+        "name": "Extract Audio",
+        "description": "Confirm selected videos in a compact Qt shell, then extract audio in a console flow.",
+        "version": "1.1.0",
         "category": "video",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/video_convert/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/video_convert.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/extract_audio/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_audio.zip"
     }
 ]
