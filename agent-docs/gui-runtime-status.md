@@ -7,7 +7,7 @@ It is a working inventory, not a final release checklist.
 
 Use it together with:
 
-- `agent-docs/gui-runtime-contract.md`
+- `qt-app-builder-contexthub` 스킬 문서
 - `agent-docs/gui-cleanup-backlog.md`
 - `Diagnostics/gui_capture_log.md`
 - `Diagnostics/gui_captures/`
@@ -92,7 +92,7 @@ These are not part of the generic Qt template pass.
 ## Low-Risk Cleanup Order
 
 1. Keep the shared runtime compatibility layer stable.
-2. Preserve `ConfirmDialog`, `HeaderSurface.manual_btn`, `PreviewListPanel.set_comparative_mode`, and the common palette/metrics fields until no caller depends on them.
+2. Preserve `ConfirmDialog`, `HeaderSurface.manual_btn`, `PreviewListPanel.set_comparative_mode`, `AssetWorkspacePanel`, `ExportFoldoutPanel`, and the common palette/metrics fields until no caller depends on them.
 3. Verify the low-risk full/compact apps first.
 4. Move only the proven mini/special apps after the common template contract is stable.
 5. Mirror any shared-runtime changes to `Contexthub\Runtimes\Shared`.
@@ -104,6 +104,8 @@ These are not part of the generic Qt template pass.
 - `special` apps should not be forced into a single generic template before their panel model is understood.
 - `audio` is still a separate subtree for operational review, even though its manifest templates are now explicit.
 - `ui.template` should be filled on the apps we consider structurally special so the bucket is declared in manifest, not inferred from file names.
+- `audio/normalize_volume` currently fails because `AudioMiniWindow.__init__()` still expects a `subtitle` argument.
+- `image/image_compare` currently fails because `mode_combo` is referenced before it is created.
 
 ## Theme Drift
 
@@ -124,6 +126,7 @@ These are not part of the generic Qt template pass.
 - Qt 앱의 공용 테마 계약은 `contexthub` 하나로 고정한다.
 - 앱은 컴포넌트 구조를 다르게 가져갈 수 있지만, raw color stylesheet를 새로 늘리지 않는다.
 - 다음 정리 패스는 개별 앱 색 수정이 아니라 shared shell role/tone API 도입 후, 상위 offender 앱을 그 API로 옮기는 방식으로 진행한다.
+- shared runtime은 작은 모듈로 분해한 상태를 유지하되, 기존 앱이 의존하는 compatibility alias는 캡처 재검증 전까지 유지한다.
 
 ## Validation
 

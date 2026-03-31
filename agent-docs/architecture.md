@@ -45,7 +45,19 @@
 
 이 구조는 `image/image_convert/main.py`, `utilities/youtube_downloader/main.py` 같은 앱에서 확인된다.
 
-Qt shared runtime의 공통 계약과 템플릿 분류는 `agent-docs/gui-runtime-contract.md`를 기준으로 본다.
+Qt shared runtime의 공통 계약과 템플릿 분류는 `qt-app-builder-contexthub` 스킬을 기준으로 본다.
+
+현재 shared Qt runtime 구현은 `dev-tools/runtime/Shared/contexthub/ui/qt/` 아래에서 토픽별로 분리되어 있다.
+
+- `theme*`: palette, metrics, tone, stylesheet
+- `support.py`: app icon/manual path, runtime preference helpers
+- `widgets.py`: 공용 Qt 위젯
+- `manual.py`: 매뉴얼 다이얼로그
+- `header.py`: 헤더 surface
+- `export_*`, `preview_*`, `queue_*`, `result_*`: 패널/표면 위젯
+- `shell.py`, `panels*.py`: 기존 앱 import를 살리는 compatibility layer
+
+새 작업은 가능하면 직접 모듈을 import하되, 기존 앱이 아직 의존하는 별칭은 recapture 이전에 제거하지 않는다.
 
 ## 3. 메타데이터 위치
 

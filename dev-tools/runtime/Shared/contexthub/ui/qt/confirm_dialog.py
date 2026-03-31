@@ -20,14 +20,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .shell import (
-    build_shell_stylesheet,
-    get_shell_metrics,
-    open_manual_dialog,
-    qt_t,
-    resolve_app_icon,
-    resolve_manual_path,
-)
+from .manual import open_manual_dialog
+from .support import resolve_app_icon, resolve_manual_path
+from .theme_metrics import get_shell_metrics
+from .theme_style_helpers import qt_t
+from .theme_stylesheet import build_shell_stylesheet
 
 
 @dataclass(frozen=True)

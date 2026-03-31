@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from .shell import get_shell_metrics, set_surface_role, set_transparent_surface
+from .theme_metrics import get_shell_metrics
+from .theme_style_helpers import set_surface_role, set_transparent_surface
 
 try:
     from PySide6.QtCore import Qt

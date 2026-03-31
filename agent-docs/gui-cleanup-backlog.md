@@ -3,12 +3,13 @@
 ## Scope
 
 이 문서는 2026-03-29 기준 GUI 테스트 메모를 공통 작업과 앱별 작업으로 나눠 정리한 실행용 백로그다.
-규칙 문서는 `agent-docs/gui-runtime-contract.md`, 현재 분류 상태는 `agent-docs/gui-runtime-status.md`, 캡처 근거는 `Diagnostics/gui_design_report_2026-03-14.md`와 `Diagnostics/gui_capture_log.md`를 따른다.
+규칙 문서는 `qt-app-builder-contexthub` 스킬, 현재 분류 상태는 `agent-docs/gui-runtime-status.md`, 캡처 근거는 `Diagnostics/gui_design_report_2026-03-14.md`와 `Diagnostics/gui_capture_log.md`를 따른다.
 
 ## Common Work
 
 | Priority | Topic | Direction | Notes |
 | --- | --- | --- | --- |
+| P0 | Shared runtime modularization | shared Qt runtime을 작은 모듈로 유지하되, 기존 앱 호환 별칭은 캡처로 검증될 때까지 유지한다. | `shell.py`와 `panels*.py`는 compatibility layer로 남기고, alias 제거는 recapture 이후에만 한다. |
 | P0 | Shared palette consolidation | shared runtime palette와 실제 stylesheet 색 출처를 일치시킨다. | 현재 `ShellPalette`와 `build_shell_stylesheet()` 사이에 하드코딩 값이 섞여 있다. |
 | P0 | Theme contract enforcement | Qt 앱의 `ui.shared_theme`를 `contexthub`로 고정하고 raw color stylesheet를 줄인다. | manifest 계약과 runtime enforcement를 같이 가져가야 한다. |
 | P0 | Header cleanup | 부제목, 상태 배지, 보조 버튼을 앱 목적 기준으로 압축한다. | 불필요한 설명과 모델 체크 버튼은 헤더에서 빼는 방향. |
@@ -94,13 +95,14 @@
 ## Execution Order
 
 1. shared runtime palette와 stylesheet를 먼저 정리한다.
-2. `full` 앱 중 표준 샘플로 쓸 앱을 고른다.
+2. shared runtime alias와 compatibility layer를 recapture 기반으로 정리한다.
+3. `full` 앱 중 표준 샘플로 쓸 앱을 고른다.
    - 우선 후보: `resize_power_of_2`, `video_convert`
-3. 긴 창과 빈 상태가 심한 앱을 줄인다.
+4. 긴 창과 빈 상태가 심한 앱을 줄인다.
    - `image_convert`, `doc_convert`, `pdf_merge`, `merge_to_exr`
-4. 통합 대상 앱을 줄인다.
+5. 통합 대상 앱을 줄인다.
    - 오디오 분리 앱군
-5. `special` 앱 재설계로 넘어간다.
+6. `special` 앱 재설계로 넘어간다.
    - `qwen3_tts`, `versus_up`, `whisper_subtitle`
 
 ## Current Common Work Started

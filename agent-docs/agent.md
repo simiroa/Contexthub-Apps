@@ -19,9 +19,9 @@
 
 ## 3. 먼저 읽을 문서
 
-Qt GUI 작업이면 아래 문서를 우선 본다.
+Qt GUI 작업이면 아래 문서와 스킬을 우선 본다.
 
-1. `agent-docs/gui-runtime-contract.md`
+1. `qt-app-builder-contexthub` 스킬의 `SKILL.md` 및 `references` 문서
 2. `agent-docs/gui-runtime-status.md`
 3. 대상 앱의 `manifest.json`
 4. 대상 앱의 `main.py`
@@ -30,7 +30,7 @@ Qt GUI 작업이면 아래 문서를 우선 본다.
 - 앱/카테고리 목적: `agent-docs/app-overview.md`
 - 운영 방식과 코드 위치: `agent-docs/architecture.md`
 - 새 앱 추가 지침: `agent-docs/new-app-guidelines.md`
-- Qt shared runtime 계약과 템플릿 분류: `agent-docs/gui-runtime-contract.md`
+- Qt shared runtime 계약과 템플릿 분류: `qt-app-builder-contexthub` 스킬 참조
 - 현재 템플릿 버킷과 위험 상태: `agent-docs/gui-runtime-status.md`
 - 안정성 제약: `agent-docs/stability-constraints.md`
 - Git 및 배포 정책: `agent-docs/git-policy.md`
@@ -76,3 +76,16 @@ Qt GUI 작업이면 아래 문서를 우선 본다.
   - 기본 env 이름: `contexthub-ai`
   - Conda 미설치 또는 env 미검출 시 경고 후 기존 Python으로 fallback
 - 공유 런타임을 수정했다면 `Contexthub\Runtimes\Shared` 원본 반영 여부까지 확인한다.
+- shared Qt runtime은 `dev-tools/runtime/Shared/contexthub/ui/qt`를 기준으로 작게 나뉜 모듈 구조를 유지하되, 기존 앱 호환용 별칭과 래퍼는 캡처로 검증되기 전까지 유지한다.
+- 공유 이름을 제거할 때는 관련 앱을 다시 캡처해서 실제 실행이 살아 있는지 먼저 확인한다.
+
+## 9. 로컬 개발 환경 vs 허브 런타임 환경 (Local Dev vs Hub Runtime)
+
+앱 개발 및 디버깅 시 파이썬 환경의 차이를 명확히 인지해야 한다. 에이전트가 에러의 원인을 오판하지 않도록 주의한다.
+
+- **허브 런타임 (배포 환경)**:
+  사용자가 허브에서 앱을 실행할 때, 허브 코어가 해당 카테고리 전용 가상환경(env)을 만들고 `{category}/requirements.txt`에 명시된 패키지(예: `PySide6`)를 자동 설치해 준다.
+- **로컬 개발 (IDE 환경)**:
+  이 저장소 자체는 파이썬 의존성을 격리해 들고 있지 않다. `main.py`를 직접 실행할 때 `ModuleNotFoundError: No module named 'PySide6'` 에러가 발생한다면, **코드 경로 버그가 아니라 현재 로컬 인터프리터에 패키지가 없는 것**이다. 로컬 터미널에서 수동으로 패키지를 설치해야 앱 윈도우를 띄울 수 있다.
+- **런타임 소스코드 결합 (Bootstrapping)**:
+  `shared/_engine` 이나 공용 템플릿 컴포넌트(`shared/_engine/components`) 파일들을 파이썬이 찾는 과정은 전적으로 앱의 `main.py` 초기 설정에 달렸다. 따라서 `main.py` 최상단에서 의존성 모듈을 바로 임포트하지 말고, `runtime_bootstrap.py`를 통해 `sys.path` 조립이 완전히 끝난 이후에 **지연 임포트(Lazy Import)** 방식으로 UI를 로드해야 환경에 관계없이 안전하게 코드를 찾는다.
