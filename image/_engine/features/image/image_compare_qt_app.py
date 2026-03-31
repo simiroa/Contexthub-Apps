@@ -25,10 +25,10 @@ from contexthub.ui.qt.shell import (
     HeaderSurface,
     get_shell_metrics,
     build_shell_stylesheet,
-    qt_t,
     apply_app_icon,
     attach_size_grip,
 )
+from shared._engine.components.icon_button import build_icon_button
 from contexthub.ui.qt.panels import (
     ComparativePreviewWidget,
 )
@@ -77,68 +77,59 @@ class ImageCompareWindow(QMainWindow):
         )
         self.main_layout.addWidget(self.header)
 
-        # Body Layout: Horizontal
-        self.body_container = QWidget()
+        self.body_container = QFrame()
+        self.body_container.setObjectName("card")
         self.body_layout = QHBoxLayout(self.body_container)
         self.body_layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
         self.body_layout.setSpacing(m.section_gap)
-        
-        # Left: File List (Minimized)
-        self.list_frame = QFrame()
-        self.list_frame.setObjectName("subtlePanel")
-        self.list_frame.setFixedWidth(280)
-        list_vbox = QVBoxLayout(self.list_frame)
-        list_vbox.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
-        list_vbox.setSpacing(10)
-        
-        list_title = QLabel("Input Files")
-        list_title.setObjectName("sectionTitle")
-        list_vbox.addWidget(list_title)
-        
+
+        self.left_panel = QFrame()
+        self.left_panel.setObjectName("subtlePanel")
+        left_layout = QVBoxLayout(self.left_panel)
+        left_layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
+        left_layout.setSpacing(8)
+
+        left_title = QLabel("Inputs")
+        left_title.setObjectName("sectionTitle")
+        left_layout.addWidget(left_title)
+
+        actions_row = QHBoxLayout()
+        self.add_btn = build_icon_button("Add", icon_name="plus", role="secondary")
+        self.clear_btn = build_icon_button("Clear", icon_name="trash-2", role="ghost")
+        actions_row.addWidget(self.add_btn)
+        actions_row.addWidget(self.clear_btn)
+        actions_row.addStretch(1)
+        left_layout.addLayout(actions_row)
+
         self.input_list = QListWidget()
-        self.input_list.setSelectionMode(QListWidget.ExtendedSelection)
-        self.input_list.setStyleSheet("QListWidget { background: transparent; border: none; }")
-        self.input_list.setSpacing(2)
-        list_vbox.addWidget(self.input_list, 1)
-        
-        action_row = QHBoxLayout()
-        self.add_btn = QPushButton("＋ Add")
-        self.add_btn.setObjectName("pillBtn")
-        self.clear_btn = QPushButton("✕ Clear")
-        self.clear_btn.setObjectName("pillBtn")
-        action_row.addWidget(self.add_btn)
-        action_row.addWidget(self.clear_btn)
-        list_vbox.addLayout(action_row)
-        
-        self.body_layout.addWidget(self.list_frame)
-        
-        # Right: Comparison Area
+        self.input_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        left_layout.addWidget(self.input_list, 1)
+
         self.preview_frame = QFrame()
-        self.preview_frame.setObjectName("card")
+        self.preview_frame.setObjectName("subtlePanel")
         preview_vbox = QVBoxLayout(self.preview_frame)
         preview_vbox.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
-        preview_vbox.setSpacing(10)
-        
-        # Tools Bar
+        preview_vbox.setSpacing(8)
+
         tools_row = QHBoxLayout()
-        tools_row.addWidget(QLabel("View Mode:"), 0)
         self.mode_combo = QComboBox()
-        self.mode_combo.addItems(["Split Slider", "Grid", "Difference", "Selection (Single)"])
+        self.mode_combo.addItems(["Split", "Grid", "Difference", "Selection (Single)"])
+        self.mode_combo.setCurrentIndex(0)
         self.mode_combo.setFixedWidth(180)
         tools_row.addWidget(self.mode_combo)
         tools_row.addStretch(1)
-        
+
         self.metrics_label = QLabel("Select files to compare")
         self.metrics_label.setObjectName("summaryText")
         tools_row.addWidget(self.metrics_label)
         preview_vbox.addLayout(tools_row)
-        
-        # Comparative Preview
+
         self.comp_preview = ComparativePreviewWidget()
         preview_vbox.addWidget(self.comp_preview, 1)
-        
-        self.body_layout.addWidget(self.preview_frame, 1)
-        
+
+        self.body_layout.addWidget(self.left_panel, 1)
+        self.body_layout.addWidget(self.preview_frame, 2)
+
         self.main_layout.addWidget(self.body_container, 1)
         
         # Shell Closing

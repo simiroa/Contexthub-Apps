@@ -17,13 +17,17 @@ from features.audio.audio_toolbox_tasks import (
     TASK_COMPRESS_AUDIO,
     TASK_CONVERT_AUDIO,
     TASK_ENHANCE_AUDIO,
+    TASK_EXTRACT_ALL_AUDIO,
     TASK_EXTRACT_BGM,
     TASK_EXTRACT_VOICE,
     TASK_LABELS,
     TASK_NORMALIZE_VOLUME,
 )
 
-AUDIO_EXTENSIONS = {".wav", ".mp3", ".ogg", ".flac", ".m4a", ".aac", ".wma"}
+AUDIO_EXTENSIONS = {
+    ".wav", ".mp3", ".ogg", ".flac", ".m4a", ".aac", ".wma",
+    ".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"
+}
 
 
 @dataclass
@@ -34,6 +38,7 @@ class AudioToolboxState:
 
     output_mode: str = "source_folder"
     custom_output_dir: Optional[Path] = None
+    export_format: str = ""
 
     model: str = SEPARATOR_MODELS[0]
     separator_output_format: str = "wav"
