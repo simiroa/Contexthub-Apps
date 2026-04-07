@@ -23,6 +23,7 @@ from contexthub.ui.qt.shell import (
     apply_app_icon,
     attach_size_grip,
 )
+from shared._engine.components.icon_button import build_icon_button
 from contexthub.ui.qt.panels import (
     ExportFoldoutPanel,
 )
@@ -88,12 +89,11 @@ class SplitChannelWindow(QMainWindow):
         list_vbox.addWidget(self.input_list, 1)
         
         action_row = QHBoxLayout()
-        self.add_btn = QPushButton("＋ Add Files")
-        self.add_btn.setObjectName("pillBtn")
-        self.clear_btn = QPushButton("✕ Clear")
-        self.clear_btn.setObjectName("pillBtn")
+        self.add_btn = build_icon_button("Add Files", icon_name="plus", role="secondary")
+        self.clear_btn = build_icon_button("Clear", icon_name="trash-2", role="ghost")
         action_row.addWidget(self.add_btn)
         action_row.addWidget(self.clear_btn)
+
         list_vbox.addLayout(action_row)
         
         self.body_layout.addWidget(self.list_frame, 1)

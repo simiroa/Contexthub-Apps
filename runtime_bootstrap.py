@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import atexit
+import hashlib
 import os
 import re
 import subprocess
@@ -13,12 +14,14 @@ from pathlib import Path
 def _candidate_shared_roots(app_root: Path) -> list[Path | None]:
     repo_root = app_root.parents[1]
     env_shared_runtime_root = os.environ.get("CTX_SHARED_RUNTIME_ROOT")
+    env_shared_root = os.environ.get("CTX_SHARED_ROOT")
     return [
         Path(env_shared_runtime_root) if env_shared_runtime_root else None,
-        app_root / "Runtimes" / "Shared",
-        repo_root / "dev-tools" / "runtime" / "Shared",
+        Path(env_shared_root).parent if env_shared_root else None,
         repo_root.parent / "Contexthub" / "Runtimes" / "Shared",
         app_root.parent.parent / "Contexthub" / "Runtimes" / "Shared",
+        app_root / "Runtimes" / "Shared",
+        repo_root / "dev-tools" / "runtime" / "Shared",
     ]
 
 
@@ -29,9 +32,9 @@ def _candidate_runtime_roots(app_root: Path) -> list[Path | None]:
     return [
         Path(env_runtime_root) if env_runtime_root else None,
         Path(env_dev_runtime_root) if env_dev_runtime_root else None,
-        repo_root / "dev-tools" / "runtime",
         repo_root.parent / "Contexthub" / "Runtimes",
         app_root.parent.parent / "Contexthub" / "Runtimes",
+        repo_root / "dev-tools" / "runtime",
     ]
 
 
@@ -65,7 +68,9 @@ _ACTIVE_INSTANCE_LOCKS: list[object] = []
 
 
 def _normalize_lock_name(app_root: Path) -> str:
-    relative_name = f"{app_root.parent.name}__{app_root.name}"
+    abs_path = str(app_root.resolve())
+    path_hash = hashlib.md5(abs_path.encode()).hexdigest()[:8]
+    relative_name = f"{app_root.parent.name}__{app_root.name}__{path_hash}"
     return re.sub(r"[^A-Za-z0-9._-]+", "_", relative_name).strip("._-") or "contexthub_app"
 
 
@@ -158,6 +163,23 @@ def _acquire_instance_lock(app_root: Path):
                     pass
                 time.sleep(0.1)
                 continue
+
+            # NEW: Verify if recorded argv0 matches current sys.argv[0]
+            # to prevent killing unrelated apps that might collide on simple lock names
+            try:
+                recorded_argv0 = ""
+                for line in lock_path.read_text(encoding="utf-8").splitlines():
+                    if line.startswith("argv0="):
+                        recorded_argv0 = line.split("=", 1)[1].strip()
+                
+                if recorded_argv0 and recorded_argv0 != sys.argv[0]:
+                    # Different app, but somehow lock name matched?
+                    # This shouldn't happen with the new hash-based naming, but it's a safe fallback.
+                    # We treat it as lock acquisition failure rather than killing the other app.
+                    return None
+            except Exception:
+                pass
+
             _kill_process_tree(existing_pid)
             _wait_for_process_exit(existing_pid)
             try:
@@ -207,7 +229,7 @@ def _should_enforce_single_instance() -> bool:
     return (app_root / "manifest.json").exists()
 
 
-def _enforce_single_instance_if_app() -> None:
+def enforce_single_instance_if_app() -> None:
     if not _should_enforce_single_instance():
         return
     app_root = Path(sys.argv[0]).resolve().parent
@@ -217,4 +239,3 @@ def _enforce_single_instance_if_app() -> None:
     raise SystemExit(0)
 
 
-_enforce_single_instance_if_app()

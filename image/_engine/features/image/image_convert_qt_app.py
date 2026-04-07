@@ -77,22 +77,22 @@ class ImageConvertWindow(QMainWindow):
         m = get_shell_metrics()
         p = get_shell_palette()
         compact_styles = f"""
-            QComboBox, QLineEdit {{
+            QComboBox, QLineEdit {{{{
                 min-height: 30px;
                 max-height: 30px;
                 padding: 2px 10px;
                 border-radius: {m.field_radius - 4}px;
                 background: {p.field_bg};
-            }}
-            QGroupBox#exportRunPanel QLineEdit {{
+            }}}}
+            QGroupBox#exportRunPanel QLineEdit {{{{
                 min-height: 26px;
                 max-height: 26px;
-            }}
-            #card QFrame#subtlePanel {{
+            }}}}
+            #card QFrame#subtlePanel {{{{
                 background: transparent;
                 border: 1px solid {p.control_border};
                 margin-bottom: -6px;
-            }}
+            }}}}
             QLabel#eyebrow {{
                 margin-bottom: -2px;
             }}
@@ -111,7 +111,7 @@ class ImageConvertWindow(QMainWindow):
                 background: {p.button_hover};
             }}
             /* Pill Button Style */
-            QPushButton#pillBtn {{
+            QPushButton[buttonRole="pill"] {{
                 background: {p.accent_soft};
                 color: {p.text};
                 border-radius: 17px;
@@ -120,7 +120,7 @@ class ImageConvertWindow(QMainWindow):
                 font-weight: 600;
                 border: 1px solid {p.control_border};
             }}
-            QPushButton#pillBtn:hover {{
+            QPushButton[buttonRole="pill"]:hover {{
                 background: {p.accent};
                 color: {p.accent_text};
                 border-color: {p.accent};

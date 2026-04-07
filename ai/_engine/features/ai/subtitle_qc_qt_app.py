@@ -178,7 +178,7 @@ class MeetingNotesWindow(QMainWindow):
         set_button_role(self.files_btn, "secondary")
         self.files_btn.setToolTip("Open the meeting queue to add, remove, or switch recordings.")
         for widget in (self.summary_status, self.summary_mode):
-            set_badge_role(widget, "status", "muted")
+            set_badge_role(widget, "muted")
         self.summary_focus.setObjectName("summaryText")
         header_row.addWidget(self.preview_name, 0)
         header_row.addSpacing(8)
@@ -525,8 +525,8 @@ class MeetingNotesWindow(QMainWindow):
         state = self.service.state
         self.summary_status.setText(f"{state.generation_status} · {int(state.progress * 100)}%")
         self.summary_mode.setText("Queue" if self._run_mode_is_batch() else "Selected")
-        set_badge_role(self.summary_status, "status", state.generation_status_tone if state.generation_status_tone in {"accent", "success", "warning", "error"} else "muted")
-        set_badge_role(self.summary_mode, "status", "accent" if self._run_mode_is_batch() else "muted")
+        set_badge_role(self.summary_status, state.generation_status_tone if state.generation_status_tone in {"accent", "success", "warning", "error"} else "muted")
+        set_badge_role(self.summary_mode, "accent" if self._run_mode_is_batch() else "muted")
         self.run_btn.setText("Run Queue" if self._run_mode_is_batch() else "Run Selected")
         self.cancel_btn.setEnabled(state.is_processing)
         if self.queue_dialog is not None and self.queue_dialog.isVisible():

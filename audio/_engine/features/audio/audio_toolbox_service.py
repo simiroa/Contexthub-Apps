@@ -25,6 +25,7 @@ from features.audio.audio_toolbox_tasks import (
     TASK_COMPRESS_AUDIO,
     TASK_CONVERT_AUDIO,
     TASK_ENHANCE_AUDIO,
+    TASK_EXTRACT_ALL_AUDIO,
     TASK_EXTRACT_BGM,
     TASK_EXTRACT_VOICE,
     TASK_NORMALIZE_VOLUME,
@@ -139,6 +140,8 @@ class AudioToolboxService:
         target = path or (self.state.files[0] if self.state.files else None)
         if target is None:
             return None
+        if self.state.task_type == TASK_EXTRACT_ALL_AUDIO:
+            return _output_dir_for(target, self.state.output_mode, self.state.custom_output_dir, "Extracted_Audio")
         if self.state.task_type in {TASK_EXTRACT_VOICE, TASK_EXTRACT_BGM}:
             return _output_dir_for(target, self.state.output_mode, self.state.custom_output_dir, "Separated_Audio")
         if self.state.task_type == TASK_NORMALIZE_VOLUME:
@@ -328,6 +331,8 @@ class AudioToolboxService:
             )
         task_type = self.state.task_type
         try:
+            if task_type == TASK_EXTRACT_ALL_AUDIO:
+                return [self._run_extract_all_audio(path, prepared_path)]
             if task_type in {TASK_EXTRACT_VOICE, TASK_EXTRACT_BGM}:
                 return self._run_separation(path, prepared_path)
             if task_type == TASK_NORMALIZE_VOLUME:
@@ -342,6 +347,40 @@ class AudioToolboxService:
         finally:
             if temp_dir is not None:
                 temp_dir.cleanup()
+
+    def _run_extract_all_audio(self, path: Path, input_path: Path) -> Path:
+        output_dir = self.output_dir_for_preview(path)
+        if output_dir is None:
+            raise RuntimeError("No output directory available.")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        # Always output as mp3 for simple extraction
+        output_name = f"{path.stem}_audio.mp3" if self.state.output_mode == "source_folder" else f"{path.stem}.mp3"
+        output_path = get_safe_path(output_dir / output_name)
+        
+        ffmpeg = get_ffmpeg()
+        cmd = [
+            ffmpeg,
+            "-i", str(input_path),
+            "-vn",
+            "-acodec", "libmp3lame",
+            "-y",
+            str(output_path),
+        ]
+        self.current_process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        )
+        _stdout, stderr = self.current_process.communicate()
+        if self.current_process.returncode != 0:
+            raise RuntimeError(stderr.strip() or "FFmpeg extraction failed")
+        
+        if not output_path.exists():
+            raise RuntimeError("FFmpeg extraction finished but output file is missing")
+            
+        return output_path
 
     def _run_separation(self, path: Path, input_path: Path) -> list[Path]:
         self.state.active_backend = ""

@@ -20,6 +20,7 @@ from contexthub.ui.qt.shell import (
     set_surface_role,
     set_transparent_surface,
 )
+from shared._engine.components.icon_button import build_icon_button
 from features.video.youtube_downloader_service import DownloadItem, YoutubeDownloaderService
 
 try:
@@ -152,8 +153,7 @@ class YoutubeDownloaderWindow(QMainWindow):
         row.setSpacing(8)
         self.url_edit = QLineEdit()
         self.url_edit.setPlaceholderText(qt_t("youtube_downloader.url_placeholder", "Paste a video URL and analyze it"))
-        self.analyze_btn = QPushButton(qt_t("youtube_downloader.search_btn", "Analyze"))
-        self.analyze_btn.setObjectName("primary")
+        self.analyze_btn = build_icon_button(qt_t("youtube_downloader.search_btn", "Analyze"), icon_name="search", role="primary")
         row.addWidget(self.url_edit, 1)
         row.addWidget(self.analyze_btn)
         layout.addLayout(row)
@@ -227,8 +227,7 @@ class YoutubeDownloaderWindow(QMainWindow):
         self.output_dir_edit = QLineEdit()
         self.output_dir_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         output_row.addWidget(self.output_dir_edit, 1)
-        self.open_folder_btn = QPushButton(qt_t("common.open_folder", "Open Folder"))
-        set_button_role(self.open_folder_btn, "secondary")
+        self.open_folder_btn = build_icon_button(qt_t("common.open_folder", "Open Folder"), icon_name="folder-open", role="secondary")
         output_row.addWidget(self.open_folder_btn, 0)
         layout.addLayout(output_row)
 
@@ -242,8 +241,7 @@ class YoutubeDownloaderWindow(QMainWindow):
         self.download_status_label = QLabel(qt_t("youtube_downloader.status_ready", "Ready"))
         self.download_status_label.setObjectName("summaryText")
         footer.addWidget(self.download_status_label, 1)
-        self.download_btn = QPushButton(qt_t("youtube_downloader.download_now", "Download"))
-        self.download_btn.setObjectName("primary")
+        self.download_btn = build_icon_button(qt_t("youtube_downloader.download_now", "Download"), icon_name="download", role="primary")
         footer.addWidget(self.download_btn, 0)
         layout.addLayout(footer)
         return card
@@ -260,8 +258,7 @@ class YoutubeDownloaderWindow(QMainWindow):
         self.queue_title_label.setObjectName("sectionTitle")
         self.queue_count_label = QLabel("0")
         self.queue_count_label.setObjectName("summaryText")
-        self.clear_queue_btn = QPushButton(qt_t("common.clear", "Clear"))
-        set_button_role(self.clear_queue_btn, "secondary")
+        self.clear_queue_btn = build_icon_button(qt_t("common.clear", "Clear"), icon_name="trash-2", role="ghost")
         header.addWidget(self.queue_title_label)
         header.addStretch(1)
         header.addWidget(self.queue_count_label)

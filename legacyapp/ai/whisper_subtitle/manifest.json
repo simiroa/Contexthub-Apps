@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.2",
+  "id": "whisper_subtitle",
+  "name": "Whisper Subtitle AI (Qt)",
+  "description": "Queue-based subtitle generation with editable SRT/VTT/TXT/JSON outputs and per-asset session recovery.",
+  "author": "ContextHub Legacy",
+  "version": "1.0.0",
+  "icon": null,
+  "runtime": {
+    "category": "ai",
+    "environment_id": null,
+    "python_version": "3.11",
+    "required_binaries": []
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "gui",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": "whisper_subtitle",
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": false,
+    "quick_launcher": false,
+    "context_menu": {
+      "enabled": true,
+      "extensions": [
+        ".mp4",
+        ".mov",
+        ".avi",
+        ".mkv",
+        ".webm",
+        ".mp3",
+        ".wav",
+        ".m4a",
+        ".flac",
+        ".ogg"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "pyside6",
+    "shared_theme": "contexthub"
+  }
+}

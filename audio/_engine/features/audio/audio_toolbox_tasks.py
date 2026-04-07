@@ -2,14 +2,16 @@ from __future__ import annotations
 
 TASK_EXTRACT_VOICE = "extract_voice"
 TASK_EXTRACT_BGM = "extract_bgm"
+TASK_EXTRACT_ALL_AUDIO = "extract_all_audio"
 TASK_NORMALIZE_VOLUME = "normalize_volume"
 TASK_CONVERT_AUDIO = "convert_audio"
 TASK_COMPRESS_AUDIO = "compress_audio"
 TASK_ENHANCE_AUDIO = "enhance_audio"
 
 TASK_LABELS = {
-    TASK_EXTRACT_VOICE: "Extract Voice",
-    TASK_EXTRACT_BGM: "Extract BGM",
+    TASK_EXTRACT_VOICE: "Extract Voice (AI)",
+    TASK_EXTRACT_BGM: "Extract BGM (AI)",
+    TASK_EXTRACT_ALL_AUDIO: "Extract All Audio (Copy)",
     TASK_NORMALIZE_VOLUME: "Normalize Volume",
     TASK_CONVERT_AUDIO: "Convert Audio",
     TASK_COMPRESS_AUDIO: "Compress Audio",
@@ -36,6 +38,7 @@ ENHANCE_OUTPUT_FORMATS = ["WAV", "FLAC", "M4A", "MP3"]
 TASK_STACK_INDEX = {
     TASK_EXTRACT_VOICE: 0,
     TASK_EXTRACT_BGM: 0,
+    TASK_EXTRACT_ALL_AUDIO: 0,
     TASK_NORMALIZE_VOLUME: 1,
     TASK_CONVERT_AUDIO: 2,
     TASK_COMPRESS_AUDIO: 3,

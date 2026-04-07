@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from contexthub.ui.qt.panels import ExportFoldoutPanel, FixedParameterPanel, PreviewListPanel
 from contexthub.ui.qt.shell import (
     HeaderSurface,
     attach_size_grip,
@@ -14,12 +13,16 @@ from contexthub.ui.qt.shell import (
     qt_t,
     refresh_runtime_preferences,
     runtime_settings_signature,
+    set_surface_role,
+    set_button_role,
 )
-from features.image.simple_normal_roughness_service import SimpleNormalRoughnessService
+from shared._engine.components.icon_button import build_icon_button
+from shared._engine.components.input_card import build_input_card
+from _engine.features.image.simple_normal_roughness_service import SimpleNormalRoughnessService
 
 try:
-    from PySide6.QtCore import QSettings, Qt, QTimer
-    from PySide6.QtGui import QImage, QPixmap
+    from PySide6.QtCore import QSettings, Qt, QTimer, Signal, Slot
+    from PySide6.QtGui import QImage, QPixmap, QDragEnterEvent, QDropEvent
     from PySide6.QtWidgets import (
         QApplication,
         QCheckBox,
@@ -29,9 +32,12 @@ try:
         QHBoxLayout,
         QLineEdit,
         QMainWindow,
-        QSplitter,
         QVBoxLayout,
         QWidget,
+        QLabel,
+        QPushButton,
+        QScrollArea,
+        QFormLayout,
     )
 except ImportError as exc:
     raise ImportError("PySide6 is required for simple_normal_roughness.") from exc
@@ -39,6 +45,56 @@ except ImportError as exc:
 APP_ID = "simple_normal_roughness"
 APP_TITLE = qt_t("simple_normal_roughness.title", "Simple PBR Generator")
 APP_SUBTITLE = qt_t("simple_normal_roughness.subtitle", "Generate Normal/Roughness maps from images.")
+
+
+class DropZoneCard(QFrame):
+    files_dropped = Signal(list)
+
+    def __init__(self, title: str, body: str):
+        super().__init__()
+        m = get_shell_metrics()
+        set_surface_role(self, "card")
+        self.setAcceptDrops(True)
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
+        layout.setSpacing(m.section_gap // 2)
+
+        title_label = QLabel(title)
+        title_label.setObjectName("sectionTitle")
+        layout.addWidget(title_label)
+
+        self.zone = QFrame()
+        set_surface_role(self.zone, "subtle")
+        self.zone.setMinimumHeight(100)
+        zone_layout = QVBoxLayout(self.zone)
+        self.body_label = QLabel(body)
+        self.body_label.setAlignment(Qt.AlignCenter)
+        self.body_label.setWordWrap(True)
+        zone_layout.addWidget(self.body_label, 1)
+        
+        self.pick_btn = build_icon_button(qt_t("snr.pick", "Pick Images"), icon_name="file-plus", role="secondary")
+        zone_layout.addWidget(self.pick_btn, 0, Qt.AlignCenter)
+        
+        layout.addWidget(self.zone)
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+            set_surface_role(self.zone, "accent")
+        else:
+            event.ignore()
+
+    def dragLeaveEvent(self, event):
+        set_surface_role(self.zone, "subtle")
+
+    def dropEvent(self, event: QDropEvent):
+        set_surface_role(self.zone, "subtle")
+        urls = event.mimeData().urls()
+        if urls:
+            paths = [u.toLocalFile() for u in urls if u.isLocalFile()]
+            self.files_dropped.emit(paths)
+            event.acceptProposedAction()
 
 
 class SimpleNormalRoughnessWindow(QMainWindow):
@@ -56,57 +112,20 @@ class SimpleNormalRoughnessWindow(QMainWindow):
         self.setWindowTitle(APP_TITLE)
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
-        self.resize(1440, 940)
-        self.setMinimumSize(1100, 780)
+        self.resize(700, 940)
+        self.setMinimumSize(620, 800)
         apply_app_icon(self, self.app_root)
 
         self.setStyleSheet(build_shell_stylesheet())
         self._build_ui()
-        self._apply_compact_styles()
         self._restore_window_state()
         self._bind_actions()
-
-        # Enable Split comparison
-        self.preview_list_panel.set_comparative_mode("split")
 
         if targets:
             self.service.add_inputs(targets)
         self._refresh_parameter_form()
-        self._refresh_assets()
+        self._refresh_ui_state()
         self._runtime_timer.start()
-
-    def _apply_compact_styles(self) -> None:
-        m = get_shell_metrics()
-        p = get_shell_palette()
-        compact_styles = f"""
-            QComboBox, QLineEdit {{
-                min-height: 30px;
-                max-height: 30px;
-                padding: 2px 10px;
-                border-radius: {m.field_radius - 4}px;
-                background: {p.field_bg};
-            }}
-            #card QFrame#subtlePanel {{
-                background: transparent;
-                border: 1px solid {p.control_border};
-                margin-bottom: -6px;
-            }}
-            QListWidget {{
-                background: {p.field_bg};
-                border: 1px solid {p.control_border};
-                padding: 4px;
-            }}
-            QPushButton#pillBtn {{
-                background: {p.accent_soft};
-                color: {p.text};
-                border-radius: 17px;
-                padding: 6px 18px;
-                font-size: 11px;
-                font-weight: 600;
-                border: 1px solid {p.control_border};
-            }}
-        """
-        self.setStyleSheet(self.styleSheet() + compact_styles)
 
     def _build_ui(self) -> None:
         m = get_shell_metrics()
@@ -114,7 +133,6 @@ class SimpleNormalRoughnessWindow(QMainWindow):
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
         root.setContentsMargins(m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2)
-        root.setSpacing(m.section_gap)
 
         self.window_shell = QFrame()
         self.window_shell.setObjectName("windowShell")
@@ -122,153 +140,246 @@ class SimpleNormalRoughnessWindow(QMainWindow):
         shell_layout.setContentsMargins(m.shell_margin, m.shell_margin, m.shell_margin, m.shell_margin)
         shell_layout.setSpacing(m.section_gap)
 
+        # 1. Header
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root)
-        self.header_surface.set_header_visibility(
-            show_subtitle=False,
-            show_asset_count=False,
-            show_runtime_status=False,
-        )
+        self.header_surface.set_header_visibility(show_subtitle=False, show_runtime_status=False)
         shell_layout.addWidget(self.header_surface)
 
-        self.splitter = QSplitter(Qt.Horizontal)
-        self.splitter.setChildrenCollapsible(False)
-        self.splitter.setHandleWidth(6)
+        # 2. Mode Strip (Strip Check)
+        self.mode_strip_card = QFrame()
+        set_surface_role(self.mode_strip_card, "card")
+        mode_strip_layout = QHBoxLayout(self.mode_strip_card)
+        mode_strip_layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
+        mode_strip_layout.setSpacing(8)
         
-        self.preview_list_panel = PreviewListPanel(
-            preview_title=qt_t("pbr.preview", "Map Preview"),
-            list_title=qt_t("pbr.inputs", "Input Images"),
-        )
-        
-        self.right_container = QFrame()
-        self.right_container.setObjectName("card")
-        right_layout = QVBoxLayout(self.right_container)
-        right_layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
-        right_layout.setSpacing(m.section_gap)
+        mode_label = QLabel(qt_t("pbr.mode_strip", "Generate Mode"))
+        mode_label.setObjectName("sectionTitle")
+        mode_strip_layout.addWidget(mode_label)
+        mode_strip_layout.addStretch(1)
 
-        self.param_panel = FixedParameterPanel(
-            title=qt_t("pbr.parameters", "PBR Parameters"),
-            description=qt_t("pbr.desc", "Adjust normal strength and roughness contrast."),
-        )
-        # Hide preset combo as we don't need it for this simple app
-        self.param_panel.preset_label.hide()
-        self.param_panel.preset_combo.hide()
+        self.mode_buttons: dict[str, QPushButton] = {}
+        for mode_name in ["Normal", "Roughness", "Both"]:
+            btn = QPushButton(mode_name)
+            btn.setCheckable(True)
+            btn.setMinimumWidth(100)
+            btn.clicked.connect(lambda _, m=mode_name: self._handle_mode_change(m))
+            mode_strip_layout.addWidget(btn)
+            self.mode_buttons[mode_name] = btn
         
-        right_layout.addWidget(self.param_panel, 1)
+        shell_layout.addWidget(self.mode_strip_card)
 
-        self.export_panel = ExportFoldoutPanel(qt_t("pbr.run_panel", "Process & Export"))
-        self.export_panel.set_values(
-            "", "pbr_", True, False
-        )
-        self.export_panel.set_expanded(False)
-        right_layout.addWidget(self.export_panel, 0)
+        # 3. Preview Card
+        self.preview_card = QFrame()
+        set_surface_role(self.preview_card, "card")
+        preview_layout = QVBoxLayout(self.preview_card)
+        preview_layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
+        
+        self.preview_surface = QFrame()
+        set_surface_role(self.preview_surface, "subtle")
+        self.preview_surface.setMinimumHeight(300)
+        preview_surf_layout = QVBoxLayout(self.preview_surface)
+        
+        self.preview_label = QLabel(qt_t("pbr.no_preview", "No image selected"))
+        self.preview_label.setAlignment(Qt.AlignCenter)
+        preview_surf_layout.addWidget(self.preview_label, 1)
+        preview_layout.addWidget(self.preview_surface, 1)
+        
+        # Meta info inside preview card
+        self.meta_label = QLabel("")
+        self.meta_label.setObjectName("summaryText")
+        preview_layout.addWidget(self.meta_label)
+        
+        shell_layout.addWidget(self.preview_card, 1)
 
-        self.splitter.addWidget(self.preview_list_panel)
-        self.splitter.addWidget(self.right_container)
-        self.splitter.setStretchFactor(0, 7)
-        self.splitter.setStretchFactor(1, 3)
+        # 4. Parameters Card (Dynamic)
+        self.param_card = QFrame()
+        set_surface_role(self.param_card, "card")
+        self.param_layout = QVBoxLayout(self.param_card)
+        self.param_layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
         
-        shell_layout.addWidget(self.splitter, 1)
+        param_title = QLabel(qt_t("pbr.parameters", "Parameters"))
+        param_title.setObjectName("sectionTitle")
+        self.param_layout.addWidget(param_title)
         
-        self.size_grip = attach_size_grip(shell_layout, self.window_shell)
+        self.param_content_layout = QFormLayout()
+        self.param_content_layout.setSpacing(m.section_gap // 2)
+        self.param_content_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        self.param_layout.addLayout(self.param_content_layout)
+        
+        shell_layout.addWidget(self.param_card)
+
+        # 5. Footer Export Card
+        self.footer_card = QFrame()
+        set_surface_role(self.footer_card, "card")
+        footer_layout = QVBoxLayout(self.footer_card)
+        footer_layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
+        
+        self.status_label = QLabel(qt_t("common.ready", "Ready. Drag an image to start."))
+        self.status_label.setObjectName("summaryText")
+        footer_layout.addWidget(self.status_label)
+        
+        btn_row = QHBoxLayout()
+        self.reveal_btn = build_icon_button(None, icon_name="folder-open", role="ghost")
+        self.run_btn = build_icon_button(qt_t("snr.generate", "Generate Maps"), icon_name="play", role="primary")
+        btn_row.addWidget(self.reveal_btn)
+        btn_row.addWidget(self.run_btn, 1)
+        footer_layout.addLayout(btn_row)
+        
+        shell_layout.addWidget(self.footer_card)
+
+        attach_size_grip(shell_layout, self.window_shell)
         root.addWidget(self.window_shell)
 
     def _bind_actions(self) -> None:
-        self.preview_list_panel.add_requested.connect(self._pick_inputs)
-        self.preview_list_panel.remove_requested.connect(self._remove_selected_input)
-        self.preview_list_panel.clear_requested.connect(self._clear_inputs)
-        self.preview_list_panel.selection_changed.connect(self._sync_preview_from_selection)
-        self.export_panel.run_requested.connect(self._run_workflow)
-        self.export_panel.reveal_requested.connect(self.service.reveal_output_dir)
+        self.preview_surface.setAcceptDrops(True)
+        # Drop logic directly on the preview card
+        self.preview_surface.dragEnterEvent = self._preview_drag_enter
+        self.preview_surface.dropEvent = self._preview_drop
+        
+        self.run_btn.clicked.connect(self._run_workflow)
+        self.reveal_btn.clicked.connect(self.service.reveal_output_dir)
+
+    def _preview_drag_enter(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+            set_surface_role(self.preview_surface, "accent")
+    
+    def _preview_drop(self, event):
+        set_surface_role(self.preview_surface, "subtle")
+        urls = event.mimeData().urls()
+        if urls:
+            path = urls[0].toLocalFile()
+            self.service.clear_inputs()
+            self.service.add_inputs([path])
+            self._refresh_ui_state()
+
+    def _handle_mode_change(self, mode: str):
+        # Update buttons
+        for m, btn in self.mode_buttons.items():
+            btn.setChecked(m == mode)
+            set_button_role(btn, "primary" if m == mode else "secondary")
+        
+        # Sync service state
+        self.service.update_parameter("save_mode", mode)
+        # Use Normal/Roughness for preview if Both is selected
+        self.service.update_parameter("preview_mode", "Normal" if mode == "Both" else mode)
+        
+        self._refresh_parameter_form()
+        self._refresh_preview()
 
     def _refresh_parameter_form(self) -> None:
-        self.param_panel.clear_fields()
-        for definition in self.service.get_ui_definition():
-            widget = self._create_param_widget(definition)
-            self.param_panel.add_field(str(definition["label"]), widget)
+        # Clear
+        while self.param_content_layout.count():
+            item = self.param_content_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+            elif item.layout():
+                # Recursively clear sub-layouts (if any)
+                self._clear_layout(item.layout())
 
-    def _create_param_widget(self, definition: dict[str, object]) -> QWidget:
-        key = str(definition["key"])
-        kind = str(definition.get("type", "string"))
-        value = self.service.state.parameter_values.get(key, definition.get("default"))
-
-        if kind == "choice":
-            widget = QComboBox()
-            widget.addItems([str(o) for o in definition.get("options", [])])
-            widget.setCurrentText(str(value))
-            widget.currentTextChanged.connect(lambda t, k=key: self._update_and_preview(k, t))
-            return widget
-        if kind == "bool":
-            widget = QCheckBox()
-            widget.setChecked(bool(value))
-            widget.stateChanged.connect(lambda s, k=key: self._update_and_preview(k, bool(s)))
-            return widget
+    def _clear_layout(self, layout) -> None:
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+            elif item.layout():
+                self._clear_layout(item.layout())
         
-        widget = QLineEdit(str(value))
-        widget.textChanged.connect(lambda t, k=key: self._update_and_preview(k, t))
-        return widget
+        mode = self.service.state.parameter_values.get("save_mode", "Normal")
+        self._field_widgets.clear()
+        
+        # Filter parameters based on mode
+        defs = self.service.get_ui_definition()
+        visible_keys = []
+        if mode in ["Normal", "Both"]:
+            visible_keys.extend(["normal_strength", "normal_flip_g"])
+        if mode in ["Roughness", "Both"]:
+            visible_keys.extend(["roughness_contrast", "roughness_invert"])
+            
+        # Add sub-headers if in Both mode
+        added_normal_header = False
+        added_roughness_header = False
+        
+        for d in defs:
+            if d["key"] not in visible_keys:
+                continue
+            
+            # Grouping headers
+            if mode == "Both":
+                if d["key"].startswith("normal") and not added_normal_header:
+                    h = QLabel(qt_t("pbr.normal_settings", "Normal Map Settings"))
+                    h.setStyleSheet("font-weight: bold; color: palette(link); margin-top: 5px;")
+                    self.param_content_layout.addRow(h)
+                    added_normal_header = True
+                elif d["key"].startswith("roughness") and not added_roughness_header:
+                    h = QLabel(qt_t("pbr.roughness_settings", "Roughness Map Settings"))
+                    h.setStyleSheet("font-weight: bold; color: palette(link); margin-top: 5px;")
+                    self.param_content_layout.addRow(h)
+                    added_roughness_header = True
 
-    def _update_and_preview(self, key, value):
+            label = QLabel(d["label"])
+            val = self.service.state.parameter_values.get(d["key"], d["default"])
+            
+            if d["type"] == "bool":
+                widget = QCheckBox()
+                widget.setChecked(bool(val))
+                widget.stateChanged.connect(lambda s, k=d["key"]: self._update_and_preview(k, bool(s)))
+            else: # float/string
+                widget = QLineEdit(str(val))
+                widget.textChanged.connect(lambda t, k=d["key"]: self._update_and_preview(k, t))
+            
+            self.param_content_layout.addRow(label, widget)
+            self._field_widgets[d["key"]] = widget
+
+    def _update_and_preview(self, key: str, value: any):
         self.service.update_parameter(key, value)
         self._refresh_preview()
 
-    def _pick_inputs(self) -> None:
-        files, _ = QFileDialog.getOpenFileNames(self, "Select Images")
-        if files:
-            self.service.add_inputs(files)
-            self._refresh_assets()
-
-    def _remove_selected_input(self) -> None:
-        self.service.remove_input_at(self.preview_list_panel.current_row())
-        self._refresh_assets()
-
-    def _clear_inputs(self) -> None:
-        self.service.clear_inputs()
-        self._refresh_assets()
-
-    def _sync_preview_from_selection(self) -> None:
-        self.service.set_preview_from_index(self.preview_list_panel.current_row())
-        self._refresh_preview()
-
-    def _refresh_assets(self) -> None:
-        items = [(a.path.name, str(a.path)) for a in self.service.state.input_assets]
-        self.preview_list_panel.set_items(items)
+    def _refresh_ui_state(self) -> None:
+        # Sync the initial mode
+        mode = self.service.state.parameter_values.get("save_mode", "Normal")
+        self._handle_mode_change(mode)
         self._refresh_preview()
 
     def _refresh_preview(self) -> None:
         path = self.service.state.preview_path
         if not path:
-            self.preview_list_panel.set_preview("Select an image", "")
+            self.preview_label.setText(qt_t("pbr.no_preview", "Drop Image to Preview"))
+            self.preview_label.setPixmap(QPixmap())
+            self.meta_label.setText("")
             return
         
         try:
-            # Original
-            orig_pm = QPixmap(str(path))
-            
-            # Processed (Normal or Roughness)
             pil_img = self.service.get_processed_preview(path)
             qimg = QImage(pil_img.tobytes(), pil_img.width, pil_img.height, QImage.Format_RGB888)
-            proc_pm = QPixmap.fromImage(qimg)
+            pm = QPixmap.fromImage(qimg)
             
-            self.preview_list_panel.set_comparative_images(orig_pm, proc_pm)
+            scaled_pm = pm.scaled(
+                self.preview_surface.size() - Qt.Size(20, 20), 
+                Qt.KeepAspectRatio, 
+                Qt.SmoothTransformation
+            )
+            self.preview_label.setPixmap(scaled_pm)
+            self.meta_label.setText(f"{pil_img.width}x{pil_img.height} | {path.suffix.upper()} ({self.service.state.parameter_values.get('preview_mode')})")
         except Exception as e:
-            self.preview_list_panel.set_preview(f"Error: {e}", str(path))
+            self.preview_label.setText(f"Preview Error: {e}")
 
     def _run_workflow(self) -> None:
-        self.service.update_output_options(
-            self.export_panel.output_dir_edit.text(),
-            self.export_panel.output_prefix_edit.text(),
-            self.export_panel.open_folder_checkbox.isChecked(),
-            self.export_panel.export_session_checkbox.isChecked(),
-        )
+        if not self.service.state.input_assets:
+            self.status_label.setText("Please select an input image first.")
+            return
+
+        self.status_label.setText(qt_t("common.processing", "Generating maps..."))
+        QApplication.processEvents()
+        
         ok, msg, _ = self.service.run_workflow()
-        self.export_panel.status_label.setText(msg)
+        self.status_label.setText(msg)
 
     def _check_runtime_preferences(self) -> None:
         if self._runtime_signature != runtime_settings_signature():
             self._runtime_signature = runtime_settings_signature()
             refresh_runtime_preferences()
             self.setStyleSheet(build_shell_stylesheet())
-            self._apply_compact_styles()
 
     def _restore_window_state(self) -> None:
         geo = self._settings.value("geometry")
@@ -279,8 +390,11 @@ class SimpleNormalRoughnessWindow(QMainWindow):
         super().closeEvent(event)
 
 
-def start_app(targets: list[str] | None = None) -> int:
+def main(targets: list[str] | None = None) -> int:
     app = QApplication.instance() or QApplication(sys.argv)
-    window = SimpleNormalRoughnessWindow(SimpleNormalRoughnessService(), Path(__file__).resolve().parents[3] / APP_ID, targets)
+    service = SimpleNormalRoughnessService()
+    # Correct pathing to engine module
+    app_root = Path(__file__).resolve().parents[3] / APP_ID
+    window = SimpleNormalRoughnessWindow(service, app_root, targets)
     window.show()
     return app.exec()

@@ -317,12 +317,14 @@ class AutoLodWindow(QMainWindow):
         self.export_panel.output_prefix_edit.setText(default_output_prefix())
         if output_dir:
             summary = f"Output folder: {output_dir.name}"
-            self.export_panel.summary_label.setText(summary)
-            self.export_panel.summary_label.setToolTip(str(output_dir))
+            if hasattr(self.export_panel, 'summary_label'):
+                self.export_panel.summary_label.setText(summary)
+                self.export_panel.summary_label.setToolTip(str(output_dir))
             self.export_panel.output_dir_edit.setToolTip(str(output_dir))
         else:
-            self.export_panel.summary_label.setText("Output folder will appear after you load a mesh.")
-            self.export_panel.summary_label.setToolTip("")
+            if hasattr(self.export_panel, 'summary_label'):
+                self.export_panel.summary_label.setText("Output folder will appear after you load a mesh.")
+                self.export_panel.summary_label.setToolTip("")
             self.export_panel.output_dir_edit.setToolTip("")
 
     def _refresh_ui(self) -> None:

@@ -276,6 +276,80 @@ class VisionPopup(QDialog):
         self.close_btn.clicked.connect(self._dismiss)
         chrome.addWidget(self.close_btn)
         self.status = QLabel("")
+
+    def setData(self, index: QModelIndex, value, role: int = Qt.EditRole):  # noqa: N802
+        if role != Qt.EditRole or not index.isValid() or not self.is_data_cell(index.row(), index.column()):
+            return False
+        criterion = self.service.state.criteria[index.row() - 1]
+        product = self.service.state.products[index.column() - 1]
+        self.service.set_cell_value(product.id, criterion.id, str(value))
+        self.service.recalculate_scores()
+        self.refresh()
+        return True
+
+    def flags(self, index: QModelIndex):  # noqa: N802
+        if not index.isValid():
+            return Qt.ItemIsEnabled
+        if self.is_data_cell(index.row(), index.column()):
+            return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+        if self.is_product_header(index.row(), index.column()) or self.is_criterion_header(index.row(), index.column()):
+            return Qt.ItemIsSelectable | Qt.ItemIsEnabled
+        if self.is_add_product_cell(index.row(), index.column()) or self.is_add_criterion_cell(index.row(), index.column()):
+            return Qt.ItemIsEnabled
+        return Qt.ItemIsEnabled
+
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole):  # noqa: N802
+        return None
+
+    def refresh(self) -> None:
+        self.beginResetModel()
+        self.endResetModel()
+
+
+class VisionWorker(QObject):
+    finished = Signal(str, object)
+    failed = Signal(str, str)
+
+    def __init__(self, service, product_id: str) -> None:
+        super().__init__()
+        self.service = service
+        self.product_id = product_id
+
+    def run(self) -> None:
+        try:
+            cache = self.service.analyze_product_image(self.product_id)
+            self.finished.emit(self.product_id, cache)
+        except Exception as exc:
+            self.service.set_vision_error(self.product_id, str(exc))
+            self.failed.emit(self.product_id, str(exc))
+
+
+class VisionPopup(QDialog):
+    apply_requested = Signal()
+    dismissed = Signal()
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent, Qt.Tool | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_ShowWithoutActivating, True)
+        self.setModal(False)
+        self.setMinimumWidth(360)
+        self.setStyleSheet(build_shell_stylesheet())
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        card = QFrame()
+        card.setObjectName("card")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(14, 14, 14, 14)
+        layout.setSpacing(8)
+        chrome = QHBoxLayout()
+        self.title = QLabel("Vision")
+        self.title.setObjectName("sectionTitle")
+        chrome.addWidget(self.title)
+        chrome.addStretch(1)
+        self.close_btn = QPushButton("Close")
+        self.close_btn.clicked.connect(self._dismiss)
+        chrome.addWidget(self.close_btn)
+        self.status = QLabel("")
         self.status.setObjectName("eyebrow")
         self.summary = QLabel("")
         self.summary.setWordWrap(True)
@@ -283,7 +357,7 @@ class VisionPopup(QDialog):
         self.raw_text.setObjectName("muted")
         self.raw_text.setWordWrap(True)
         self.apply_btn = QPushButton("Review proposals")
-        self.apply_btn.setObjectName("primary")
+        self.apply_btn.setProperty("buttonRole", "primary")
         self.apply_btn.clicked.connect(self.apply_requested.emit)
         layout.addLayout(chrome)
         layout.addWidget(self.status)
@@ -364,7 +438,7 @@ class ProposalReviewDialog(QDialog):
         buttons.addStretch(1)
         cancel_btn = QPushButton("Cancel")
         apply_btn = QPushButton("Apply")
-        apply_btn.setObjectName("primary")
+        apply_btn.setProperty("buttonRole", "primary")
         cancel_btn.clicked.connect(self.reject)
         apply_btn.clicked.connect(self.accept)
         buttons.addWidget(cancel_btn)
@@ -545,7 +619,7 @@ class TemplatePickerDialog(QDialog):
         buttons.addStretch(1)
         cancel_btn = QPushButton("Cancel")
         confirm_btn = QPushButton("Use Template")
-        confirm_btn.setObjectName("primary")
+        confirm_btn.setProperty("buttonRole", "primary")
         cancel_btn.clicked.connect(self.reject)
         confirm_btn.clicked.connect(self._accept_choice)
         buttons.addWidget(cancel_btn)
@@ -743,40 +817,6 @@ class EdgeAddButton(QPushButton):
             f"QPushButton#ghostAddButton {{ border: 1px dashed {palette.control_border}; border-radius: 12px; padding: 8px 10px; color: {palette.muted}; background: {palette.surface_subtle}; }}"
             f"QPushButton#ghostAddButton:hover {{ border-color: {palette.chip_border}; color: {palette.text}; background: {palette.control_bg}; }}"
         )
-
-
-class TextEntryDialog(QDialog):
-    def __init__(self, title: str, prompt: str, initial_value: str = "", parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint)
-        self.setModal(True)
-        self.setStyleSheet(build_shell_stylesheet())
-        self.resize(380, 180)
-        self.value = initial_value
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
-        card = QFrame()
-        card.setObjectName("card")
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(10)
-        header = QLabel(title)
-        header.setObjectName("sectionTitle")
-        hint = QLabel(prompt)
-        hint.setObjectName("muted")
-        self.input = QLineEdit()
-        self.input.setText(initial_value)
-        buttons = QHBoxLayout()
-        buttons.addStretch(1)
-        cancel_btn = QPushButton("Cancel")
-        confirm_btn = QPushButton("OK")
-        confirm_btn.setObjectName("primary")
-        cancel_btn.clicked.connect(self.reject)
-        confirm_btn.clicked.connect(self._accept)
-        buttons.addWidget(cancel_btn)
-        buttons.addWidget(confirm_btn)
-        layout.addWidget(header)
-        layout.addWidget(hint)
         layout.addWidget(self.input)
         layout.addLayout(buttons)
         outer.addWidget(card)

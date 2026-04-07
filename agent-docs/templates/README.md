@@ -7,7 +7,7 @@
 - `new-app-template/`: legacy `_engine` wrapper 중심의 일반 템플릿
 - `new-category-template/`: 새 카테고리를 만들 때 사용하는 최소 골격
 
-GUI 앱은 이 폴더의 정적 템플릿보다, 가장 가까운 기존 앱과 `agent-docs/gui-runtime-contract.md`를 기준으로 시작하는 편이 안전하다.
+GUI 앱은 이 폴더의 정적 템플릿보다, 가장 가까운 기존 앱과 `qt-app-builder-contexthub` 스킬 문서를 기준으로 시작하는 편이 안전하다.
 특히 Qt 앱은 이 폴더를 직접 복제하지 않고, 사용자 skill 라이브러리의 `qt-app-builder-contexthub`를 우선 기준으로 본다.
 
 ## Qt Policy

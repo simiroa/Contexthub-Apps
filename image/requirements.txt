@@ -1,10 +1,13 @@
 customtkinter
+imageio
 numpy
 opencv-python
 OpenEXR
 piexif
 Pillow
 psd-tools
+PySide6
 rembg
+scikit-image
 scipy
 vtracer

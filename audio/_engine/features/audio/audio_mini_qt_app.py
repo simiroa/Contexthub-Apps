@@ -31,7 +31,7 @@ from features.audio.audio_toolbox_tasks import (
 )
 
 # Shared components
-from components.mini_execute_card import build_mini_execute_card
+from shared._engine.components.export_foldout_card import build_export_foldout_card
 from components.mini_parameter_card import build_mini_parameter_slider
 
 class ServiceBridge(QObject):
@@ -108,10 +108,13 @@ class AudioMiniWindow(QMainWindow):
         self.header.set_header_visibility(show_subtitle=False, show_asset_count=True, show_runtime_status=True)
         shell_layout.addWidget(self.header)
 
-        # Execution Card (Simplified Mini)
-        self.export_card = build_mini_execute_card("Process")
-        self.export_format_combo = self.export_card["format_combo"]
+        # Execution Card (Standardized Export Foldout)
+        self.export_card = build_export_foldout_card("Process")
+        self.export_format_combo = self.export_card["out_format_combo"]
         self.export_format_combo.currentTextChanged.connect(self._on_export_format_changed)
+
+        self.export_card["name_edit"].setText("processed")
+        self.export_card["name_edit"].setPlaceholderText("output_filename")
 
         # Optional Profile/Quality Slider (Integrated into the same card)
         if self.default_task == TASK_COMPRESS_AUDIO:
@@ -119,8 +122,8 @@ class AudioMiniWindow(QMainWindow):
                 "Quality", 
                 value_labels={0: "High", 1: "Balanced", 2: "Small"}
             )
-            # Add the contents of the parameter card elements to the options_layout
-            self.export_card["options_layout"].addWidget(self.quality_card["card"])
+            # Add the contents of the parameter card elements to the details_layout
+            self.export_card["details_layout"].insertWidget(0, self.quality_card["card"])
             # Remove the frame/background of the nested card to make it look integrated
             self.quality_card["card"].setStyleSheet("background: transparent; border: none; padding: 0;")
             
@@ -161,9 +164,9 @@ class AudioMiniWindow(QMainWindow):
         
         self.export_card["status_label"].setText(status)
         if progress > 0:
-            self.export_card["progress_label"].setText(f"{progress}%")
+            self.export_card["progress_percent"].setText(f"{progress}%")
         else:
-             self.export_card["progress_label"].setText("")
+             self.export_card["progress_percent"].setText("0%")
 
         if payload.get("finished"):
             self.header.set_runtime_status("idle")
@@ -187,7 +190,13 @@ def start_mini_app(targets: list[Path]|None, app_root: str|Path, app_id: str, ti
     existing_instance = QApplication.instance()
     app = existing_instance or QApplication(sys.argv)
     
-    window = AudioMiniWindow(state.files, Path(app_root), app_id, title, description)
+    window = AudioMiniWindow(
+        targets=state.files,
+        app_root=Path(app_root),
+        default_task=app_id,
+        title=title,
+        subtitle=description
+    )
     window.show()
     
     # Only execute the event loop if we created the app instance here

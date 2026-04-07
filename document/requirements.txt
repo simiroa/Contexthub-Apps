@@ -1,8 +1,11 @@
 customtkinter
 numpy
 opencv-python
+openpyxl
 pdf2docx
 Pillow
 pymupdf4llm
 pypdf
+python-pptx
+PySide6
 rapidocr-onnxruntime

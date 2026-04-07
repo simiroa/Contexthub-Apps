@@ -62,6 +62,9 @@ def main() -> int:
     if not _show_confirm(targets):
         return 0
     if _capture_mode():
+        # Keep the process alive for a moment so capture tool has time to detect window if it's still closing
+        import time
+        time.sleep(0.5)
         return 0
 
     from features.mesh.mesh_console import run_cad_to_obj_console

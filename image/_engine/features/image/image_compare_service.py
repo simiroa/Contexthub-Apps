@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple, Dict
 import numpy as np
 from PIL import Image
+from PySide6.QtCore import QObject, QThread, Signal
 
 # Import core logic from relative or absolute features.image
 try:
@@ -26,6 +27,29 @@ except ModuleNotFoundError:
             return logger
 
 logger = setup_logger("image_compare_service")
+
+class ImageLoadWorker(QObject):
+    finished = Signal(tuple)  # (path, pil_image, type)
+    error = Signal(str)
+
+    def __init__(self, service, path, channel="RGB", task_type="load"):
+        super().__init__()
+        self.service = service
+        self.path = path
+        self.channel = channel
+        self.task_type = task_type
+        self.path_b = None
+
+    def run(self):
+        try:
+            if self.task_type == "load":
+                pil = self.service.get_pil_image(self.path, self.channel)
+                self.finished.emit((self.path, pil, "load"))
+            elif self.task_type == "metrics":
+                ssim, diff = self.service.compute_metrics(self.path, self.path_b, self.channel)
+                self.finished.emit(((self.path, self.path_b), (ssim, diff), "metrics"))
+        except Exception as e:
+            self.error.emit(str(e))
 
 class ImageCompareService:
     def __init__(self):

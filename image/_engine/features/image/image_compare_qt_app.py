@@ -29,12 +29,10 @@ from contexthub.ui.qt.shell import (
     attach_size_grip,
 )
 from shared._engine.components.icon_button import build_icon_button
-from contexthub.ui.qt.panels import (
-    ComparativePreviewWidget,
-)
 
 from .image_compare_state import ImageCompareState
-from .image_compare_service import ImageCompareService
+from .image_compare_service import ImageCompareService, ImageLoadWorker
+from .advanced_compare_widget import AdvancedCompareWidget
 
 class ImageCompareWindow(QMainWindow):
     def __init__(self, app_root: Path, targets: list[str] = None):
@@ -124,11 +122,11 @@ class ImageCompareWindow(QMainWindow):
         tools_row.addWidget(self.metrics_label)
         preview_vbox.addLayout(tools_row)
 
-        self.comp_preview = ComparativePreviewWidget()
+        self.comp_preview = AdvancedCompareWidget()
         preview_vbox.addWidget(self.comp_preview, 1)
 
         self.body_layout.addWidget(self.left_panel, 1)
-        self.body_layout.addWidget(self.preview_frame, 2)
+        self.body_layout.addWidget(self.preview_frame, 3) 
 
         self.main_layout.addWidget(self.body_container, 1)
         

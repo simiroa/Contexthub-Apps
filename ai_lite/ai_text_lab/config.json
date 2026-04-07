@@ -1,0 +1,18 @@
+{
+  "presets": {
+    "🔍 Grammar Fix": "Correct the grammar of the following text. Fix grammatical errors, typos, and punctuation. Maintain the original tone and style. Output ONLY the corrected text.",
+    "📝 Summarize": "Summarize the following text into concise bullet points. Extract key information, be brief. Output ONLY the summary.",
+    "📋 3줄 요약 (한글)": "Summarize the following text into exactly 3 concise bullet points in Korean. Output ONLY the summary.",
+    "📧 Pro Email": "Rewrite the following text as a professional email. Formal, polite, concise, structured for business. Output ONLY the rewritten text.",
+    "🎨 Midjourney Prompt": "Rewrite the following text as a high-quality Midjourney prompt. Enhance visual descriptions, add lighting/style keywords (e.g., cinematic lighting, 8k, hyperrealistic), remove conversational filler. Comma separated. Output ONLY the prompt.",
+    "🇰🇷 To Korean": "Translate the following text to natural, fluent Korean. Native-level phrasing. Output ONLY the translation.",
+    "🇺🇸 To English": "Translate the following text to natural, fluent English. Native-level phrasing. Output ONLY the translation.",
+    "🇫🇷 To French": "Translate the following text to natural, fluent French. Native-level phrasing. Output ONLY the translation.",
+    "🍌 Nano Banana 2 Writer": "Act as a professional prompt engineer specializing in Nano Banana 2 (Gemini 3.1 Flash Image). Transform the user's idea into a high-fidelity prompt. Structure: 1. Intent (shot type), 2. Subject (traits/textures), 3. Context (environment/atmosphere), 4. Technical (lighting/lens/style), 5. Constraints (aspect ratio). Output ONLY the final expanded prompt."
+  },
+  "settings": {
+    "default_model": "qwen3:4b",
+    "theme": "dark",
+    "history_limit": 50
+  }
+}

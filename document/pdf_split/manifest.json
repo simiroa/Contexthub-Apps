@@ -1,57 +1,51 @@
-﻿{
-    "schema_version":  "1.2",
-    "id":  "pdf_split",
-    "name":  "PDF Split",
-    "description":  "Confirm selected PDFs in a compact Qt shell, choose a simple output format, then split in a console flow.",
-    "author":  "ContextHub",
-    "version":  "1.1.0",
-    "icon":  "icon.png",
-    "runtime":  {
-                    "category":  "document",
-                    "python_version":  "3.11",
-                    "required_binaries":  [
-
-                                          ]
-                },
-    "execution":  {
-                      "entry_point":  "main.py",
-                      "arguments":  "",
-                      "mode":  "console",
-                      "working_directory":  "./",
-                      "auto_start":  false,
-                      "run_as_admin":  false,
-                      "single_instance":  false,
-                      "env_vars":  {
-
-                                   }
-                  },
-    "monitoring":  {
-                       "enabled":  false,
-                       "type":  "process",
-                       "target":  "pdf_split",
-                       "interval":  5000,
-                       "on_active":  null,
-                       "on_inactive":  null,
-                       "on_error":  null
-                   },
-    "triggers":  {
-                     "tray":  false,
-                     "quick_launcher":  false,
-                     "context_menu":  {
-                                          "enabled":  true,
-                                          "extensions":  [
-                                                             ".pdf"
-                                                         ],
-                                          "scopes":  [
-
-                                                     ]
-                                      },
-                     "sidebar_widget":  null
-                 },
-    "ui":  {
-               "enabled":  true,
-               "framework":  "pyside6",
-               "shared_theme":  "contexthub",
-               "template":  "mini"
-           }
+{
+  "schema_version": "1.2",
+  "id": "pdf_split",
+  "name": "PDF Split",
+  "description": "Confirm selected PDFs in a compact Qt shell, choose a simple output format, then split in a console flow.",
+  "author": "ContextHub",
+  "version": "1.1.0",
+  "icon": "icon.png",
+  "runtime": {
+    "category": "document",
+    "environment_id": null,
+    "python_version": "3.11",
+    "required_binaries": []
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "console",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": "pdf_split",
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": false,
+    "quick_launcher": false,
+    "context_menu": {
+      "enabled": true,
+      "extensions": [
+        ".pdf"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "pyside6",
+    "shared_theme": "contexthub"
+  }
 }

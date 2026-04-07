@@ -12,9 +12,9 @@ from contexthub.ui.qt.shell import (
     get_shell_metrics,
     qt_t,
     set_badge_role,
-    set_button_role,
     set_surface_role,
 )
+from shared._engine.components.icon_button import build_icon_button
 from features.audio.audio_toolbox_panels import build_option_panels
 from features.audio.audio_toolbox_run_widget import AudioRunWidget
 from features.audio.audio_toolbox_service import AudioToolboxService
@@ -128,19 +128,6 @@ class AudioToolboxWindow(QMainWindow):
         self.size_grip = attach_size_grip(shell_layout, self.window_shell)
         root.addWidget(self.window_shell)
 
-        field_style = """
-            QComboBox, QSpinBox, QDoubleSpinBox, QTextEdit {
-                min-height: 38px;
-                border-radius: 12px;
-            }
-        """
-        self.task_combo.setStyleSheet(field_style)
-        self.model_combo.setStyleSheet(field_style)
-        self.stem_mode_combo.setStyleSheet(field_style)
-        self.convert_quality_combo.setStyleSheet(field_style)
-        self.run_foldout.export_format_combo.setStyleSheet(
-            "QComboBox#compactField { min-height: 34px; border-radius: 12px; padding: 4px 10px; }"
-        )
 
     def _build_left_panel(self) -> QWidget:
         panel = QFrame()
@@ -172,12 +159,10 @@ class AudioToolboxWindow(QMainWindow):
         transport = QHBoxLayout()
         transport.setContentsMargins(0, 0, 0, 0)
         transport.setSpacing(6)
-        self.play_btn = QPushButton("Play")
-        self.pause_btn = QPushButton("Pause")
+        self.play_btn = build_icon_button(qt_t("audio_toolbox.play", "Play"), icon_name="play", role="subtle")
+        self.pause_btn = build_icon_button(qt_t("audio_toolbox.pause", "Pause"), icon_name="pause", role="subtle")
         self.time_label = QLabel("0:00 / 0:00")
         self.time_label.setObjectName("muted")
-        set_button_role(self.play_btn, "pill")
-        set_button_role(self.pause_btn, "pill")
         transport.addWidget(self.play_btn, 0)
         transport.addWidget(self.pause_btn, 0)
         transport.addWidget(self.time_label, 1)
@@ -204,12 +189,12 @@ class AudioToolboxWindow(QMainWindow):
         action_row = QHBoxLayout()
         action_row.setContentsMargins(0, 0, 0, 0)
         action_row.setSpacing(6)
-        self.add_btn = QPushButton("Add")
-        self.remove_btn = QPushButton("Remove")
-        self.clear_btn = QPushButton("Clear")
-        self.pick_output_btn = QPushButton("Output Folder")
+        self.add_btn = build_icon_button(qt_t("audio_toolbox.add", "Add"), icon_name="plus", role="secondary")
+        self.remove_btn = build_icon_button(qt_t("audio_toolbox.remove", "Remove"), icon_name="minus", role="secondary")
+        self.clear_btn = build_icon_button(qt_t("audio_toolbox.clear", "Clear"), icon_name="trash-2", role="secondary")
+        self.pick_output_btn = build_icon_button(qt_t("audio_toolbox.output_folder", "Output Folder"), icon_name="folder", role="secondary")
+        
         for button in (self.add_btn, self.remove_btn, self.clear_btn, self.pick_output_btn):
-            set_button_role(button, "secondary")
             action_row.addWidget(button)
         queue_layout.addLayout(action_row)
         layout.addWidget(queue_card, 1)
@@ -597,7 +582,15 @@ def start_app(targets: list[Path] | None, app_root: str | Path) -> int:
     state = AudioToolboxState(files=[Path(item) for item in (targets or [])])
     if state.files:
         state.selected_index = 0
-    app = QApplication.instance() or QApplication(sys.argv)
+    
+    # Check for existing instance before creating a new one
+    existing_instance = QApplication.instance()
+    app = existing_instance or QApplication(sys.argv)
+    
     window = AudioToolboxWindow(state, app_root)
     window.show()
-    return app.exec()
+    
+    # Only execute the event loop if we created the app instance here
+    if not existing_instance:
+        return app.exec()
+    return 0

@@ -51,7 +51,6 @@ class AudioRunWidget(QFrame):
         dir_row.setSpacing(6)
         self.output_dir_edit = QLineEdit()
         self.output_dir_edit.setPlaceholderText("Custom output folder")
-        self.output_dir_edit.setMinimumHeight(34)
         self.browse_btn = QPushButton("Browse")
         self.browse_btn.setObjectName("iconBtn")
         self.browse_btn.clicked.connect(self.browse_requested.emit)
@@ -87,10 +86,8 @@ class AudioRunWidget(QFrame):
         trim_row.setSpacing(6)
         self.trim_start_edit = QLineEdit()
         self.trim_start_edit.setPlaceholderText("Start 0:00")
-        self.trim_start_edit.setMinimumHeight(34)
         self.trim_end_edit = QLineEdit()
         self.trim_end_edit.setPlaceholderText("End 0:30")
-        self.trim_end_edit.setMinimumHeight(34)
         trim_row.addWidget(self.trim_start_edit, 1)
         trim_row.addWidget(self.trim_end_edit, 1)
         expanded.addLayout(trim_row)
@@ -122,15 +119,13 @@ class AudioRunWidget(QFrame):
         footer.addLayout(status_col, 1)
 
         self.export_format_combo = QComboBox()
-        self.export_format_combo.setMinimumHeight(34)
         self.export_format_combo.setMinimumWidth(120)
         self.export_format_combo.setObjectName("compactField")
         self.toggle_btn = QPushButton("⋯")
         self.toggle_btn.setObjectName("iconBtn")
         self.toggle_btn.clicked.connect(self.toggle_requested.emit)
         self.run_btn = QPushButton("Run Task")
-        self.run_btn.setObjectName("primary")
-        self.run_btn.setMinimumHeight(max(38, m.primary_button_height - 8))
+        self.run_btn.setProperty("buttonRole", "primary")
         self.run_btn.setMinimumWidth(220)
         self.run_btn.clicked.connect(self.run_requested.emit)
         footer.addWidget(self.export_format_combo, 0)
@@ -138,24 +133,6 @@ class AudioRunWidget(QFrame):
         footer.addWidget(self.run_btn, 0)
         root.addLayout(footer)
 
-        segment_style = f"""
-            QPushButton#segmentBtn {{
-                min-height: 32px;
-                padding: 4px 12px;
-                border-radius: 12px;
-                background: {p.control_bg};
-                border: 1px solid {p.control_border};
-            }}
-            QPushButton#segmentBtn:checked {{
-                background: {p.card_bg};
-                border: 1px solid {p.chip_border};
-                color: {p.text};
-                font-weight: 600;
-            }}
-        """
-        self.source_btn.setStyleSheet(segment_style)
-        self.task_folder_btn.setStyleSheet(segment_style)
-        self.custom_btn.setStyleSheet(segment_style)
         self.set_expanded(False)
         self.set_trim_enabled(False)
 

@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.2",
+  "id": "extract_audio",
+  "name": "Extract Audio",
+  "description": "Extract all audio tracks or isolate vocals/bgm from media files.",
+  "author": "ContextHub",
+  "version": "1.2.0",
+  "icon": "icon.png",
+  "runtime": {
+    "category": "audio",
+    "environment_id": null,
+    "python_version": "3.11",
+    "required_binaries": [
+      "ffmpeg"
+    ]
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "gui",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": "extract_audio",
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": false,
+    "quick_launcher": false,
+    "context_menu": {
+      "enabled": true,
+      "extensions": [
+        ".mp4",
+        ".mov",
+        ".avi",
+        ".mkv",
+        ".webm",
+        ".m4v",
+        ".wav",
+        ".mp3",
+        ".ogg",
+        ".flac",
+        ".m4a",
+        ".aac"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "pyside6",
+    "shared_theme": "contexthub"
+  }
+}

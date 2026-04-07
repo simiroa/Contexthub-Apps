@@ -6,9 +6,11 @@ diffusers
 faster-whisper
 gfpgan
 kornia
+librosa
 numpy
 opencv-python
 Pillow
+PySide6
 realesrgan
 torch
 transformers

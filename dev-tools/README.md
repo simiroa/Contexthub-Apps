@@ -13,7 +13,7 @@
 
 ## 포함 스크립트
 
-- `sync-shared-runtime.ps1`: 허브 저장소에서 공유 런타임을 이 저장소 안으로 복제
+- `sync-shared-runtime.ps1`: `dev-tools\runtime\Shared`를 허브 저장소 `Runtimes\Shared`로 미러링
 - `run-app-local.ps1`: 카테고리/앱을 지정해 일반 실행
 - `run-image-resize-local.ps1`: `image/resize_power_of_2` 전용 빠른 실행 예시
 - `capture-python-gui-apps.ps1`: Python GUI 앱들을 순회하며 창 캡처와 로그 생성
@@ -47,6 +47,7 @@ powershell -ExecutionPolicy Bypass -File .\dev-tools\run-image-resize-local.ps1 
 
 ## 주의
 
+- 허브에서 실제 앱 실행을 테스트하기 전에는 `sync-shared-runtime.ps1`로 shared runtime을 먼저 허브 쪽에 반영하는 것이 기준이다.
 - 기본 우선순위는 `dev-tools\runtime\Shared`다. 없으면 허브 저장소의 `Runtimes\Shared`를 사용한다.
 - 일부 앱은 공유 런타임 외에 모델, 외부 바이너리, 설치형 도구가 추가로 필요하다.
 - GUI 앱은 실행 후 창이 열린 상태로 대기하는 것이 정상이다.

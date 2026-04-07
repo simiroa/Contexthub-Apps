@@ -1,57 +1,53 @@
-﻿{
-    "schema_version":  "1.2",
-    "id":  "youtube_downloader",
-    "name":  "Video Downloader",
-    "description":  "Legacy Utilities tool.",
-    "author":  "ContextHub Legacy",
-    "version":  "1.0.1",
-    "icon":  null,
-    "runtime":  {
-                    "category":  "utilities",
-                    "python_version":  "3.11",
-                    "required_binaries":  [
-                                              "ffmpeg"
-                                          ]
-                },
-    "execution":  {
-                      "entry_point":  "main.py",
-                      "arguments":  "",
-                      "mode":  "gui",
-                      "working_directory":  "./",
-                      "auto_start":  false,
-                      "run_as_admin":  false,
-                      "single_instance":  false,
-                      "env_vars":  {
-
-                                   }
-                  },
-    "monitoring":  {
-                       "enabled":  false,
-                       "type":  "process",
-                       "target":  "youtube_downloader",
-                       "interval":  5000,
-                       "on_active":  null,
-                       "on_inactive":  null,
-                       "on_error":  null
-                   },
-    "triggers":  {
-                     "tray":  true,
-                     "quick_launcher":  true,
-                     "context_menu":  {
-                                          "enabled":  false,
-                                          "extensions":  [
-                                                             "*"
-                                                         ],
-                                          "scopes":  [
-
-                                                     ]
-                                      },
-                     "sidebar_widget":  null
-                 },
-    "ui":  {
-               "enabled":  true,
-               "framework":  "pyside6",
-               "shared_theme":  "contexthub",
-               "template":  "special"
-           }
+{
+  "schema_version": "1.2",
+  "id": "youtube_downloader",
+  "name": "Video Downloader",
+  "description": "Legacy Utilities tool.",
+  "author": "ContextHub Legacy",
+  "version": "1.0.1",
+  "icon": null,
+  "runtime": {
+    "category": "utilities",
+    "environment_id": null,
+    "python_version": "3.11",
+    "required_binaries": [
+      "ffmpeg"
+    ]
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "gui",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": "youtube_downloader",
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": true,
+    "quick_launcher": true,
+    "context_menu": {
+      "enabled": false,
+      "extensions": [
+        "*"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "pyside6",
+    "shared_theme": "contexthub"
+  }
 }

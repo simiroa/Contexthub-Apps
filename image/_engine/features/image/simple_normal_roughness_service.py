@@ -15,7 +15,7 @@ try:
 except ImportError:
     sobel = None
 
-from features.image.simple_normal_roughness_state import SimpleNormalRoughnessState, InputAsset
+from _engine.features.image.simple_normal_roughness_state import SimpleNormalRoughnessState, InputAsset
 from contexthub.ui.qt.shell import qt_t
 
 class SimpleNormalRoughnessService:

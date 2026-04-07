@@ -116,6 +116,33 @@ class BackgroundRemovalWindow(QMainWindow):
         self.param_panel.preset_label.hide()
         self.param_panel.preset_combo.hide()
         
+        self.runtime_status_badge = self.header_surface.runtime_status_badge
+        self.header_surface.open_webui_btn.hide()
+        shell_layout.addWidget(self.header_surface)
+
+        self.splitter = QSplitter(Qt.Horizontal)
+        self.splitter.setChildrenCollapsible(False)
+        self.splitter.setHandleWidth(6)
+        
+        self.preview_list_panel = PreviewListPanel(
+            preview_title=qt_t("rmbg_background.preview", "Preview"),
+            list_title=qt_t("rmbg_background.input_list", "Inputs"),
+            list_hint=qt_t("rmbg_background.list_hint", "Select an image to preview."),
+        )
+        
+        right_card = QFrame()
+        right_card.setObjectName("card")
+        right_layout = QVBoxLayout(right_card)
+        right_layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
+        right_layout.setSpacing(m.section_gap)
+
+        self.param_panel = FixedParameterPanel(
+            title=qt_t("rmbg_background.parameters", "Parameters"),
+            description=qt_t("rmbg_background.param_desc", "Configure removal settings"),
+        )
+        self.param_panel.preset_label.hide()
+        self.param_panel.preset_combo.hide()
+        
         # Model Choice
         self.model_combo = QComboBox()
         self.model_combo.addItems(["birefnet", "inspyrenet", "rmbg"])
@@ -135,20 +162,12 @@ class BackgroundRemovalWindow(QMainWindow):
         
         # Download Button
         self.download_btn = QPushButton(qt_t("rmbg_background.download_models", "Download Models"))
-        self.download_btn.setObjectName("pillBtn")
+        self.download_btn.setProperty("buttonRole", "pill")
         self.param_panel.add_field("", self.download_btn)
 
         right_layout.addWidget(self.param_panel, 1)
 
         self.export_panel = ExportFoldoutPanel(qt_t("rmbg_background.export_and_run", "Process And Run"))
-        self.export_panel.set_values(
-            "",
-            self.service.state.output_options.file_prefix,
-            self.service.state.output_options.open_folder_after_run,
-            self.service.state.output_options.export_session_json,
-        )
-        self.export_panel.set_expanded(False)
-        self.export_panel.export_btn.hide()
         right_layout.addWidget(self.export_panel, 0)
         
         self.splitter.addWidget(self.preview_list_panel)

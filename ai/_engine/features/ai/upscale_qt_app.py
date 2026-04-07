@@ -127,14 +127,9 @@ class UpscaleWindow(QMainWindow):
         self.face_check.setChecked(self.service.state.face_enhance)
         self.param_panel.add_field("", self.face_check)
         
-        # Use Tile
-        self.tile_check = QCheckBox(qt_t("esrgan_upscale.use_tile", "Use Tiling for low VRAM"))
-        self.tile_check.setChecked(self.service.state.use_tile)
-        self.param_panel.add_field("", self.tile_check)
-
         # Download Button
         self.download_btn = QPushButton(qt_t("esrgan_upscale.download_models", "Download Models"))
-        self.download_btn.setObjectName("pillBtn")
+        self.download_btn.setProperty("buttonRole", "pill")
         self.param_panel.add_field("", self.download_btn)
 
         right_layout.addWidget(self.param_panel, 1)

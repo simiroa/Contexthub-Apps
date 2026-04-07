@@ -8,6 +8,7 @@
   "icon": null,
   "runtime": {
     "category": "comfyui",
+    "environment_id": null,
     "python_version": "3.11",
     "required_binaries": [
       "ComfyUI"
@@ -47,7 +48,6 @@
   "ui": {
     "enabled": true,
     "framework": "pyside6",
-    "shared_theme": "contexthub",
-    "template": "mini"
+    "shared_theme": "contexthub"
   }
 }

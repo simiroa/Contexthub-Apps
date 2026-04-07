@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.2",
+  "id": "compress_audio",
+  "name": "Compress Audio",
+  "description": "Reduce audio file size with optimized compression presets.",
+  "author": "ContextHub",
+  "version": "1.0.0",
+  "icon": "icon.png",
+  "runtime": {
+    "category": "audio",
+    "environment_id": null,
+    "python_version": "3.11",
+    "required_binaries": [
+      "ffmpeg"
+    ]
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "gui",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": null,
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": true,
+    "quick_launcher": true,
+    "context_menu": {
+      "enabled": true,
+      "extensions": [
+        ".wav",
+        ".mp3",
+        ".ogg",
+        ".flac",
+        ".m4a",
+        ".aac",
+        ".wma"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": false,
+    "framework": "pyside6",
+    "shared_theme": ""
+  }
+}

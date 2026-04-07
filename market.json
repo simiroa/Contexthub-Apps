@@ -171,49 +171,13 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/marigold_pbr.zip"
     },
     {
-        "id": "qwen3_tts",
-        "name": "Qwen3 TTS",
-        "description": "Generate speech with Qwen3-TTS custom voice or voice clone.",
-        "version": "1.0.1",
-        "category": "ai",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/qwen3_tts/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/qwen3_tts.zip"
-    },
-    {
-        "id": "whisper_subtitle",
-        "name": "Whisper Subtitle AI (Qt)",
-        "description": "Queue-based subtitle generation with editable SRT/VTT/TXT/JSON outputs and per-asset session recovery.",
-        "version": "1.0.0",
-        "category": "ai",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/whisper_subtitle/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/whisper_subtitle.zip"
-    },
-    {
-        "id": "extract_bgm",
-        "name": "Extract BGM",
-        "description": "Confirm selected audio files in a compact Qt shell, then extract BGM stems in a console flow.",
-        "version": "1.1.0",
-        "category": "audio",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_bgm/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_bgm.zip"
-    },
-    {
         "id": "normalize_volume",
         "name": "Normalize Volume",
-        "description": "Confirm selected audio files in a compact Qt shell, then normalize loudness in a console flow.",
-        "version": "1.1.0",
+        "description": "Professional audio loudness normalization to target LUFS using EBU R128 standards.",
+        "version": "1.2.0",
         "category": "audio",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/normalize_volume/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normalize_volume.zip"
-    },
-    {
-        "id": "extract_voice",
-        "name": "Extract Voice",
-        "description": "Confirm selected audio files in a compact Qt shell, then extract voice stems in a console flow.",
-        "version": "1.1.0",
-        "category": "audio",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_voice/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_voice.zip"
     },
     {
         "id": "audio_toolbox",
@@ -223,6 +187,42 @@
         "category": "audio",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/audio_toolbox/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/audio_toolbox.zip"
+    },
+    {
+        "id": "extract_audio",
+        "name": "Extract Audio",
+        "description": "Unified tool for extracting all audio from video or isolating vocals/bgm using AI.",
+        "version": "1.2.0",
+        "category": "audio",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_audio/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_audio.zip"
+    },
+    {
+        "id": "convert_audio",
+        "name": "Convert Audio",
+        "description": "Fast audio format conversion (MP3, WAV, FLAC, M4A) with high-quality presets and metadata preservation.",
+        "version": "1.0.0",
+        "category": "audio",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/convert_audio/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/convert_audio.zip"
+    },
+    {
+        "id": "enhance_audio",
+        "name": "Enhance Audio",
+        "description": "Improve audio clarity, reduce background noise, and optimize levels with one-click enhancement profiles.",
+        "version": "1.0.0",
+        "category": "audio",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/enhance_audio/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/enhance_audio.zip"
+    },
+    {
+        "id": "compress_audio",
+        "name": "Compress Audio",
+        "description": "Efficient audio compression to reduce file size while maintaining optimal hearing quality.",
+        "version": "1.0.0",
+        "category": "audio",
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/compress_audio/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/compress_audio.zip"
     },
     {
         "id": "pdf_split",
@@ -331,14 +331,5 @@
         "category": "video",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/remove_audio/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/remove_audio.zip"
-    },
-    {
-        "id": "extract_audio",
-        "name": "Extract Audio",
-        "description": "Confirm selected videos in a compact Qt shell, then extract audio in a console flow.",
-        "version": "1.1.0",
-        "category": "video",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/extract_audio/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_audio.zip"
     }
 ]

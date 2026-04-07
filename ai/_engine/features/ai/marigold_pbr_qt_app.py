@@ -46,18 +46,17 @@ APP_TITLE = qt_t("marigold_gui.title", "Marigold PBR")
 APP_SUBTITLE = qt_t("marigold_gui.header", "Generate depth, normal, and material maps from a single image.")
 
 
-class ResultMapSwitcher(QFrame):
-    map_selected = Signal(str) # "Original", "Depth", "Normal", etc.
+class MapSwitcher(QFrame):
+    map_selected = Signal(str)
 
     def __init__(self) -> None:
         super().__init__()
-        self.setObjectName("card")
-        self.setFixedHeight(120)
+        self.setObjectName("subtlePanel")
         self.layout = QHBoxLayout(self)
-        self.layout.setContentsMargins(10, 5, 10, 5)
-        self.layout.setSpacing(10)
+        self.layout.setContentsMargins(8, 6, 8, 6)
+        self.layout.setSpacing(8)
         self.buttons: dict[str, QPushButton] = {}
-        
+
     def set_available_maps(self, labels: list[str]) -> None:
         # Clear existing
         while self.layout.count():
@@ -68,19 +67,23 @@ class ResultMapSwitcher(QFrame):
 
         for label in labels:
             btn = QPushButton(label)
-            btn.setObjectName("pillBtn")
-            btn.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-            btn.clicked.connect(lambda l=label: self.map_selected.emit(l))
+            btn.setProperty("buttonRole", "pill")
+            btn.setCheckable(True)
+            btn.clicked.connect(lambda _, l=label: self.map_selected.emit(l))
             self.layout.addWidget(btn)
             self.buttons[label] = btn
         self.layout.addStretch(1)
 
 
 class MarigoldPBRWindow(QMainWindow):
-    def __init__(self, service: MarigoldPBRService, app_root: str | Path, targets: list[str] | None = None) -> None:
+    map_selected = Signal(str) # "Original", "Depth", "Normal", etc.
+
+    def __init__(self, service: MarigoldPBRService, app_root: Path, targets: list[str] | None = None) -> None:
         super().__init__()
         self.service = service
-        self.app_root = Path(app_root)
+        self.app_root = app_root
+        self.targets = targets
+        self.setObjectName("card")
         self._settings = QSettings("Contexthub", APP_ID)
         self._runtime_signature = runtime_settings_signature()
         self._runtime_timer = QTimer(self)
@@ -146,19 +149,16 @@ class MarigoldPBRWindow(QMainWindow):
         self.viewer_label = QLabel(qt_t("ai_common.drop_hint", "Drop an image here to start"))
         self.viewer_label.setAlignment(Qt.AlignCenter)
         self.viewer_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.viewer_label.setStyleSheet(f"background: {p.field_bg}; border-radius: 12px;")
         viewer_layout.addWidget(self.viewer_label)
         workspace_layout.addWidget(self.viewer_card, 1)
 
-        # 2. Add / Result Switcher Row
+        # 2. Footer Row (Switcher + Action)
         self.footer_row = QHBoxLayout()
-        self.add_btn = QPushButton("＋ " + qt_t("marigold_gui.add_image", "Add Image"))
-        self.add_btn.setObjectName("primary")
-        self.add_btn.setMinimumHeight(44)
-        self.footer_row.addWidget(self.add_btn, 0)
+        self.add_btn = QPushButton(qt_t("common.add", "Add Image"))
+        self.add_btn.setProperty("buttonRole", "pill")
+        self.footer_row.addWidget(self.add_btn)
 
-        self.switcher = ResultMapSwitcher()
-        self.switcher.set_available_maps(["Original"])
+        self.switcher = MapSwitcher()
         self.footer_row.addWidget(self.switcher, 1)
         workspace_layout.addLayout(self.footer_row)
 
@@ -173,7 +173,7 @@ class MarigoldPBRWindow(QMainWindow):
         settings_header.setContentsMargins(0, 0, 0, 0)
         settings_header.setSpacing(8)
         self.download_btn = QPushButton(qt_t("marigold_gui.download_models", "Check Models"))
-        self.download_btn.setObjectName("pillBtn")
+        self.download_btn.setProperty("buttonRole", "pill")
         self.download_btn.setToolTip(qt_t("marigold_gui.download_models", "Download/Check Models"))
         settings_header.addStretch(1)
         settings_header.addWidget(self.download_btn, 0)
@@ -338,6 +338,7 @@ class MarigoldPBRWindow(QMainWindow):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             ok, message = self.service.download_models(lambda m: self.runtime_status_badge.setText(m))
+            from PySide6.QtWidgets import QMessageBox
             QMessageBox.information(self, "Model Setup", message)
             self._refresh_all()
         finally:

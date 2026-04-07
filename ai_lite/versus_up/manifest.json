@@ -1,50 +1,49 @@
-﻿{
-    "schema_version":  "1.2",
-    "id":  "versus_up",
-    "name":  "VersusUp",
-    "description":  "Qt-based product decision support system with weighted scoring and Ollama Vision review.",
-    "author":  "Antigravity",
-    "version":  "2.0.0",
-    "icon":  "icon.png",
-    "runtime":  {
-                    "category":  "ai_lite",
-                    "python_version":  "3.11",
-                    "required_binaries":  [
-
-                                          ]
-                },
-    "execution":  {
-                      "entry_point":  "main.py",
-                      "arguments":  "",
-                      "mode":  "gui",
-                      "working_directory":  "./",
-                      "auto_start":  false,
-                      "run_as_admin":  false,
-                      "single_instance":  true,
-                      "env_vars":  {
-
-                                   }
-                  },
-    "monitoring":  {
-                       "enabled":  false
-                   },
-    "triggers":  {
-                     "tray":  false,
-                     "quick_launcher":  true,
-                     "context_menu":  {
-                                          "enabled":  false,
-                                          "extensions":  [
-
-                                                         ],
-                                          "scopes":  [
-
-                                                     ]
-                                      }
-                 },
-    "ui":  {
-               "enabled":  true,
-               "framework":  "pyside6",
-               "shared_theme":  "contexthub",
-               "template":  "special"
-           }
+{
+  "schema_version": "1.2",
+  "id": "versus_up",
+  "name": "VersusUp",
+  "description": "Qt-based product decision support system with weighted scoring and Ollama Vision review.",
+  "author": "Antigravity",
+  "version": "2.0.0",
+  "icon": "icon.png",
+  "runtime": {
+    "category": "ai_lite",
+    "environment_id": null,
+    "python_version": "3.11",
+    "required_binaries": []
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "gui",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": true,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": null,
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": false,
+    "quick_launcher": true,
+    "context_menu": {
+      "enabled": false,
+      "extensions": [],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "pyside6",
+    "shared_theme": "contexthub"
+  }
 }

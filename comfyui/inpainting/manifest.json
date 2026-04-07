@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.2",
+  "id": "inpainting",
+  "name": "ComfyUI Inpainting",
+  "description": "Brush-based inpainting with ComfyUI \u2014 load image, paint mask, regenerate.",
+  "author": "ContextHub",
+  "version": "1.0.0",
+  "icon": "icon.png",
+  "runtime": {
+    "category": "comfyui",
+    "environment_id": null,
+    "python_version": "3.11",
+    "required_binaries": [
+      "ComfyUI"
+    ]
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "console",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": "inpainting",
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": true,
+    "quick_launcher": false,
+    "context_menu": {
+      "enabled": true,
+      "extensions": [
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".webp",
+        ".bmp",
+        ".tif",
+        ".tiff"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "pyside6",
+    "shared_theme": "contexthub"
+  }
+}

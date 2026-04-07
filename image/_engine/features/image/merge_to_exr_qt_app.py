@@ -13,6 +13,7 @@ from contexthub.ui.qt.shell import (
     set_surface_role,
     qt_t,
 )
+from shared._engine.components.icon_button import build_icon_button
 from features.image.merge_to_exr.service import ExrMergeService
 
 try:
@@ -161,11 +162,11 @@ class MergeToExrWindow(QMainWindow):
         layer_layout.addWidget(hint)
 
         toolbar = QHBoxLayout()
-        self.add_btn = QPushButton(qt_t("merge_to_exr.add", "Add Images"))
-        self.remove_btn = QPushButton(qt_t("merge_to_exr.remove", "Remove"))
-        self.up_btn = QPushButton(qt_t("merge_to_exr.up", "Move Up"))
-        self.down_btn = QPushButton(qt_t("merge_to_exr.down", "Move Down"))
-        self.clear_btn = QPushButton(qt_t("merge_to_exr.clear", "Clear"))
+        self.add_btn = build_icon_button(qt_t("merge_to_exr.add", "Add Images"), icon_name="plus", role="secondary")
+        self.remove_btn = build_icon_button(qt_t("merge_to_exr.remove", "Remove"), icon_name="minus", role="ghost")
+        self.up_btn = build_icon_button(qt_t("merge_to_exr.up", "Move Up"), icon_name="chevron-up", role="ghost")
+        self.down_btn = build_icon_button(qt_t("merge_to_exr.down", "Move Down"), icon_name="chevron-down", role="ghost")
+        self.clear_btn = build_icon_button(qt_t("merge_to_exr.clear", "Clear"), icon_name="trash-2", role="ghost")
         for button in (self.add_btn, self.remove_btn, self.up_btn, self.down_btn, self.clear_btn):
             toolbar.addWidget(button)
         layer_layout.addLayout(toolbar)

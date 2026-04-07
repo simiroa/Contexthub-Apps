@@ -16,6 +16,7 @@ from contexthub.ui.qt.shell import (
     qt_t,
 )
 from features.document.pdf_merge.service import PdfMergeService
+from shared._engine.components.icon_button import build_icon_button
 
 try:
     from PySide6.QtCore import Qt, QTimer
@@ -112,11 +113,11 @@ class PdfMergeWindow(QMainWindow):
         list_layout.addWidget(self.drop_hint)
 
         action_row = QHBoxLayout()
-        self.add_btn = QPushButton(qt_t("pdf_merge.add", "Add PDFs"))
-        self.remove_btn = QPushButton(qt_t("pdf_merge.remove", "Remove"))
-        self.up_btn = QPushButton(qt_t("pdf_merge.up", "Move Up"))
-        self.down_btn = QPushButton(qt_t("pdf_merge.down", "Move Down"))
-        self.clear_btn = QPushButton(qt_t("pdf_merge.clear", "Clear"))
+        self.add_btn = build_icon_button(qt_t("pdf_merge.add", "Add PDFs"), icon_name="plus", role="secondary")
+        self.remove_btn = build_icon_button(qt_t("pdf_merge.remove", "Remove"), icon_name="trash-2", role="secondary")
+        self.up_btn = build_icon_button(qt_t("pdf_merge.up", "Move Up"), icon_name="chevron-up", role="secondary")
+        self.down_btn = build_icon_button(qt_t("pdf_merge.down", "Move Down"), icon_name="chevron-down", role="secondary")
+        self.clear_btn = build_icon_button(qt_t("pdf_merge.clear", "Clear"), icon_name="refresh-ccw", role="secondary")
         for button in (self.add_btn, self.remove_btn, self.up_btn, self.down_btn, self.clear_btn):
             action_row.addWidget(button)
         list_layout.addLayout(action_row)

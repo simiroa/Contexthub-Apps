@@ -176,12 +176,11 @@ class BlurGray32Dialog(QDialog):
         actions.setSpacing(max(8, m.section_gap - 4))
 
         cancel_btn = QPushButton(qt_t("common.cancel", "Cancel"))
-        cancel_btn.setObjectName("pillBtn")
+        cancel_btn.setProperty("buttonRole", "pill")
         cancel_btn.clicked.connect(self.reject)
 
         run_btn = QPushButton(request.confirm_label)
-        run_btn.setObjectName("primary")
-        run_btn.setMinimumHeight(m.primary_button_height)
+        run_btn.setProperty("buttonRole", "primary")
         run_btn.clicked.connect(self._accept_if_valid)
         run_btn.setEnabled(request.item_count > 0)
         self.run_btn = run_btn

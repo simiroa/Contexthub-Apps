@@ -8,6 +8,7 @@
   "icon": null,
   "runtime": {
     "category": "3d",
+    "environment_id": null,
     "python_version": "3.11",
     "required_binaries": [
       "mayo"
@@ -50,7 +51,6 @@
   "ui": {
     "enabled": true,
     "framework": "pyside6",
-    "shared_theme": "contexthub",
-    "template": "mini"
+    "shared_theme": "contexthub"
   }
 }

@@ -19,6 +19,14 @@ from core.logger import setup_logger
 
 logger = setup_logger("ai_text_lab_service")
 
+# Note: The specific model 'qwen3.5:4b' is now the standard for this app.
+PREFERRED_OLLAMA_MODELS = [
+    "qwen3.5:4b",
+    "qwen3:4b",
+    "gemma4:e2b",
+    "qwen3:8b",
+]
+
 class AITextLabService:
     def __init__(self):
         self.settings = load_settings()
@@ -32,25 +40,80 @@ class AITextLabService:
             return []
         try:
             models_response = ollama.list()
-            return [m.get('name', '') for m in models_response.get('models', [])]
+            model_names = [m.get('name', '') for m in models_response.get('models', []) if m.get('name')]
+
+            def sort_key(name: str):
+                lowered = name.lower()
+                try:
+                    preferred_index = PREFERRED_OLLAMA_MODELS.index(lowered)
+                except ValueError:
+                    preferred_index = len(PREFERRED_OLLAMA_MODELS)
+                qwen_bias = 0 if lowered.startswith("qwen3:") else 1
+                return (preferred_index, qwen_bias, lowered)
+
+            return sorted(model_names, key=sort_key)
         except Exception as e:
             logger.error(f"Failed to list Ollama models: {e}")
             return []
 
-    def warmup_model(self, model_name):
+    def get_preferred_model(self, available_models):
+        normalized = {str(model).lower(): str(model) for model in available_models if model}
+        for preferred in PREFERRED_OLLAMA_MODELS:
+            if preferred in normalized:
+                return normalized[preferred]
+        return available_models[0] if available_models else "✦ gemini-2.0-flash"
+
+    def ensure_model(self, model_name: str) -> bool:
+        """Check if model exists, if not pull it."""
+        if ollama is None: return False
+        try:
+            logger.info(f"Ensuring model exists: {model_name}")
+            models = ollama.list().get('models', [])
+            if any(m.get('name') == model_name or m.get('model') == model_name for m in models):
+                return True
+            
+            logger.info(f"Model {model_name} not found. Pulling (this may take time)...")
+            ollama.pull(model_name)
+            return True
+        except Exception as e:
+            logger.error(f"Error pulling model {model_name}: {e}")
+            return False
+
+    def warmup_model(self, model_name="qwen3.5:4b"):
         """Pre-loads a model into memory."""
         if model_name.startswith("✦ ") or "Google" in model_name:
             return
         if ollama is None:
             return
+        
+        # Ensure model before warming
+        self.ensure_model(model_name)
+        
+        logger.info(f"Warming up model: {model_name}")
         try:
+            # A simple chat call with num_predict: 1 triggers the load
             ollama.chat(
                 model=model_name,
                 messages=[{'role': 'user', 'content': 'hi'}],
                 options={'num_predict': 1}
             )
+            logger.info(f"Model {model_name} warmed up successfully.")
         except Exception as e:
             logger.error(f"Failed to warmup model {model_name}: {e}")
+
+    def unload_model(self, model_name):
+        """Explicitly unloads a model from VRAM by setting keep_alive to 0."""
+        if model_name.startswith("✦ ") or "Google" in model_name:
+            return
+        if ollama is None:
+            return
+        logger.info(f"Unloading model: {model_name} to release VRAM")
+        try:
+            # Setting keep_alive to 0 in a generate call unloads the model
+            ollama.generate(model=model_name, keep_alive=0)
+            logger.info(f"Model {model_name} unloaded.")
+        except Exception as e:
+            logger.error(f"Failed to unload model {model_name}: {e}")
 
     def translate(self, text, target_lang="ko"):
         """Performs machine translation."""
@@ -63,10 +126,14 @@ class AITextLabService:
             logger.error(f"Translation error: {e}")
             raise e
 
-    def stream_ollama(self, model, system_prompt, prompt, req_id, callback, cancel_event):
+    def stream_ollama(self, model, system_prompt, prompt, callback, cancel_event):
         """Streams response from Ollama."""
         if ollama is None:
             raise RuntimeError("Ollama Python package is not installed.")
+        
+        # Ensure model exists before streaming
+        self.ensure_model(model)
+        
         try:
             stream = ollama.chat(
                 model=model,
@@ -82,14 +149,25 @@ class AITextLabService:
                 if cancel_event.is_set():
                     break
                 content = chunk.get('message', {}).get('content', '')
+                if not content:
+                    continue
                 
-                # Simple <think> tag handling
-                if '<think>' in content:
+                # Enhanced tag handling (covers cases where tags are in the middle of content)
+                lowered = content.lower()
+                if '<think>' in lowered:
                     in_think_block = True
-                    content = content.split('<think>')[0]
-                if '</think>' in content:
+                    parts = content.split('<think>')
+                    # Keep text BEFORE <think>
+                    if parts[0]: callback(parts[0])
+                    continue
+                
+                if '</think>' in lowered:
                     in_think_block = False
-                    content = content.split('</think>')[-1]
+                    parts = content.split('</think>')
+                    # Keep text AFTER </think>
+                    if len(parts) > 1 and parts[1]: 
+                        callback(parts[1])
+                    continue
                 
                 if not in_think_block and content:
                     callback(content)

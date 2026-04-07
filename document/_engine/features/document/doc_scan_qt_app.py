@@ -42,6 +42,7 @@ try:
         QFileDialog,
         QSlider,
     )
+    from shared._engine.components.icon_button import build_icon_button
 except ImportError as exc:
     raise ImportError("PySide6 is required for doc_scan.") from exc
 
@@ -156,7 +157,7 @@ class InteractivePreview(QWidget):
                 self.active_handle = 10
                 self.update()
                 return
-
+        
         # Check Corners (only if unwarp not active)
         if not item.unwarp_active and item.corners:
             for i, c in enumerate(item.corners):
@@ -288,12 +289,12 @@ class DocScanWindow(QMainWindow):
         
         rot_row = QHBoxLayout()
         rot_row.setSpacing(8)
-        self.rot_left_btn = QPushButton("↺ " + qt_t("doc_scan.rot_left", "Left"))
-        self.rot_right_btn = QPushButton("↻ " + qt_t("doc_scan.rot_right", "Right"))
+        self.rot_left_btn = build_icon_button(qt_t("doc_scan.rot_left", "Left"), icon_name="rotate-ccw", role="secondary")
+        self.rot_right_btn = build_icon_button(qt_t("doc_scan.rot_right", "Right"), icon_name="rotate-cw", role="secondary")
         rot_row.addWidget(self.rot_left_btn)
         rot_row.addWidget(self.rot_right_btn)
         
-        self.unwarp_btn = QPushButton("⛃ " + qt_t("doc_scan.unwarp", "Unwarp (ON/OFF)"))
+        self.unwarp_btn = build_icon_button(qt_t("doc_scan.unwarp", "Unwarp (ON/OFF)"), icon_name="maximize", role="secondary")
         self.unwarp_btn.setCheckable(True)
         
         layout_box_layout.addLayout(rot_row)
@@ -327,7 +328,7 @@ class DocScanWindow(QMainWindow):
         sig_layout.setContentsMargins(0, 0, 0, 0)
         sig_layout.setSpacing(8)
         
-        self.load_sig_btn = QPushButton("✎ " + qt_t("doc_scan.load_sig", "Load Marker (PNG)"))
+        self.load_sig_btn = build_icon_button(qt_t("doc_scan.load_sig", "Load Marker (PNG)"), icon_name="pen-tool", role="secondary")
         
         self.sig_controls = QFrame()
         sig_controls_layout = QVBoxLayout(self.sig_controls)
@@ -352,18 +353,13 @@ class DocScanWindow(QMainWindow):
         self.param_panel.add_field(qt_t("doc_scan.signature", "Signature Overlay"), self.sig_box)
 
         # Global Actions
-        self.reset_btn = QPushButton("↺ " + qt_t("doc_scan.reset", "Reset All Controls"))
-        self.reset_btn.setObjectName("secondary")
+        self.reset_btn = build_icon_button(qt_t("doc_scan.reset", "Reset All Controls"), icon_name="rotate-ccw", role="secondary")
         self.param_panel.add_field("", self.reset_btn)
         
         # Save Buttons (Now fixed placeholders)
-        self.save_png_btn = QPushButton(qt_t("doc_scan.save_png", "Save Current Page (PNG)"))
-        self.save_png_btn.setObjectName("primary")
-        self.save_png_btn.setMinimumHeight(36)
+        self.save_png_btn = build_icon_button(qt_t("doc_scan.save_png", "Save Current Page (PNG)"), icon_name="image", role="primary")
         
-        self.save_pdf_btn = QPushButton(qt_t("doc_scan.save_pdf", "Merge All to PDF"))
-        self.save_pdf_btn.setObjectName("primary")
-        self.save_pdf_btn.setMinimumHeight(44)
+        self.save_pdf_btn = build_icon_button(qt_t("doc_scan.save_pdf", "Merge All to PDF"), icon_name="file-text", role="primary")
         
         tools_layout.addWidget(self.param_panel, 1)
         tools_layout.addWidget(self.save_png_btn, 0)

@@ -17,7 +17,7 @@
 ## Use Instead
 
 - 사용자 skill 라이브러리의 `qt-app-builder-contexthub`
-- `agent-docs/gui-runtime-contract.md`
+- `qt-app-builder-contexthub` 스킬 문서
 - `agent-docs/gui-runtime-status.md`
 
 ## Still Valid For

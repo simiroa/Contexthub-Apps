@@ -46,7 +46,7 @@ Contexthub 앱 설치 환경 없이도, 이 저장소의 앱을 개별적으로 
 ## 추천 절차
 
 1. 허브 저장소가 로컬에 존재하는지 확인
-2. `dev-tools/sync-shared-runtime.ps1`로 공유 런타임 복제
+2. `dev-tools/sync-shared-runtime.ps1`로 `dev-tools\runtime\Shared`를 허브 `Runtimes\Shared`로 미러링
 3. 필요한 Python 패키지 설치 확인
 4. `ai` 카테고리라면 Conda env 사용 여부를 먼저 확인
 5. `dev-tools/run-app-local.ps1`로 대상 앱 실행

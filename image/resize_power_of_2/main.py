@@ -54,7 +54,7 @@ def _pick_targets():
 
 def _run_qt(targets):
     try:
-        from features.image.resize_power_of_2_qt_app import start_app
+        from features.image.image_resizer_qt_app import start_app
         start_app(targets)
     except ImportError as e:
         print(f"Failed to load Qt app: {e}")

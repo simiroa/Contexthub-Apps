@@ -1,6 +1,7 @@
 customtkinter
 deep-translator
-google-genai
+google-generativeai
 ollama
 Pillow
+PySide6
 yt-dlp

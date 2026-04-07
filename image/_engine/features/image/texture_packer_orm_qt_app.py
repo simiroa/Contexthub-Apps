@@ -33,6 +33,7 @@ from contexthub.ui.qt.panels import (
     PreviewListPanel,
     FixedParameterPanel,
 )
+from shared._engine.components.icon_button import build_icon_button
 
 from .texture_packer_orm_state import PackerState, SlotState
 from .texture_packer_orm_service import TexturePackerService
@@ -120,12 +121,10 @@ class TexturePackerWindow(QMainWindow):
         
         # Compact Export
         palette = get_shell_palette()
-        self.pack_save_btn = QPushButton("Pack & Save Image")
-        self.pack_save_btn.setObjectName("primary")
-        self.pack_save_btn.setMinimumHeight(50)
+        self.pack_save_btn = build_icon_button(qt_t("texture_packer.pack_save", "Pack & Save"), icon_name="save", role="primary")
+        self.pack_save_btn.setProperty("buttonRole", "primary")
         self.pack_save_btn.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 5px;")
         self.body_layout.addWidget(self.pack_save_btn)
-        
         self.status_label = QLabel("Ready")
         self.status_label.setObjectName("summaryText")
         self.status_label.setAlignment(Qt.AlignCenter)
