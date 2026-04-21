@@ -117,13 +117,13 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/merge_to_exr.zip"
     },
     {
-        "id": "resize_power_of_2",
-        "name": "Resize Power of 2",
-        "description": "Legacy Image tool.",
-        "version": "1.0.0",
+        "id": "image_resizer",
+        "name": "Image Resizer",
+        "description": "High-performance image resizing and batch processing tool.",
+        "version": "1.1.0",
         "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/resize_power_of_2/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/resize_power_of_2.zip"
+        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_resizer/icon.png",
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_resizer.zip"
     },
     {
         "id": "texture_packer_orm",

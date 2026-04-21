@@ -11,8 +11,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from runtime_bootstrap import resolve_shared_runtime
+from contexthub.utils.startup_errors import format_startup_error
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
-os.chdir(LEGACY_ROOT)
 for path in (LEGACY_ROOT,):
     if path.exists():
         path_str = str(path)
@@ -48,7 +48,7 @@ def _run_qt(targets) -> None:
     try:
         from features.video.youtube_downloader_qt_app import start_app
     except ImportError as exc:
-        _show_dependency_error(f"PySide6 is required to run this app.\n\n{exc}")
+        _show_dependency_error(format_startup_error(exc))
         return
     start_app(targets)
 

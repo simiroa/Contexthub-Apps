@@ -34,6 +34,9 @@ tmp/
 temp/
 .locks/
 *.tmp
+dev-tools/Runtimes
+dev-tools/runtime_Old/
+image/image_resizer/Diagnostics/
 
 # Logs
 logs/

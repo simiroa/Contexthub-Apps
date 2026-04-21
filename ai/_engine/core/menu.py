@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 import traceback
 import shutil
@@ -199,7 +199,7 @@ def build_handler_map():
         # === Image ===
         "image_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "image_convert")), *([str(i) for i in s] if s else [str(p)])]),
         "merge_to_exr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "merge_to_exr")), *([str(i) for i in s] if s else [str(p)])]),
-        "resize_power_of_2": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "resize_power_of_2")), *([str(i) for i in s] if s else [str(p)])]),
+        "image_resizer": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "image_resizer")), *([str(i) for i in s] if s else [str(p)])]),
         "split_exr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "split_exr")), *([str(i) for i in s] if s else [str(p)])]),
         "texture_packer_orm": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "texture_packer_orm")), *([str(i) for i in s] if s else [str(p)])]),
         "normal_flip_green": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "normal_flip_green")), *([str(i) for i in s] if s else [str(p)])]),

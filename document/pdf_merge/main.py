@@ -11,7 +11,6 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
-os.chdir(LEGACY_ROOT)
 from runtime_bootstrap import resolve_shared_runtime
 
 SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)

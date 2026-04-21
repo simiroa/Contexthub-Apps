@@ -1,0 +1,23 @@
+{
+    "id": "__APP_ID__",
+    "name": "__APP_NAME__",
+    "description": "__APP_DESCRIPTION__",
+    "version": "1.0.0",
+    "category": "__CATEGORY__",
+    "author": "Contexthub",
+    "ui": {
+        "framework": "pyside6",
+        "shared_theme": "contexthub",
+        "template": "compact",
+        "width": 420,
+        "height": 720
+    },
+    "trigger": {
+        "type": "context-menu",
+        "extensions": ["*"],
+        "scope": "items"
+    },
+    "monitoring": {
+        "target": "__APP_ID__"
+    }
+}

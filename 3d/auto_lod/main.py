@@ -10,6 +10,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from runtime_bootstrap import resolve_shared_runtime
+from contexthub.utils.startup_errors import format_startup_error
 
 SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 for entry in (ENGINE_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
@@ -43,7 +44,7 @@ def _run_qt(targets: list[str]) -> int:
     try:
         from features.mesh.auto_lod_qt_app import start_app
     except ImportError as exc:
-        _show_dependency_error(f"PySide6 is required to run this app.\n\n{exc}")
+        _show_dependency_error(format_startup_error(exc))
         return 1
     return start_app(APP_ROOT, targets)
 

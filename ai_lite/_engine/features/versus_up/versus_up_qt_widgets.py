@@ -39,6 +39,44 @@ def alpha_hex(color_value: str, alpha: int) -> str:
     return color.name(QColor.HexArgb)
 
 
+class TextEntryDialog(QDialog):
+    def __init__(self, title: str, prompt: str, value: str = "", parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setModal(True)
+        self.value = value
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(16, 16, 16, 16)
+        outer.setSpacing(10)
+
+        title_label = QLabel(title)
+        title_label.setObjectName("sectionTitle")
+        prompt_label = QLabel(prompt)
+        prompt_label.setWordWrap(True)
+        self.input_edit = QLineEdit(value)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        cancel_btn = QPushButton("Cancel")
+        ok_btn = QPushButton("OK")
+        ok_btn.setProperty("buttonRole", "primary")
+        cancel_btn.clicked.connect(self.reject)
+        ok_btn.clicked.connect(self._accept_value)
+        buttons.addWidget(cancel_btn)
+        buttons.addWidget(ok_btn)
+
+        outer.addWidget(title_label)
+        outer.addWidget(prompt_label)
+        outer.addWidget(self.input_edit)
+        outer.addLayout(buttons)
+
+    def _accept_value(self) -> None:
+        text = self.input_edit.text().strip()
+        self.value = text or self.value
+        self.accept()
+
+
 class HoverProductList(QListWidget):
     product_hovered = Signal(str, QPoint)
     hover_left = Signal()
@@ -817,10 +855,3 @@ class EdgeAddButton(QPushButton):
             f"QPushButton#ghostAddButton {{ border: 1px dashed {palette.control_border}; border-radius: 12px; padding: 8px 10px; color: {palette.muted}; background: {palette.surface_subtle}; }}"
             f"QPushButton#ghostAddButton:hover {{ border-color: {palette.chip_border}; color: {palette.text}; background: {palette.control_bg}; }}"
         )
-        layout.addWidget(self.input)
-        layout.addLayout(buttons)
-        outer.addWidget(card)
-
-    def _accept(self) -> None:
-        self.value = self.input.text()
-        self.accept()

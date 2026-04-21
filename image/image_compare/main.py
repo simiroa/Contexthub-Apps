@@ -10,23 +10,16 @@ if str(REPO_ROOT) not in sys.path:
 
 from runtime_bootstrap import resolve_shared_runtime
 
+engine_path = APP_ROOT.parent / "_engine"
+shared_root, shared_pkg_root = resolve_shared_runtime(APP_ROOT)
+for path in (engine_path, shared_root, shared_pkg_root):
+    if path.exists() and str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
 def main():
     abs_app_root = APP_ROOT
     os.environ["CTX_APP_ROOT"] = str(abs_app_root)
-    
-    # Shared Runtime Path
-    shared_root, shared_pkg_root = resolve_shared_runtime(abs_app_root)
-    engine_path = abs_app_root.parent / "_engine"
-    
-    # Set CWD to engine
-    if engine_path.exists():
-        os.chdir(str(engine_path))
-    
-    for path in (engine_path, shared_root, shared_pkg_root):
-        if path.exists() and str(path) not in sys.path:
-            sys.path.insert(0, str(path))
 
-    # QT Launch
     from features.image.image_compare_qt_app import main as qt_main
     qt_main()
 

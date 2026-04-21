@@ -10,6 +10,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from runtime_bootstrap import resolve_shared_runtime
+from contexthub.utils.startup_errors import format_startup_error
 
 SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 FEATURE_DIR = LEGACY_ROOT / "features" / "tools"
@@ -22,16 +23,17 @@ for path in (LEGACY_ROOT, FEATURE_DIR, SHARED_ROOT, SHARED_PACKAGE_ROOT):
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
+
 def main():
-    # Now import app components
     try:
         from ai_text_lab_qt_app import start_app
-        sys.exit(start_app())
-    except Exception as e:
-        print(f"Failed to start AI Text Lab: {e}")
+    except Exception as exc:
+        print(f"AI Text Lab startup failed: {format_startup_error(exc)}", file=sys.stderr)
         import traceback
         traceback.print_exc()
-        sys.exit(1)
+        return 1
+
+    return start_app()
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

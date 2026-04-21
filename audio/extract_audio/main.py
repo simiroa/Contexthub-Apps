@@ -13,6 +13,7 @@ if str(REPO_ROOT) not in sys.path:
 
 # 2. Setup shared runtime properties
 from runtime_bootstrap import resolve_shared_runtime, enforce_single_instance_if_app
+from contexthub.utils.startup_errors import format_startup_error
 SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 
 # 3. Build path list in priority order (local engine > shared engine > shared runtime)
@@ -29,9 +30,7 @@ def main() -> None:
     try:
         from features.audio.extract_audio_qt_app import start_app
     except ImportError as exc:
-        print(f"Failed to load UI components: {exc}", file=sys.stderr)
-        import traceback
-        traceback.print_exc()
+        print(format_startup_error(exc), file=sys.stderr)
         return
 
     # Pass remaining args as targets

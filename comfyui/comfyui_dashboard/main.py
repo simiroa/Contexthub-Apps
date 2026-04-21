@@ -12,6 +12,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from runtime_bootstrap import resolve_shared_runtime
+from contexthub.utils.startup_errors import format_startup_error
 
 ENGINE_ROOT = APP_ROOT.parent / "_engine"
 SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
@@ -43,7 +44,7 @@ try:
         QWidget,
     )
 except ImportError as exc:  # pragma: no cover
-    raise SystemExit("PySide6 is required to run the ComfyUI dashboard.") from exc
+    raise SystemExit(format_startup_error(exc)) from exc
 
 
 APP_TITLE = qt_t("comfyui.dashboard.title", "ComfyUI Dashboard")

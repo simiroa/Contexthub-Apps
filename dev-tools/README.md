@@ -15,7 +15,7 @@
 
 - `sync-shared-runtime.ps1`: `dev-tools\runtime\Shared`를 허브 저장소 `Runtimes\Shared`로 미러링
 - `run-app-local.ps1`: 카테고리/앱을 지정해 일반 실행
-- `run-image-resize-local.ps1`: `image/resize_power_of_2` 전용 빠른 실행 예시
+- `run-image-resize-local.ps1`: `image/image_resizer` 전용 빠른 실행 예시
 - `capture-python-gui-apps.ps1`: Python GUI 앱들을 순회하며 창 캡처와 로그 생성
 
 ## 예시
@@ -25,7 +25,7 @@
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\dev-tools\run-app-local.ps1 `
   -Category image `
-  -App resize_power_of_2 `
+  -App image_resizer `
   -TargetPath "C:\path\to\image.png"
 ```
 
@@ -34,7 +34,7 @@ powershell -ExecutionPolicy Bypass -File .\dev-tools\run-app-local.ps1 `
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\dev-tools\run-app-local.ps1 `
   -Category image `
-  -App resize_power_of_2 `
+  -App image_resizer `
   -Headless
 ```
 

@@ -15,13 +15,14 @@ if str(REPO_ROOT) not in sys.path:
 from runtime_bootstrap import resolve_shared_runtime
 
 SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
-os.chdir(ENGINE_ROOT)
 for path in (REPO_ROOT, ENGINE_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
     if path.exists() and str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
+
+from contexthub.utils.startup_errors import format_startup_error
 
 
 def _capture_mode() -> bool:
@@ -63,7 +64,7 @@ def main() -> None:
     try:
         from features.ai.whisper_subtitle_qt_app import start_app
     except Exception as exc:
-        _show_dependency_error(f"PySide6 is required to run this app.\n\n{exc}")
+        _show_dependency_error(format_startup_error(exc))
         return
 
     start_app(_pick_targets(), APP_ROOT)

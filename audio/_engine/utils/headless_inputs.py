@@ -7,7 +7,7 @@ from pathlib import Path
 IMAGE_IDS = {
     "image_convert",
     "merge_to_exr",
-    "resize_power_of_2",
+    "image_resizer",
     "split_exr",
     "texture_packer_orm",
     "image_compare",

@@ -160,8 +160,8 @@
 - 문제: 템플릿 분류와 문서가 이 mini 성격을 충분히 반영하지 못했습니다.
 - 제안: mini confirm-shell 기준으로 유지하고, 출력 파일명 규칙과 간단한 작업 요약만 강조하면 됩니다.
 
-### resize_power_of_2
-- 캡처: [resize_power_of_2.png](/C:/Users/HG/Documents/Contexthub-Apps/Diagnostics/gui_captures/image/resize_power_of_2.png)
+### image_resizer
+- 캡처: [image_resizer.png](/C:/Users/HG/Documents/Contexthub-Apps/Diagnostics/gui_captures/image/image_resizer.png)
 - 평가: 실무용 도구로서 방향은 좋습니다.
 - 장점: “가장 긴 변 기준”과 같은 가이드 문구가 기능 이해에 도움을 줍니다.
 - 문제: 설정 양에 비해 공간 배분이 불균형할 가능성이 높고, 결과 예측이 약합니다.

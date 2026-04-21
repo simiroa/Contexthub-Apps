@@ -26,7 +26,7 @@ Manifested apps:
 - `audio_toolbox`
 - `doc_scan`
 - `merge_to_exr`
-- `resize_power_of_2`
+- `image_resizer`
 - `rigreader_vectorizer`
 - `video_convert`
 - `image_compare`

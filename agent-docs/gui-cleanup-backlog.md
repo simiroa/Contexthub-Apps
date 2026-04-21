@@ -29,7 +29,7 @@
 | `pdf_split` | mini | P1 | 범위 입력과 출력 규칙 예시를 보강한다. |
 | `qwen3_tts` | special | P0 | 채팅형 UX를 유지하되 사실상 전면 재설계 대상으로 본다. |
 | `remove_audio` | mini | Hold | 현 상태 유지 가능. |
-| `resize_power_of_2` | full | Keep | 현재 표준 UI 후보로 유지하고 공통 기준 샘플로 삼는다. |
+| `image_resizer` | full | Keep | 현재 표준 UI 후보로 유지하고 공통 기준 샘플로 삼는다. |
 | `rigreader_vectorizer` | full | P0 | 입력 리스트 대신 채널 리스트 중심으로 재작성하고 병렬 배치 UX를 넣는다. |
 | `simple_normal_roughness` | compact | P0 | 단일 input + 실시간 preview 중심의 compact 흐름으로 단순화한다. |
 | `split_exr` | compact | P1 | `split_channel` 방향으로 정리하고 채널 이름 preset을 넣는다. |
@@ -97,7 +97,7 @@
 1. shared runtime palette와 stylesheet를 먼저 정리한다.
 2. shared runtime alias와 compatibility layer를 recapture 기반으로 정리한다.
 3. `full` 앱 중 표준 샘플로 쓸 앱을 고른다.
-   - 우선 후보: `resize_power_of_2`, `video_convert`
+   - 우선 후보: `image_resizer`, `video_convert`
 4. 긴 창과 빈 상태가 심한 앱을 줄인다.
    - `image_convert`, `doc_convert`, `pdf_merge`, `merge_to_exr`
 5. 통합 대상 앱을 줄인다.

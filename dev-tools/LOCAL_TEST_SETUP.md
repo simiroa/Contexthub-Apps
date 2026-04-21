@@ -24,7 +24,7 @@ Contexthub 앱 설치 환경 없이도, 이 저장소의 앱을 개별적으로 
 
 ## 현재 확인된 상태
 
-`image/resize_power_of_2`는 위 환경을 주고 실제 PNG 파일 경로를 넘기면 GUI가 정상적으로 올라온다.
+`image/image_resizer`는 위 환경을 주고 실제 PNG 파일 경로를 넘기면 GUI가 정상적으로 올라온다.
 
 추가로 현재 기준:
 
@@ -59,7 +59,7 @@ Contexthub 앱 설치 환경 없이도, 이 저장소의 앱을 개별적으로 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\dev-tools\run-app-local.ps1 `
   -Category image `
-  -App resize_power_of_2 `
+  -App image_resizer `
   -TargetPath "$env:TEMP\sample.png"
 ```
 

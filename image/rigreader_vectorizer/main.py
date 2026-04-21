@@ -13,7 +13,6 @@ if str(REPO_ROOT) not in sys.path:
 from runtime_bootstrap import resolve_shared_runtime
 LEGACY_ROOT = APP_ROOT.parent / "_engine"
 SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
-os.chdir(LEGACY_ROOT)
 for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
     path_str = str(path)
     if path.exists() and path_str not in sys.path:

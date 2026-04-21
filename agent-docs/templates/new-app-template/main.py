@@ -1,120 +1,45 @@
 import os
 import sys
 from pathlib import Path
-import runpy
 
-LEGACY_ID = "your_app_id"
-LEGACY_SCOPE = "file"
-USE_MENU = False
-SCRIPT_REL = "features/your_domain/your_script.py"
-
-ROOT = Path(__file__).resolve().parents[3]
 APP_ROOT = Path(__file__).resolve().parent
-LEGACY_ROOT = APP_ROOT.parent / "_engine"
-os.chdir(LEGACY_ROOT)
 REPO_ROOT = APP_ROOT.parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
 from runtime_bootstrap import resolve_shared_runtime
+from contexthub.utils.startup_errors import format_startup_error
 
 SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
-for path in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
-    if path.exists() and str(path) not in sys.path:
-        sys.path.insert(0, str(path))
+for path in (SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    if path.exists():
+        path_str = str(path)
+        if path_str not in sys.path:
+            sys.path.insert(0, path_str)
 
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
 
+# Replace these placeholders when generating a new app.
+APP_MODULE = "features.your_domain.your_app_qt_app"
+APP_ENTRYPOINT = "start_app"
 
-def _capture_mode():
-    return os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1"
+
+def _load_app_entrypoint():
+    module = __import__(APP_MODULE, fromlist=[APP_ENTRYPOINT])
+    entrypoint = getattr(module, APP_ENTRYPOINT)
+    return entrypoint
 
 
-def _pick_targets():
-    if LEGACY_SCOPE in {"background", "tray_only", "standalone"}:
-        return []
-
-    if _capture_mode():
-        try:
-            from utils.headless_inputs import get_headless_targets
-
-            return get_headless_targets(LEGACY_ID, LEGACY_SCOPE, LEGACY_ROOT)
-        except Exception:
-            return []
-
-    args = [a for a in sys.argv[1:] if a]
-    if args:
-        return args
-
+def main() -> int:
     try:
-        import tkinter as tk
-        from tkinter import filedialog
-
-        root = tk.Tk()
-        root.withdraw()
-
-        if LEGACY_SCOPE == "items":
-            paths = filedialog.askopenfilenames(title=LEGACY_ID)
-            return list(paths)
-        if LEGACY_SCOPE == "directory":
-            path = filedialog.askdirectory(title=LEGACY_ID)
-            return [path] if path else []
-        path = filedialog.askopenfilename(title=LEGACY_ID)
-        return [path] if path else []
-    except Exception:
-        return []
-
-
-def _run_script(script_rel, targets):
-    script_path = LEGACY_ROOT / script_rel
-    if not script_path.exists():
-        raise FileNotFoundError("Missing script: " + str(script_path))
-    argv = [str(script_path)] + targets
-    old_argv = sys.argv
-    try:
-        sys.argv = argv
-        runpy.run_path(str(script_path), run_name="__main__")
-    finally:
-        sys.argv = old_argv
-
-
-def _run_menu(targets):
-    from core import menu as legacy_menu
-
-    handler = legacy_menu.build_handler_map().get(LEGACY_ID)
-    if handler is None:
-        raise RuntimeError("Missing legacy handler: " + LEGACY_ID)
-
-    target = targets[0] if targets else str(LEGACY_ROOT)
-    selection = targets if len(targets) > 1 else None
-    try:
-        if selection:
-            handler(target, selection)
-        else:
-            handler(target)
-    except TypeError:
-        handler(target)
-
-
-def main():
-    targets = _pick_targets()
-    if LEGACY_SCOPE not in {"background", "tray_only", "standalone"} and not targets and not _capture_mode():
-        try:
-            import tkinter as tk
-            from tkinter import messagebox
-
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showwarning("ContextHub", "No target selected.")
-        except Exception:
-            pass
-        return
-
-    if USE_MENU:
-        _run_menu(targets)
-    else:
-        _run_script(SCRIPT_REL, targets)
+        start_app = _load_app_entrypoint()
+        start_app([])
+        return 0
+    except Exception as exc:
+        print(format_startup_error(exc), file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -19,7 +19,7 @@
 - `image/image_convert`
 - `image/image_metadata`
 - `image/merge_to_exr`
-- `image/resize_power_of_2`
+- `image/image_resizer`
 - `image/rigreader_vectorizer`
 - `image/split_exr`
 - `ai/demucs_stems`
@@ -61,7 +61,7 @@
 
 - `ai_light/ai_text_lab` stdout에는 `Deep-Translator initialized` 로그가 남았다.
 - 이번 실행에서 생성된 stderr 로그는 대상 앱 전반에서 비어 있었다.
-- `image/resize_power_of_2`는 개별 실행과 전체 캡처 배치 모두에서 정상 캡처되었다.
+- `image/image_resizer`는 개별 실행과 전체 캡처 배치 모두에서 정상 캡처되었다.
 - 후속 수정 후 `esrgan_upscale`, `whisper_subtitle`, `rmbg_background`는 하단 실행 버튼과 진행 바가 첫 화면에 노출되도록 재검증했다.
 - `doc_scan`은 `BaseWindow` 전환 후에도 정상 캡처되었다.
 

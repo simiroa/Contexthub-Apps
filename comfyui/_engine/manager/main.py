@@ -1,60 +1,76 @@
-import sys
 import os
+import sys
 from pathlib import Path
-import customtkinter as ctk
 
-def main():
-    # Setup Paths
-    current_file = Path(__file__).resolve()
-    # If executed as src/manager/main.py, parent is src/manager, parent.parent is src
-    src_dir = current_file.parent.parent 
-    root_dir = src_dir.parent
-    
-    # Ensure src is in sys.path for absolute imports of other packages (core, features, etc.)
-    if str(src_dir) not in sys.path:
-        sys.path.insert(0, str(src_dir))
-    
-    # Remove own directory from path to avoid shadowing the package name 'manager'
-    if str(current_file.parent) in sys.path:
-        sys.path.remove(str(current_file.parent))
-        
-    # High DPI Fix (Windows)
+
+APP_ROOT = Path(__file__).resolve().parent
+ENGINE_ROOT = APP_ROOT.parent
+COMFYUI_ROOT = ENGINE_ROOT.parent
+REPO_ROOT = APP_ROOT.parents[2]
+
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from runtime_bootstrap import resolve_shared_runtime
+from contexthub.utils.startup_errors import format_startup_error
+
+SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
+for path in (ENGINE_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
+    if path.exists():
+        path_str = str(path)
+        if path_str not in sys.path:
+            sys.path.insert(0, path_str)
+
+if str(APP_ROOT) in sys.path:
+    sys.path.remove(str(APP_ROOT))
+
+if not os.environ.get("CTX_APP_ROOT"):
+    os.environ["CTX_APP_ROOT"] = str(COMFYUI_ROOT)
+
+
+def _set_high_dpi_awareness() -> None:
     try:
         import ctypes
+
         ctypes.windll.shcore.SetProcessDpiAwareness(1)
     except Exception:
         try:
-             ctypes.windll.user32.SetProcessDPIAware()
-        except: pass
-        
-    # Import App
-    # We import here to ensure sys.path is set first
-    from core.logger import setup_logger
-    setup_logger(file_prefix="app")
-    
-    # Use absolute import from 'src' root, which is now in sys.path
-    from manager.ui.app import ContextUpManager
-    
-    app = ContextUpManager(root_dir)
-    app.mainloop()
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
 
-if __name__ == "__main__":
+
+def main() -> int:
     try:
-        main()
-    except Exception as e:
+        _set_high_dpi_awareness()
+
+        from core.logger import setup_logger
+
+        setup_logger(file_prefix="app")
+
+        from manager.ui.app import ContextUpManager
+
+        app = ContextUpManager(COMFYUI_ROOT)
+        app.mainloop()
+        return 0
+    except Exception as exc:
         import traceback
-        from pathlib import Path
-        
-        # Emergency log to root if core/paths not ready
-        error_msg = f"Manager Startup Fatal Error: {e}\n{traceback.format_exc()}"
+
+        error_msg = f"Manager Startup Fatal Error: {format_startup_error(exc)}\n{traceback.format_exc()}"
         print(error_msg)
-        
+
         try:
-            log_path = Path(__file__).resolve().parent.parent.parent / "logs" / "manager_crash.log"
+            log_path = COMFYUI_ROOT / "logs" / "manager_crash.log"
             log_path.parent.mkdir(exist_ok=True)
             with open(log_path, "a", encoding="utf-8") as f:
                 import datetime
+
                 f.write(f"\n[{datetime.datetime.now()}] {error_msg}\n")
-        except:
+        except Exception:
             pass
-        sys.exit(1)
+
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

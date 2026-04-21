@@ -14,7 +14,7 @@ if (-not (Test-Path $scriptPath)) {
 
 $params = @{
     Category = "image"
-    App = "resize_power_of_2"
+    App = "image_resizer"
     RepoRoot = $RepoRoot
     HubRoot = $HubRoot
     PythonExe = $PythonExe

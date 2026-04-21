@@ -9,7 +9,13 @@ import subprocess
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Callable
-from PIL import Image
+from PIL import Image, ImageFile
+
+# Increase PIL's safety limit for high-res images (Default is ~89M)
+# 1,000,000,000 pixels is approx 31,622 x 31,622.
+Image.MAX_IMAGE_PIXELS = 1000000000
+# Ensure truncated images don't crash the loader
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 from features.image.image_resizer_state import ImageResizerState, InputAsset
 from contexthub.ui.qt.shell import qt_t
@@ -54,7 +60,19 @@ class ImageResizerService:
             path = Path(raw_path)
             if not path.exists(): continue
             if any(asset.path == path for asset in self.state.input_assets): continue
-            self.state.input_assets.append(InputAsset(path=path, kind="image"))
+            
+            try:
+                # Early check for image validity and resolution
+                with Image.open(path) as img:
+                    w, h = img.size
+                    if w * h > Image.MAX_IMAGE_PIXELS:
+                        print(f"Skipping {path.name}: Image resolution too high ({w}x{h})")
+                        continue
+                self.state.input_assets.append(InputAsset(path=path, kind="image"))
+            except Exception as e:
+                print(f"Failed to import {path.name}: {e}")
+                continue
+                
         if self.state.input_assets and self.state.preview_path is None:
             self.state.preview_path = self.state.input_assets[0].path
 
@@ -146,35 +164,44 @@ class ImageResizerService:
                 resample = v
                 break
 
-        with Image.open(path) as img:
-            rgb = img.convert("RGBA" if "A" in img.mode else "RGB")
-            w, h = rgb.size
-            
-            if target_type == "Ratio":
-                factor = float(params.get("scale_factor", "1.0"))
-                nw, nh = int(w * factor), int(h * factor)
-            elif target_type == "Custom":
-                nw = int(params.get("custom_width", "1024"))
-                nh = int(params.get("custom_height", "1024"))
-            else: # Po2
-                t_size = int(params.get("po2_size", "1024"))
-                if force_square:
-                    rgb = self._pad_edge(rgb, t_size)
-                    nw, nh = t_size, t_size
-                else:
-                    ratio = w / h
-                    if w >= h:
-                        nw = t_size
-                        nh = self.get_nearest_pot(nw / ratio)
-                    else:
-                        nh = t_size
-                        nw = self.get_nearest_pot(nh * ratio)
-            
-            # Skip redundant resize if dimensions match exactly (prevents potential noise at 1.0 factor)
-            if nw == w and nh == h and not force_square:
-                return rgb
+        try:
+            with Image.open(path) as img:
+                rgb = img.convert("RGBA" if "A" in img.mode else "RGB")
+                w, h = rgb.size
                 
-            return rgb.resize((nw, nh), resample)
+                if target_type == "Ratio":
+                    factor = float(params.get("scale_factor", "1.0"))
+                    nw, nh = int(w * factor), int(h * factor)
+                elif target_type == "Custom":
+                    nw = int(params.get("custom_width", "1024"))
+                    nh = int(params.get("custom_height", "1024"))
+                else: # Po2
+                    t_size = int(params.get("po2_size", "1024"))
+                    if force_square:
+                        rgb = self._pad_edge(rgb, t_size)
+                        nw, nh = t_size, t_size
+                    else:
+                        ratio = w / h
+                        if w >= h:
+                            nw = t_size
+                            nh = self.get_nearest_pot(nw / ratio)
+                        else:
+                            nh = t_size
+                            nw = self.get_nearest_pot(nh * ratio)
+                
+                # Double-check result dimensions for sanity
+                if nw * nh > Image.MAX_IMAGE_PIXELS:
+                    raise ValueError(f"Target resolution {nw}x{nh} exceeds safety limit.")
+
+                # Skip redundant resize if dimensions match exactly (prevents potential noise at 1.0 factor)
+                if nw == w and nh == h and not force_square:
+                    return rgb
+                    
+                return rgb.resize((nw, nh), resample)
+        except Exception as e:
+            # Fallback for preview failure: return an error placeholder image or re-raise
+            print(f"Preview calculation error: {e}")
+            raise e
 
     def _resize_standard(self, path: Path, out_dir: Path, params: dict):
         res = self.get_processed_preview_pil(path, params)
