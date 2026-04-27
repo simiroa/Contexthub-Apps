@@ -59,12 +59,10 @@ jobs:
         continue-on-error: true
 
       - name: Create/Update Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.zip
-          tag_name: marketplace-latest
-          name: "Marketplace Assets (Latest)"
-          body: "Auto-generated marketplace bundles. Updated on ${{ github.event.head_commit.timestamp }}"
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create marketplace-latest dist/*.zip \
+            --title "Marketplace Assets (Latest)" \
+            --notes "Auto-generated marketplace bundles. Updated on ${{ github.event.head_commit.timestamp }}" \
+            --latest
