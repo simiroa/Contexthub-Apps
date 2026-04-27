@@ -92,8 +92,12 @@ Qt shared runtime의 공통 계약과 템플릿 분류는 `qt-app-builder-contex
 2. Python 설정
 3. `package_apps.py`로 `dist/*.zip`과 `market.json` 생성
 4. 변경된 `market.json` 커밋/푸시
-5. 기존 `marketplace-latest` 릴리즈 삭제
-6. 새 ZIP들로 `marketplace-latest` 릴리즈 재생성
+5. `marketplace-assets` 릴리즈가 이미 있으면 → `gh release upload --clobber` + `gh release edit`으로 에셋 갱신
+6. 없으면 → `gh release create marketplace-assets`로 신규 생성
+
+릴리즈를 삭제 후 같은 태그로 재생성하는 방식은 사용하지 않는다.  
+GitHub는 한번 사용된 태그 이름을 내부적으로 불변 레코드로 유지하여, 삭제 후 재생성 시 `pre_receive Repository rule violations` 오류가 발생한다.  
+자세한 경위는 `gitguide.md` 섹션 11 참고.
 
 ## 7. 작업 시 위치별 책임
 

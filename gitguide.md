@@ -47,7 +47,7 @@
   "description": "Text utility",
   "version": "1.0.1",
   "category": "ai_light",
-  "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/ai_text_lab.zip",
+  "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/ai_text_lab.zip",
   "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai_light/ai_text_lab/icon.png"
 }
 ```
@@ -84,7 +84,9 @@
 
 1. 앱 폴더 스캔 (`*/ */manifest.json`)
 2. 앱별 ZIP 생성 (`{id}.zip`)
-3. `marketplace-latest` 태그 릴리즈 생성/갱신 후 ZIP 업로드
+3. `marketplace-assets` 릴리즈 생성 또는 갱신 후 ZIP 업로드
+   - 릴리즈가 없으면: `gh release create marketplace-assets`
+   - 릴리즈가 있으면: `gh release upload --clobber` + `gh release edit`
 4. `market.json` 생성
 5. `zip_url`/`icon_url`/`manual.md` 유효성 검사
 6. 검증 통과 시 `market.json`을 `main`에 반영
@@ -93,6 +95,7 @@
 
 - 릴리즈 ZIP 업로드가 먼저, `market.json` 공개가 나중
 - 하나라도 검증 실패하면 `market.json` 배포 금지
+- 릴리즈를 삭제 후 재생성하는 방식을 사용하지 않는다 (아래 트러블슈팅 참고)
 
 ## 8. 변경 시 주의사항
 
@@ -122,7 +125,61 @@
 - 원인 분류:
   - `market.json` URL 오타/placeholder
   - 릴리즈 자산 누락
-  - 태그(`marketplace-latest`) 갱신 실패
+  - 태그(`marketplace-assets`) 갱신 실패
 - 조치:
   - 잘못된 `market.json` 즉시 롤백 또는 핫픽스
   - 릴리즈 자산 재업로드 후 검증 완료 뒤 다시 배포
+
+## 11. 트러블슈팅: GitHub 불변 릴리즈 태그 차단 (2026-04 발생)
+
+### 증상
+
+GitHub Actions에서 `gh release create <tag>` 실행 시 아래 오류로 실패:
+
+```
+HTTP 422: Validation Failed
+pre_receive Repository rule violations found
+Cannot create ref due to creations being restricted.
+tag_name was used by an immutable release
+Published releases must have a valid tag
+```
+
+Ruleset 설정 화면(`Settings > Rules`)에는 아무런 규칙이 없고,  
+`git ls-remote origin refs/tags/<tag>` 에도 태그가 존재하지 않는다.
+
+### 원인
+
+GitHub는 한번이라도 릴리즈에 사용된 태그 이름을 내부 DB에 **불변 릴리즈 레코드(immutable release tombstone)**로 기록한다.  
+릴리즈를 삭제해도 이 레코드는 남으며, 같은 태그 이름으로 새 릴리즈를 만들려고 하면 플랫폼 수준의 pre-receive 훅이 차단한다.  
+이 제한은 GitHub의 일반 Ruleset API나 Tag Protection API로는 확인도, 해제도 불가능하다.
+
+이전 `softprops/action-gh-release` 액션이 "Too many retries" 에러로 중단되면서 릴리즈가 불완전한 상태로 남았고,  
+그 상태가 내부적으로 불변 마킹을 유발한 것으로 추정된다.
+
+### 해결
+
+1. **태그 이름 변경**: `marketplace-latest` → `marketplace-assets`  
+   (`.github/scripts/package_apps.py`의 `release_url`과 워크플로 모두 변경)
+
+2. **릴리즈 전략 변경**: 삭제 후 재생성 방식을 폐기하고 "있으면 업데이트, 없으면 생성" 방식 채택:
+
+```yaml
+- name: Create/Update Release
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    if gh release view marketplace-assets >/dev/null 2>&1; then
+      gh release upload marketplace-assets dist/*.zip --clobber
+      gh release edit marketplace-assets --title "..." --notes "..." --latest
+    else
+      gh release create marketplace-assets dist/*.zip --title "..." --notes "..." --latest
+    fi
+```
+
+이 방식은 태그를 최초 1회만 생성하고 이후에는 건드리지 않으므로 동일한 문제가 재발하지 않는다.
+
+### 예방 원칙
+
+- 릴리즈 태그를 절대로 삭제 후 같은 이름으로 재생성하지 않는다.
+- 에셋 갱신은 항상 `gh release upload --clobber` + `gh release edit` 조합을 사용한다.
+- 불가피하게 태그 이름을 바꿔야 할 경우 `package_apps.py`의 `release_url`도 반드시 함께 수정한다.
