@@ -54,14 +54,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh release view marketplace-latest >/dev/null 2>&1; then
-            gh release upload marketplace-latest dist/*.zip --clobber
-            gh release edit marketplace-latest \
+          if gh release view marketplace-assets >/dev/null 2>&1; then
+            gh release upload marketplace-assets dist/*.zip --clobber
+            gh release edit marketplace-assets \
               --title "Marketplace Assets (Latest)" \
               --notes "Auto-generated marketplace bundles. Updated on ${{ github.event.head_commit.timestamp }}" \
               --latest
           else
-            gh release create marketplace-latest dist/*.zip \
+            gh release create marketplace-assets dist/*.zip \
               --title "Marketplace Assets (Latest)" \
               --notes "Auto-generated marketplace bundles. Updated on ${{ github.event.head_commit.timestamp }}" \
               --latest

@@ -6,7 +6,7 @@ def package_apps():
     market_file = "market.json"
     repo = os.getenv("GITHUB_REPOSITORY", "simiroa/Contexthub-Apps")
     base_url = f"https://raw.githubusercontent.com/{repo}/main"
-    release_url = f"https://github.com/{repo}/releases/download/marketplace-latest"
+    release_url = f"https://github.com/{repo}/releases/download/marketplace-assets"
 
     # Categories are top-level folders except for these:
     exclude_dirs = {".git", ".github", "dist", "tmp", "venv", ".gemini", "node_modules"}
