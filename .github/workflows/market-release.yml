@@ -50,19 +50,19 @@ jobs:
           git commit -m "chore: update market.json registry [skip ci]" || echo "No changes to commit"
           git push
 
-      - name: Purge Old Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release delete marketplace-latest --yes || echo "Old release not found"
-          git push origin :refs/tags/marketplace-latest || echo "Old tag not found"
-        continue-on-error: true
-
       - name: Create/Update Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create marketplace-latest dist/*.zip \
-            --title "Marketplace Assets (Latest)" \
-            --notes "Auto-generated marketplace bundles. Updated on ${{ github.event.head_commit.timestamp }}" \
-            --latest
+          if gh release view marketplace-latest >/dev/null 2>&1; then
+            gh release upload marketplace-latest dist/*.zip --clobber
+            gh release edit marketplace-latest \
+              --title "Marketplace Assets (Latest)" \
+              --notes "Auto-generated marketplace bundles. Updated on ${{ github.event.head_commit.timestamp }}" \
+              --latest
+          else
+            gh release create marketplace-latest dist/*.zip \
+              --title "Marketplace Assets (Latest)" \
+              --notes "Auto-generated marketplace bundles. Updated on ${{ github.event.head_commit.timestamp }}" \
+              --latest
+          fi
