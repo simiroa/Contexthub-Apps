@@ -6,7 +6,7 @@
         "version": "1.0.0",
         "category": "comfyui",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/inpainting/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/inpainting.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/inpainting.zip"
     },
     {
         "id": "creative_studio_z",
@@ -15,7 +15,7 @@
         "version": "1.0.0",
         "category": "comfyui",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/creative_studio_z/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/creative_studio_z.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/creative_studio_z.zip"
     },
     {
         "id": "creative_studio_advanced",
@@ -24,7 +24,7 @@
         "version": "1.0.0",
         "category": "comfyui",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/creative_studio_advanced/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/creative_studio_advanced.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/creative_studio_advanced.zip"
     },
     {
         "id": "comfyui_dashboard",
@@ -33,7 +33,7 @@
         "version": "1.0.0",
         "category": "comfyui",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/comfyui/comfyui_dashboard/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/comfyui_dashboard.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/comfyui_dashboard.zip"
     },
     {
         "id": "remove_audio",
@@ -42,7 +42,7 @@
         "version": "1.1.0",
         "category": "video",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/remove_audio/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/remove_audio.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/remove_audio.zip"
     },
     {
         "id": "video_convert",
@@ -51,7 +51,7 @@
         "version": "1.0.0",
         "category": "video",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/video_convert/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/video_convert.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/video_convert.zip"
     },
     {
         "id": "interpolate_30fps",
@@ -60,7 +60,7 @@
         "version": "1.1.0",
         "category": "video",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/video/interpolate_30fps/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/interpolate_30fps.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/interpolate_30fps.zip"
     },
     {
         "id": "enhance_audio",
@@ -69,7 +69,7 @@
         "version": "1.0.0",
         "category": "audio",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/enhance_audio/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/enhance_audio.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/enhance_audio.zip"
     },
     {
         "id": "audio_toolbox",
@@ -78,7 +78,7 @@
         "version": "1.0.0",
         "category": "audio",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/audio_toolbox/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/audio_toolbox.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/audio_toolbox.zip"
     },
     {
         "id": "convert_audio",
@@ -87,7 +87,7 @@
         "version": "1.0.0",
         "category": "audio",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/convert_audio/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/convert_audio.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/convert_audio.zip"
     },
     {
         "id": "compress_audio",
@@ -96,7 +96,7 @@
         "version": "1.0.0",
         "category": "audio",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/compress_audio/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/compress_audio.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/compress_audio.zip"
     },
     {
         "id": "extract_audio",
@@ -105,7 +105,7 @@
         "version": "1.2.0",
         "category": "audio",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/extract_audio/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_audio.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/extract_audio.zip"
     },
     {
         "id": "normalize_volume",
@@ -114,7 +114,7 @@
         "version": "1.1.0",
         "category": "audio",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/audio/normalize_volume/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normalize_volume.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/normalize_volume.zip"
     },
     {
         "id": "youtube_downloader",
@@ -123,7 +123,7 @@
         "version": "1.0.1",
         "category": "utilities",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/utilities/youtube_downloader/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/youtube_downloader.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/youtube_downloader.zip"
     },
     {
         "id": "simple_normal_roughness",
@@ -132,7 +132,7 @@
         "version": "1.1.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/simple_normal_roughness/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/simple_normal_roughness.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/simple_normal_roughness.zip"
     },
     {
         "id": "split_exr",
@@ -141,7 +141,7 @@
         "version": "1.1.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/split_exr/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/split_exr.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/split_exr.zip"
     },
     {
         "id": "image_resizer",
@@ -150,7 +150,7 @@
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_resizer/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_resizer.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/image_resizer.zip"
     },
     {
         "id": "blur_gray32_exr",
@@ -159,7 +159,7 @@
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/blur_gray32_exr/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/blur_gray32_exr.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/blur_gray32_exr.zip"
     },
     {
         "id": "normal_flip_green",
@@ -168,7 +168,7 @@
         "version": "1.1.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/normal_flip_green/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/normal_flip_green.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/normal_flip_green.zip"
     },
     {
         "id": "rigreader_vectorizer",
@@ -177,7 +177,7 @@
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/rigreader_vectorizer/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/rigreader_vectorizer.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/rigreader_vectorizer.zip"
     },
     {
         "id": "merge_to_exr",
@@ -186,7 +186,7 @@
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/merge_to_exr/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/merge_to_exr.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/merge_to_exr.zip"
     },
     {
         "id": "image_convert",
@@ -195,7 +195,7 @@
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_convert/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_convert.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/image_convert.zip"
     },
     {
         "id": "texture_packer_orm",
@@ -204,7 +204,7 @@
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/texture_packer_orm/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/texture_packer_orm.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/texture_packer_orm.zip"
     },
     {
         "id": "image_compare",
@@ -213,7 +213,7 @@
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_compare/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/image_compare.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/image_compare.zip"
     },
     {
         "id": "marigold_pbr",
@@ -222,7 +222,7 @@
         "version": "2.1.0",
         "category": "ai",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/marigold_pbr/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/marigold_pbr.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/marigold_pbr.zip"
     },
     {
         "id": "subtitle_qc",
@@ -231,7 +231,7 @@
         "version": "1.0.0",
         "category": "ai",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai/subtitle_qc/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/subtitle_qc.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/subtitle_qc.zip"
     },
     {
         "id": "ai_text_lab",
@@ -240,7 +240,7 @@
         "version": "1.0.0",
         "category": "ai_lite",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai_lite/ai_text_lab/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/ai_text_lab.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/ai_text_lab.zip"
     },
     {
         "id": "versus_up",
@@ -249,7 +249,7 @@
         "version": "2.0.0",
         "category": "ai_lite",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai_lite/versus_up/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/versus_up.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/versus_up.zip"
     },
     {
         "id": "doc_convert",
@@ -258,7 +258,7 @@
         "version": "1.0.0",
         "category": "document",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/doc_convert/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/doc_convert.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/doc_convert.zip"
     },
     {
         "id": "doc_scan",
@@ -267,7 +267,7 @@
         "version": "1.0.0",
         "category": "document",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/doc_scan/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/doc_scan.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/doc_scan.zip"
     },
     {
         "id": "pdf_split",
@@ -276,7 +276,7 @@
         "version": "1.1.0",
         "category": "document",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/pdf_split/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/pdf_split.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/pdf_split.zip"
     },
     {
         "id": "pdf_merge",
@@ -285,7 +285,7 @@
         "version": "1.0.0",
         "category": "document",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/pdf_merge/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/pdf_merge.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/pdf_merge.zip"
     },
     {
         "id": "cad_to_obj",
@@ -294,7 +294,7 @@
         "version": "1.0.0",
         "category": "3d",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/cad_to_obj/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/cad_to_obj.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/cad_to_obj.zip"
     },
     {
         "id": "open_with_mayo",
@@ -303,7 +303,7 @@
         "version": "1.0.0",
         "category": "3d",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/open_with_mayo/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/open_with_mayo.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/open_with_mayo.zip"
     },
     {
         "id": "extract_textures",
@@ -312,7 +312,7 @@
         "version": "1.0.0",
         "category": "3d",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/extract_textures/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/extract_textures.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/extract_textures.zip"
     },
     {
         "id": "auto_lod",
@@ -321,7 +321,7 @@
         "version": "1.0.0",
         "category": "3d",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/auto_lod/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/auto_lod.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/auto_lod.zip"
     },
     {
         "id": "mesh_convert",
@@ -330,6 +330,6 @@
         "version": "1.0.0",
         "category": "3d",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/3d/mesh_convert/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/mesh_convert.zip"
+        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/mesh_convert.zip"
     }
 ]
