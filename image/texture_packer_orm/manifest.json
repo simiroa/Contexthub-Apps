@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "texture_packer_orm",
   "name": "Texture Packer ORM",
-  "description": "Legacy Image tool.",
+  "description": "Specialized texture packing tool for combining occlusion, roughness, and metallic maps into one output.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,

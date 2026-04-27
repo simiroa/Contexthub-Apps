@@ -50,8 +50,7 @@ def main() -> int:
         return 0
     if not _show_confirm(targets):
         return 0
-    if _capture_mode():
-        return 0
+    pass
 
     from features.image.normal_flip_green_console import run_normal_flip_green_console
 

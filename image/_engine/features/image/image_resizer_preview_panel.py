@@ -3,6 +3,7 @@ from PySide6.QtGui import QPixmap, QImage
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PIL import Image
 
+from contexthub.ui.qt.shell import get_shell_palette, set_surface_role
 from features.image.comparison_preview_widget import ComparisonPreviewWidget
 from features.image.image_resizer_workers import ProcessLivePreviewWorker
 
@@ -20,6 +21,7 @@ class ImageResizerPreviewPanel(QWidget):
         self._preview_timer.timeout.connect(self._refresh_preview_live)
         
     def _build_ui(self):
+        p = get_shell_palette()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
@@ -29,7 +31,10 @@ class ImageResizerPreviewPanel(QWidget):
         
         self.meta_overlay = QLabel("-", self.preview_view)
         self.meta_overlay.setObjectName("summaryText")
-        self.meta_overlay.setStyleSheet("background: rgba(0,0,0,0.4); color: white; padding: 2px 6px; border-radius: 4px;")
+        set_surface_role(self.meta_overlay, "panel")
+        self.meta_overlay.setStyleSheet(
+            f"padding: 2px 6px; border-radius: 4px; color: {p.text};"
+        )
         self.meta_overlay.move(10, 10)
         
     def refresh(self):

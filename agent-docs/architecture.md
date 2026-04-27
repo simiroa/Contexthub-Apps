@@ -47,7 +47,7 @@
 
 Qt shared runtime의 공통 계약과 템플릿 분류는 `qt-app-builder-contexthub` 스킬을 기준으로 본다.
 
-현재 shared Qt runtime 구현은 `dev-tools/runtime/Shared/contexthub/ui/qt/` 아래에서 토픽별로 분리되어 있다.
+현재 shared Qt runtime 구현은 `dev-tools/Runtimes/Shared/contexthub/ui/qt/` 아래에서 토픽별로 분리되어 있다.
 
 - `theme*`: palette, metrics, tone, stylesheet
 - `support.py`: app icon/manual path, runtime preference helpers

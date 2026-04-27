@@ -37,9 +37,8 @@ Qt GUI 작업이면 아래 문서와 스킬을 우선 본다.
 
 ## 4. 빠른 구조 요약
 
-- 루트 카테고리: `3d`, `ai`, `ai_lite`, `audio`, `comfyui`, `document`, `image`, `utilities`, `video`
+- 루트 카테고리: `3d`, `ai`, `ai_lite`, `audio`, `comfyui`, `document`, `image`, `legacyapp`, `native`, `system`, `utilities`, `video`
 - `ai_lite`: 텍스트 유틸리티처럼 상대적으로 가벼운 AI 도구
-- 현재 확인된 앱 수: 총 43개
 - 앱 기본 단위: `{category}/{app_id}/`
 - 공통 엔진: `{category}/_engine/`
 - 배포 스크립트: `.github/scripts/package_apps.py`
@@ -75,9 +74,11 @@ Qt GUI 작업이면 아래 문서와 스킬을 우선 본다.
   - 기본 모드: `prefer_conda`
   - 기본 env 이름: `contexthub-ai`
   - Conda 미설치 또는 env 미검출 시 경고 후 기존 Python으로 fallback
-- 공유 런타임을 수정했다면 `Contexthub\Runtimes\Shared` 원본 반영 여부까지 확인한다.
-- shared Qt runtime은 `dev-tools/runtime/Shared/contexthub/ui/qt`를 기준으로 작게 나뉜 모듈 구조를 유지하되, 기존 앱 호환용 별칭과 래퍼는 캡처로 검증되기 전까지 유지한다.
+- 공유 런타임을 수정했다면 실제 원본인 `C:\Users\HG\Documents\Contexthub\Runtimes\Shared` 반영 여부까지 확인한다.
+- 저장소 내부 개발 기준 경로는 `dev-tools/Runtimes` 심볼릭 링크다. `dev-tools/runtime_Old`는 레거시 수동 미러로만 취급하고, 참조가 모두 정리되기 전까지 제거하지 않는다.
+- shared Qt runtime은 `dev-tools/Runtimes/Shared/contexthub/ui/qt`를 기준으로 작게 나뉜 모듈 구조를 유지하되, 기존 앱 호환용 별칭과 래퍼는 캡처로 검증되기 전까지 유지한다.
 - 공유 이름을 제거할 때는 관련 앱을 다시 캡처해서 실제 실행이 살아 있는지 먼저 확인한다.
+- `legacyapp/ai/qwen3_tts`, `legacyapp/ai/whisper_subtitle`는 이름과 달리 아직 활성 앱 루트다. 이번 단계에서는 삭제 대상이 아니라 보관 대상이다.
 
 ## 9. 로컬 개발 환경 vs 허브 런타임 환경 (Local Dev vs Hub Runtime)
 

@@ -161,8 +161,7 @@ class MeshWindowBase(QMainWindow):
         if targets:
             self._add_paths(Path(p) for p in targets)
         self._refresh_ui()
-        if os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1":
-            QTimer.singleShot(2500, self.close)
+        pass
         self._runtime_timer.start()
 
     def _build_ui(self) -> None:
@@ -170,7 +169,7 @@ class MeshWindowBase(QMainWindow):
         central = QWidget()
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
-        root.setContentsMargins(m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2)
+        root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(m.section_gap)
 
         self.window_shell = QFrame()

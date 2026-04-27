@@ -139,7 +139,7 @@ class ImageConvertWindow(QMainWindow):
         central = QWidget()
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
-        root.setContentsMargins(m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2)
+        root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(m.section_gap)
 
         self.window_shell = QFrame()

@@ -4,10 +4,10 @@ import sys
 from pathlib import Path
 
 from contexthub.ui.qt.shell import (
-    ElidedLabel,
     HeaderSurface,
     attach_size_grip,
     apply_app_icon,
+    apply_rounded_window_mask,
     build_shell_stylesheet,
     get_shell_metrics,
     qt_t,
@@ -17,6 +17,7 @@ from contexthub.ui.qt.shell import (
 from shared._engine.components.icon_button import build_icon_button
 from features.audio.audio_toolbox_panels import build_option_panels
 from features.audio.audio_toolbox_run_widget import AudioRunWidget
+from features.audio.audio_toolbox_workspace import build_player_card, build_queue_card
 from features.audio.audio_toolbox_service import AudioToolboxService
 from features.audio.audio_toolbox_state import AudioToolboxState
 from features.audio.audio_toolbox_tasks import (
@@ -86,7 +87,7 @@ class AudioToolboxWindow(QMainWindow):
         self._duration_ms = 0
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1180, 840)
         self.setMinimumSize(980, 760)
@@ -97,13 +98,15 @@ class AudioToolboxWindow(QMainWindow):
         self._bind_actions()
         self._sync_controls_from_state()
         self._refresh_all()
+        apply_rounded_window_mask(self, get_shell_metrics().window_radius)
 
     def _build_ui(self) -> None:
         m = get_shell_metrics()
         central = QWidget()
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
-        root.setContentsMargins(m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
         root.setSpacing(m.section_gap)
 
         self.window_shell = QFrame()
@@ -115,8 +118,8 @@ class AudioToolboxWindow(QMainWindow):
         self.header_surface = HeaderSurface(self, APP_TITLE, APP_SUBTITLE, self.app_root)
         self.header_surface.set_header_visibility(show_subtitle=True, show_asset_count=True, show_runtime_status=True)
         shell_layout.addWidget(self.header_surface)
-        set_badge_role(self.header_surface.asset_count_badge, "status", "accent")
-        set_badge_role(self.header_surface.runtime_status_badge, "status", "muted")
+        set_badge_role(self.header_surface.asset_count_badge, "accent")
+        set_badge_role(self.header_surface.runtime_status_badge, "muted")
 
         body = QHBoxLayout()
         body.setContentsMargins(0, 0, 0, 0)
@@ -136,68 +139,26 @@ class AudioToolboxWindow(QMainWindow):
         layout.setContentsMargins(14, 14, 14, 14)
         layout.setSpacing(12)
 
-        player_card = QFrame()
-        set_surface_role(player_card, "subtle")
-        player_card.setMaximumHeight(176)
-        player_layout = QVBoxLayout(player_card)
-        player_layout.setContentsMargins(12, 12, 12, 12)
-        player_layout.setSpacing(10)
-        player_title = QLabel("Selected Audio")
-        player_title.setObjectName("eyebrow")
-        self.now_playing = ElidedLabel("No selection")
-        self.now_playing.setObjectName("title")
-        self.audio_path = ElidedLabel("")
-        self.audio_path.setObjectName("summaryText")
-        name_row = QHBoxLayout()
-        name_row.setContentsMargins(0, 0, 0, 0)
-        name_row.setSpacing(8)
-        name_row.addWidget(self.now_playing, 1)
-        name_row.addWidget(player_title, 0, Qt.AlignRight | Qt.AlignVCenter)
-        player_layout.addLayout(name_row)
-        player_layout.addWidget(self.audio_path)
+        player = build_player_card()
+        self.now_playing = player["now_playing"]
+        self.audio_path = player["audio_path"]
+        self.play_btn = player["play_btn"]
+        self.pause_btn = player["pause_btn"]
+        self.time_label = player["time_label"]
+        self.position_slider = player["position_slider"]
+        layout.addWidget(player["card"], 0)
 
-        transport = QHBoxLayout()
-        transport.setContentsMargins(0, 0, 0, 0)
-        transport.setSpacing(6)
-        self.play_btn = build_icon_button(qt_t("audio_toolbox.play", "Play"), icon_name="play", role="subtle")
-        self.pause_btn = build_icon_button(qt_t("audio_toolbox.pause", "Pause"), icon_name="pause", role="subtle")
-        self.time_label = QLabel("0:00 / 0:00")
-        self.time_label.setObjectName("muted")
-        transport.addWidget(self.play_btn, 0)
-        transport.addWidget(self.pause_btn, 0)
-        transport.addWidget(self.time_label, 1)
-        player_layout.addLayout(transport)
-
-        self.position_slider = QSlider(Qt.Horizontal)
-        self.position_slider.setRange(0, 0)
-        player_layout.addWidget(self.position_slider)
-        layout.addWidget(player_card, 0)
-
-        queue_card = QFrame()
-        set_surface_role(queue_card, "subtle")
-        queue_layout = QVBoxLayout(queue_card)
-        queue_layout.setContentsMargins(12, 12, 12, 12)
-        queue_layout.setSpacing(10)
-        title = QLabel("Queued Audio")
-        title.setObjectName("sectionTitle")
-        queue_layout.addWidget(title)
-
-        self.file_list = QListWidget()
-        self.file_list.setMinimumHeight(200)
-        queue_layout.addWidget(self.file_list, 1)
-
-        action_row = QHBoxLayout()
-        action_row.setContentsMargins(0, 0, 0, 0)
-        action_row.setSpacing(6)
-        self.add_btn = build_icon_button(qt_t("audio_toolbox.add", "Add"), icon_name="plus", role="secondary")
-        self.remove_btn = build_icon_button(qt_t("audio_toolbox.remove", "Remove"), icon_name="minus", role="secondary")
-        self.clear_btn = build_icon_button(qt_t("audio_toolbox.clear", "Clear"), icon_name="trash-2", role="secondary")
-        self.pick_output_btn = build_icon_button(qt_t("audio_toolbox.output_folder", "Output Folder"), icon_name="folder", role="secondary")
-        
-        for button in (self.add_btn, self.remove_btn, self.clear_btn, self.pick_output_btn):
-            action_row.addWidget(button)
-        queue_layout.addLayout(action_row)
-        layout.addWidget(queue_card, 1)
+        queue = build_queue_card()
+        self.file_list = queue["file_list"]
+        self.add_btn = queue["add_btn"]
+        self.remove_btn = queue["remove_btn"]
+        self.clear_btn = queue["clear_btn"]
+        self.pick_output_btn = queue["pick_output_btn"]
+        self.add_btn.setText(qt_t("audio_toolbox.add", "Add"))
+        self.remove_btn.setText(qt_t("audio_toolbox.remove", "Remove"))
+        self.clear_btn.setText(qt_t("audio_toolbox.clear", "Clear"))
+        self.pick_output_btn.setText(qt_t("audio_toolbox.output_folder", "Output Folder"))
+        layout.addWidget(queue["card"], 1)
         return panel
 
     def _build_right_panel(self) -> QWidget:
@@ -372,7 +333,7 @@ class AudioToolboxWindow(QMainWindow):
         elif self.state.completed_count and self.state.completed_count == self.state.total_count:
             tone = "success"
             runtime_badge = "Complete"
-        set_badge_role(self.header_surface.runtime_status_badge, "status", tone)
+        set_badge_role(self.header_surface.runtime_status_badge, tone)
         self.header_surface.runtime_status_badge.setText(runtime_badge)
         self.run_foldout.progress_label.setText(f"{self.state.completed_count} / {self.state.total_count}")
         self.run_foldout.status_label.setText(self.state.status_text or "Ready")
@@ -576,6 +537,10 @@ class AudioToolboxWindow(QMainWindow):
         if hours:
             return f"{hours}:{minutes:02d}:{seconds:02d}"
         return f"{minutes}:{seconds:02d}"
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        super().resizeEvent(event)
+        apply_rounded_window_mask(self, get_shell_metrics().window_radius)
 
 
 def start_app(targets: list[Path] | None, app_root: str | Path) -> int:

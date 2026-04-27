@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "ai_text_lab",
   "name": "AI Text Lab",
-  "description": "Legacy Utilities tool.",
+  "description": "Prompt workspace for translation, summarization, and structured text analysis with Gemini or Ollama.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,

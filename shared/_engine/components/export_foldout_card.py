@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 )
 
 from contexthub.ui.qt.shell import get_shell_metrics, get_shell_palette
+from shared._engine.components.execution_footer import ExecutionFooter
 from shared._engine.components.icon_button import build_icon_button
 from shared._engine.components.icon_utils import get_icon
 
@@ -60,9 +61,9 @@ class ExportFoldoutCard(QFrame):
 
         source_row = QHBoxLayout()
         source_row.setSpacing(6)
-        self.source_btn = build_icon_button("Source", icon_name="folder", role="segment")
-        self.task_btn = build_icon_button("Task", icon_name="layers", role="segment")
-        self.custom_btn = build_icon_button("Custom", icon_name="edit-3", role="segment")
+        self.source_btn = build_icon_button("Source", icon_name="folder-open", role="segment")
+        self.task_btn = build_icon_button("Task", icon_name="settings", role="segment")
+        self.custom_btn = build_icon_button("Custom", icon_name="plus", role="segment")
         
         for btn in [self.source_btn, self.task_btn, self.custom_btn]:
             btn.setCheckable(True)
@@ -105,11 +106,12 @@ class ExportFoldoutCard(QFrame):
         progress_header.addWidget(self.progress_percent)
         
         self.progress_line_bg = QFrame()
-        self.progress_line_bg.setStyleSheet(f"background: {self.p.surface_subtle_ghost}; height: 2px; border-radius: 1px;")
+        self.progress_line_bg.setObjectName("progressTrack")
         self.progress_line_bg.setFixedHeight(2)
         
         self.progress_line_fg = QFrame(self.progress_line_bg)
-        self.progress_line_fg.setStyleSheet(f"background: {self.p.accent}; height: 2px; border-radius: 1px;")
+        self.progress_line_fg.setObjectName("progressFill")
+        self.progress_line_fg.setFixedHeight(2)
         self.progress_line_fg.setFixedWidth(0)
         
         progress_vbox.addLayout(progress_header)
@@ -124,23 +126,17 @@ class ExportFoldoutCard(QFrame):
         self.toggle_btn.setCheckable(True)
         
         self.reveal_btn = build_icon_button("", icon_name="folder-open", role="icon")
-        self.cancel_btn = build_icon_button("Cancel", icon_name="x", role="ghost")
-        self.cancel_btn.setVisible(False)
-        
-        self.out_format_combo = QComboBox()
-        self.out_format_combo.setObjectName("compactField")
+        self.footer = ExecutionFooter(title, include_format=True, include_cancel=True)
+        self.out_format_combo = self.footer.format_combo
+        self.cancel_btn = self.footer.cancel_btn
+        self.run_btn = self.footer.run_btn
         self.out_format_combo.setFixedWidth(60)
-        self.out_format_combo.setVisible(False) # Hide by default if no formats
-        
-        self.run_btn = build_icon_button(title, icon_name="play", role="primary")
+        self.out_format_combo.setVisible(False)
 
         footer_layout.addWidget(self.toggle_btn)
         footer_layout.addWidget(self.reveal_btn)
         footer_layout.addStretch(1)
-        footer_layout.addWidget(self.out_format_combo)
-        footer_layout.addSpacing(4)
-        footer_layout.addWidget(self.cancel_btn)
-        footer_layout.addWidget(self.run_btn, 1)
+        footer_layout.addWidget(self.footer, 1)
         
         self.layout.addLayout(footer_layout)
 
@@ -155,7 +151,7 @@ class ExportFoldoutCard(QFrame):
 
     def set_expanded(self, expanded: bool):
         self.toggle_btn.setChecked(expanded)
-        self.toggle_btn.setIcon(get_icon("chevron-up" if expanded else "chevron-down", color="#94a3b8"))
+        self.toggle_btn.setIcon(get_icon("chevron-up" if expanded else "chevron-down", color=self.p.text_muted))
         self.details.setVisible(expanded)
 
     def set_progress(self, percentage: int, text: Optional[str] = None):
@@ -174,10 +170,7 @@ class ExportFoldoutCard(QFrame):
         self.out_format_combo.setVisible(True)
 
     def set_running(self, running: bool):
-        self.run_btn.setEnabled(not running)
-        self.out_format_combo.setEnabled(not running)
-        self.cancel_btn.setVisible(running)
-        self.run_btn.setIcon(get_icon("loader" if running else "play", color="white"))
+        self.footer.set_running(running)
         if not running:
             self.set_progress(0, "Ready")
 

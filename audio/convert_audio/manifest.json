@@ -52,8 +52,9 @@
     "sidebar_widget": null
   },
   "ui": {
-    "enabled": false,
+    "enabled": true,
     "framework": "pyside6",
-    "shared_theme": ""
+    "shared_theme": "contexthub",
+    "template": "mini"
   }
 }

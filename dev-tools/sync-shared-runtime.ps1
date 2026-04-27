@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$source = Join-Path $RepoRoot "dev-tools\runtime\Shared"
+$source = Join-Path $RepoRoot "dev-tools\Runtimes\Shared"
 $target = Join-Path $HubRoot "Runtimes\Shared"
 
 if (-not (Test-Path $source)) {

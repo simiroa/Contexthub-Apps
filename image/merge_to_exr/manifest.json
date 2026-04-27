@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "merge_to_exr",
   "name": "Merge to EXR",
-  "description": "Legacy Image tool.",
+  "description": "Full Qt workspace for combining image channels and exporting merged EXR outputs.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,

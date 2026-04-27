@@ -1,21 +1,34 @@
 # Extract Audio
 
-The **Extract Audio** app is a unified tool for extracting or isolating audio from media files. It supports extracting full audio tracks from videos and isolating specific stems like vocals or background music using AI.
+`Extract Audio`는 미디어 파일에서 오디오를 추출하거나 AI 기반 분리를 수행하는 mini Qt 앱입니다.
 
-## Features
+## 지원 모드
 
-- **Extract All Audio (Copy)**: Quickly extracts the full audio track from video files without re-encoding the video.
-- **Isolate Vocal Track (AI)**: Uses AI (Demucs/Audio-Separator) to isolate the vocal track from an audio or video source.
-- **Isolate Background Music (AI)**: Uses AI to isolate the background music (instrumental) from an audio or video source.
+- `Extract All Audio (Copy)`
+- `Extract Voice (AI)`
+- `Extract BGM (AI)`
 
-## How to Use
+## UI 구성
 
-1. **Input Media**: Drag and drop video or audio files into the drop zone.
-2. **Extraction Mode**: Select your desired mode from the dropdown menu.
-3. **Run**: Click the **Extract** button to begin the process.
-4. **Results**: The extracted files will be saved in a subfolder next to the source files (`Extracted_Audio` or `Separated_Audio`).
+- 상단에서 입력 개수와 현재 상태를 확인합니다.
+- 가운데에서 모드와 출력 포맷을 선택합니다.
+- `Run` 버튼으로 실행합니다.
+- 출력 폴더는 작업별 기본 폴더, 원본 폴더, 사용자 지정 폴더 중 하나를 쓸 수 있습니다.
 
-## Requirements
+## 출력 위치
 
-- **FFmpeg**: Required for basic audio extraction.
-- **AI Models**: Required for vocal/BGM isolation. These may be downloaded automatically on first use.
+- `Extract All Audio`: 기본적으로 원본 위치
+- `Extract Voice` / `Extract BGM`: 기본적으로 `Separated_Audio`
+
+## 사용 방법
+
+1. 오디오 또는 비디오 파일을 앱에 전달합니다.
+2. 추출 모드를 선택합니다.
+3. 출력 포맷을 고릅니다.
+4. 필요하면 출력 폴더를 지정합니다.
+5. `Extract`를 눌러 실행합니다.
+
+## 요구 사항
+
+- `ffmpeg`
+- `audio-separator` 또는 `demucs`는 AI 분리 모드에서 사용될 수 있습니다.

@@ -59,6 +59,7 @@
   "ui": {
     "enabled": true,
     "framework": "pyside6",
-    "shared_theme": "contexthub"
+    "shared_theme": "contexthub",
+    "template": "mini"
   }
 }

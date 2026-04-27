@@ -1,15 +1,15 @@
 # Extract Textures (텍스처 추출)
 
 ## 소개
-FBX 파일 내부에 임베드된 텍스처들을 외부 이미지 파일로 분리하여 추출합니다.
+선택한 3D 파일에서 임베드된 텍스처를 추출해 원본 옆 `textures` 폴더로 저장합니다.
 
 ## 사용법
 
-1. FBX 파일 선택 후 우클릭
+1. 3D 파일 선택 후 우클릭
 2. **3D → Extract Textures** 선택
-3. mini 확인 창에서 파일 개수를 확인
+3. mini Qt 확인 창에서 선택 개수와 대상 파일을 확인
 4. **Extract** 실행
-5. 원본 파일과 같은 위치의 `textures` 폴더에 추출 결과 저장
+5. 앱이 각 소스 파일 옆에 `textures` 폴더를 만들고 추출 결과를 저장
 
 ## 출력 파일
 원본 파일과 같은 폴더의 `textures` 폴더에 저장:
@@ -29,10 +29,10 @@ textures/
 
 ## 지원 포맷
 - FBX (임베드 텍스처 포함)
-- GLB/GLTF (일부 지원)
+- GLB/GLTF (임베드 리소스 구조에 따라 제한적)
 
 ## 의존성
 - Blender 또는 pymeshlab
 
 ## UI 유형
-- mini confirm Qt shell
+- mini Qt shell

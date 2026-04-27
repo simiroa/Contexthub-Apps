@@ -217,7 +217,7 @@ class VideoConvertWindow(QMainWindow):
         central = QWidget()
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
-        root.setContentsMargins(m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2)
+        root.setContentsMargins(0, 0, 0, 0)
 
         self.window_shell = QFrame()
         self.window_shell.setObjectName("windowShell")

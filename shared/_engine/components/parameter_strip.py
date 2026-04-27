@@ -1,26 +1,21 @@
 from __future__ import annotations
 
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSlider, QVBoxLayout
+from PySide6.QtWidgets import QLabel, QSlider, QWidget, QHBoxLayout
 from PySide6.QtCore import Qt
 
-from contexthub.ui.qt.shell import get_shell_metrics
+from shared._engine.components.parameter_controls_card import ParameterCard
 
 
 def build_parameter_strip(title: str = "Parameter") -> dict[str, object]:
-    m = get_shell_metrics()
-    card = QFrame()
-    card.setObjectName("card")
-    layout = QVBoxLayout(card)
-    layout.setContentsMargins(m.panel_padding, m.panel_padding, m.panel_padding, m.panel_padding)
-    layout.setSpacing(8)
-
-    title_label = QLabel(title)
-    title_label.setObjectName("sectionTitle")
-    row = QHBoxLayout()
+    card = ParameterCard(title)
+    slider_field = QWidget()
+    row = QHBoxLayout(slider_field)
+    row.setContentsMargins(0, 0, 0, 0)
+    row.setSpacing(8)
     value_label = QLabel("0")
+    value_label.setObjectName("summaryText")
     slider = QSlider(Qt.Horizontal)
     row.addWidget(value_label, 0)
     row.addWidget(slider, 1)
-    layout.addWidget(title_label)
-    layout.addLayout(row)
+    card.add_row("Value", slider_field)
     return {"card": card, "slider": slider, "value_label": value_label}

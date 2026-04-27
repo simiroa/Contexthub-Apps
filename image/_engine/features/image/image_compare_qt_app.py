@@ -51,7 +51,7 @@ class ImageCompareWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.root_layout = QVBoxLayout(self.central_widget)
         m = get_shell_metrics()
-        self.root_layout.setContentsMargins(m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2)
+        self.root_layout.setContentsMargins(0, 0, 0, 0)
         self.root_layout.setSpacing(m.section_gap)
 
         # Standard Window Shell

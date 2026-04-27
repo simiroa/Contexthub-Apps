@@ -82,8 +82,6 @@ class AutoLodWindow(QMainWindow):
         if targets:
             self._set_input_from_paths(Path(p) for p in targets)
         self._refresh_ui()
-        if os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1":
-            QTimer.singleShot(2500, self.close)
         self._runtime_timer.start()
 
     def _build_ui(self) -> None:
@@ -92,7 +90,7 @@ class AutoLodWindow(QMainWindow):
         central = QWidget()
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
-        root.setContentsMargins(metrics.shell_margin - 2, metrics.shell_margin - 2, metrics.shell_margin - 2, metrics.shell_margin - 2)
+        root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(metrics.section_gap)
 
         self.window_shell = QFrame()

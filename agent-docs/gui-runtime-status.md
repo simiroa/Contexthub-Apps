@@ -2,8 +2,8 @@
 
 ## Scope
 
-This document tracks the current Qt GUI cleanup state in `Contexthub-Apps`.
-It is a working inventory, not a final release checklist.
+This document tracks the current Qt GUI template inventory in `Contexthub-Apps`.
+Keep it aligned with `manifest.json` `ui.template` declarations and the latest capture state only.
 
 Use it together with:
 
@@ -55,15 +55,18 @@ Manifested apps:
 
 - `cad_to_obj`
 - `comfyui_dashboard`
-- `extract_audio`
+- `compress_audio`
+- `convert_audio`
+- `enhance_audio`
 - `extract_bgm`
+- `extract_audio`
 - `extract_textures`
 - `extract_voice`
 - `image_convert`
 - `interpolate_30fps`
 - `mesh_convert`
-- `normalize_volume`
 - `normal_flip_green`
+- `normalize_volume`
 - `open_with_mayo`
 - `pdf_split`
 - `remove_audio`
@@ -86,8 +89,8 @@ Manifested apps:
 
 These are not part of the generic Qt template pass.
 
-- native apps such as `leave_manager_C`
-- categories not included in the standard capture sweep, such as `audio` and `comfyui`, when they need their own review pass
+- native apps (별도 구축된 앱 등)
+- category-specific review passes only when they still need bespoke shell behavior
 
 ## Low-Risk Cleanup Order
 
@@ -99,13 +102,9 @@ These are not part of the generic Qt template pass.
 
 ## Current Risks
 
-- Some apps still call legacy shared-runtime names that need aliases.
-- Some apps use `field_bg`, `surface_subtle`, or `preview_min_height` directly, so removing those names too early will break them.
-- `special` apps should not be forced into a single generic template before their panel model is understood.
-- `audio` is still a separate subtree for operational review, even though its manifest templates are now explicit.
-- `ui.template` should be filled on the apps we consider structurally special so the bucket is declared in manifest, not inferred from file names.
-- `audio/normalize_volume` currently fails because `AudioMiniWindow.__init__()` still expects a `subtitle` argument.
-- `image/image_compare` currently fails because `mode_combo` is referenced before it is created.
+- `special` apps should not be forced into a generic template before their panel model is understood.
+- Shared runtime compatibility aliases should stay in place until the dependent apps are recaptured.
+- Bucket ownership should be declared in `manifest.json` whenever an app is structurally special or recently refactored.
 
 ## Theme Drift
 
@@ -127,6 +126,7 @@ These are not part of the generic Qt template pass.
 - 앱은 컴포넌트 구조를 다르게 가져갈 수 있지만, raw color stylesheet를 새로 늘리지 않는다.
 - 다음 정리 패스는 개별 앱 색 수정이 아니라 shared shell role/tone API 도입 후, 상위 offender 앱을 그 API로 옮기는 방식으로 진행한다.
 - shared runtime은 작은 모듈로 분해한 상태를 유지하되, 기존 앱이 의존하는 compatibility alias는 캡처 재검증 전까지 유지한다.
+- audio 앱은 `full`과 `mini` 버킷을 명시적으로 선언하고, `compress_audio` / `convert_audio` / `enhance_audio` 같은 단일 작업 앱도 mini shell로 다룬다.
 
 ## Validation
 
@@ -134,12 +134,11 @@ These are not part of the generic Qt template pass.
 
 - `python dev-tools/check-gui-theme-contract.py`
 
-2026-03-29 기준 초기 베이스라인은 다음과 같다.
+2026-04-23 기준 최신 베이스라인은 다음과 같다.
 
 - manifest 계약 오류: 0
-- raw color drift 경고: 73
-
-이 경고 수는 이후 앱 정리 패스에서 줄여 나가는 추적 지표로 본다.
+- theme contract 경고: 0
+- 예외 목록: 3
 
 ## Working Rule
 

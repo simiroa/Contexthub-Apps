@@ -1,43 +1,38 @@
 # Audio Toolbox
 
-## 소개
-`Audio Toolbox`는 `audio` 카테고리의 분리, 정규화, 변환 기능을 한 화면으로 모은 통합 앱입니다.
+`Audio Toolbox`는 `audio` 카테고리의 통합 작업창입니다. 왼쪽은 입력 목록과 미디어 미리보기, 오른쪽은 작업 설정과 실행 영역으로 나뉩니다.
 
-하나의 창에서 다음 작업을 선택하고 바로 실행할 수 있습니다.
+## 지원 작업
 
 - `Extract Voice`
 - `Extract BGM`
 - `Normalize Volume`
 - `Convert Audio`
+- `Compress Audio`
+- `Enhance Audio`
 
-## 주요 기능
-- `audio-separator` 기반 보컬/BGM 분리
-- 모델 선택과 출력 포맷 제어
-- 긴 파일을 위한 chunk duration 설정
-- `ffmpeg-normalize` 우선 기반 loudness 정규화
-- FFmpeg 기반 포맷 변환 및 메타데이터 유지 옵션
+## UI 구성
 
-## 사용법
-1. 오디오 파일을 선택한 뒤 우클릭합니다.
-2. `Audio -> Audio Toolbox`를 실행합니다.
-3. 왼쪽에서 입력 파일을 확인합니다.
-4. 오른쪽에서 작업 종류와 옵션을 선택합니다.
-5. 출력 폴더 모드를 고릅니다.
-6. `Run Task`를 눌러 실행합니다.
+- 입력 파일은 왼쪽 목록에 표시됩니다.
+- 선택한 파일은 상단 플레이어 카드에서 확인할 수 있습니다.
+- 작업별 세부 옵션은 오른쪽 `Task Settings`에서 바뀝니다.
+- 출력 포맷과 출력 폴더 모드는 실행 카드 하단에서 선택합니다.
 
-## 출력 규칙
-- `Extract Voice`: 기본적으로 원본 폴더에 `*_voice.<format>`
-- `Extract BGM`: 기본적으로 원본 폴더에 `*_bgm.<format>`
-- `Normalize Volume`: 기본적으로 원본 폴더에 `*_normalized.<ext>`
-- `Convert Audio`: 기본적으로 원본 폴더에 `*_conv.<format>`
+## 출력 위치
 
-`Task Folder` 또는 `Custom` 모드를 선택하면 작업별 전용 폴더 또는 지정한 폴더로 출력할 수 있습니다.
+- `Source folder`: 원본 파일과 같은 위치
+- `Task folder`: 작업별 하위 폴더
+- `Custom`: 사용자가 지정한 폴더
 
-## 의존성
-- `audio-separator`
-- `ffmpeg-normalize`
-- `ffmpeg`
+## 사용 방법
+
+1. 오디오 파일을 앱에 전달하거나 목록에 추가합니다.
+2. 작업 종류를 선택합니다.
+3. 필요한 옵션과 출력 포맷을 고릅니다.
+4. 출력 폴더 모드를 선택합니다.
+5. `Run Task`를 눌러 실행합니다.
 
 ## 참고
-- 기존 `Extract BGM`, `Extract Voice`, `Normalize Volume` 앱은 그대로 유지됩니다.
-- 이 앱은 고급 옵션 조정과 일괄 작업을 위한 메인 진입점으로 설계되었습니다.
+
+- `audio-separator`, `ffmpeg-normalize`, `ffmpeg`가 사용될 수 있습니다.
+- 단일 작업용 앱들은 `Extract Audio`, `Normalize Volume`, `Compress Audio`, `Convert Audio`, `Enhance Audio`입니다.

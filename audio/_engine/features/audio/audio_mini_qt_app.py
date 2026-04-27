@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Optional
-
 from PySide6.QtCore import Qt, Signal, QObject
 from PySide6.QtWidgets import (
     QApplication,
@@ -17,17 +15,17 @@ from PySide6.QtWidgets import (
 from contexthub.ui.qt.shell import (
     HeaderSurface,
     apply_app_icon,
+    apply_rounded_window_mask,
     build_shell_stylesheet,
     get_shell_metrics,
-    set_badge_role,
 )
 from features.audio.audio_toolbox_service import AudioToolboxService
 from features.audio.audio_toolbox_state import AudioToolboxState
 from features.audio.audio_toolbox_tasks import (
-    TASK_LABELS,
-    TASK_STACK_INDEX,
+    TASK_CONVERT_AUDIO,
     export_formats_for_task,
     TASK_COMPRESS_AUDIO,
+    TASK_ENHANCE_AUDIO,
 )
 
 # Shared components
@@ -59,14 +57,16 @@ class AudioMiniWindow(QMainWindow):
         # Unique app_id to allow multiple instances
         self.app_id = f"audio_mini_{default_task}"
         
-        self.state = AudioToolboxState()
-        self.state.current_task = default_task
+        self.state = AudioToolboxState(files=list(targets))
+        self.state.task_type = default_task
+        if self.state.files:
+            self.state.selected_index = 0
         self.app_subtitle = subtitle
         self.bridge = ServiceBridge()
         self.bridge.updated.connect(self._on_service_update)
         self.service = AudioToolboxService(self.state, on_update=self.bridge.emit_update)
 
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         
         self._init_ui()
@@ -74,7 +74,7 @@ class AudioMiniWindow(QMainWindow):
 
     def _init_ui(self) -> None:
         self.setWindowTitle(self.app_title)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         apply_app_icon(self, self.app_root)
         self.setStyleSheet(build_shell_stylesheet())
@@ -90,13 +90,15 @@ class AudioMiniWindow(QMainWindow):
         # Center the window
         screen = QApplication.primaryScreen().geometry()
         self.move((screen.width() - self.width()) // 2, (screen.height() - self.height()) // 2)
+        apply_rounded_window_mask(self, get_shell_metrics().window_radius)
 
     def _build_ui(self) -> None:
         m = get_shell_metrics()
         central = QWidget()
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
-        root.setContentsMargins(m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
 
         shell = QFrame()
         shell.setObjectName("windowShell")
@@ -120,13 +122,10 @@ class AudioMiniWindow(QMainWindow):
         if self.default_task == TASK_COMPRESS_AUDIO:
             self.quality_card = build_mini_parameter_slider(
                 "Quality", 
-                value_labels={0: "High", 1: "Balanced", 2: "Small"}
+                value_labels={0: "High", 1: "Balanced", 2: "Small"},
+                embedded=True,
             )
-            # Add the contents of the parameter card elements to the details_layout
             self.export_card["details_layout"].insertWidget(0, self.quality_card["card"])
-            # Remove the frame/background of the nested card to make it look integrated
-            self.quality_card["card"].setStyleSheet("background: transparent; border: none; padding: 0;")
-            
             self.quality_slider = self.quality_card["slider"]
             self.quality_slider.valueChanged.connect(self._on_compress_level_changed)
 
@@ -144,12 +143,25 @@ class AudioMiniWindow(QMainWindow):
         formats = export_formats_for_task(self.default_task)
         self.export_format_combo.clear()
         self.export_format_combo.addItems(formats)
-        
-        if self.state.export_format in formats:
-            self.export_format_combo.setCurrentText(self.state.export_format)
+
+        current_format = ""
+        if self.default_task == TASK_COMPRESS_AUDIO:
+            current_format = self.state.compress_output_format
+        elif self.default_task == TASK_CONVERT_AUDIO:
+            current_format = self.state.convert_output_format
+        elif self.default_task == TASK_ENHANCE_AUDIO:
+            current_format = self.state.enhance_output_format
+
+        if current_format in formats:
+            self.export_format_combo.setCurrentText(current_format)
             
     def _on_export_format_changed(self, fmt: str) -> None:
-        self.state.export_format = fmt
+        if self.default_task == TASK_COMPRESS_AUDIO:
+            self.state.compress_output_format = fmt.upper()
+        elif self.default_task == TASK_CONVERT_AUDIO:
+            self.state.convert_output_format = fmt.upper()
+        elif self.default_task == TASK_ENHANCE_AUDIO:
+            self.state.enhance_output_format = fmt.upper()
 
     def _on_compress_level_changed(self, idx: int) -> None:
         # In Compress Audio, levels are Quality(0), Balanced(1), Small(2)
@@ -159,14 +171,10 @@ class AudioMiniWindow(QMainWindow):
             self.state.compress_level = levels[idx]
 
     def _on_service_update(self, payload: dict) -> None:
-        status = payload.get("status", "")
-        progress = payload.get("progress", 0)
-        
-        self.export_card["status_label"].setText(status)
-        if progress > 0:
-            self.export_card["progress_percent"].setText(f"{progress}%")
-        else:
-             self.export_card["progress_percent"].setText("0%")
+        progress = int(round((self.state.progress_value or 0.0) * 100))
+        self.export_card["progress_percent"].setText(f"{progress}%")
+        self.export_card["card"].set_running(self.state.is_processing)
+        self.export_card["card"].set_progress(progress, self.state.status_text or None)
 
         if payload.get("finished"):
             self.header.set_runtime_status("idle")
@@ -178,7 +186,14 @@ class AudioMiniWindow(QMainWindow):
             QMessageBox.warning(self, "No Files", "Please provide input files via command line.")
             return
         self.header.set_runtime_status("processing")
-        self.service.start_batch(self.targets)
+        self.state.files = list(self.targets)
+        if self.state.selected_index < 0 and self.state.files:
+            self.state.selected_index = 0
+        self.service.start()
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        super().resizeEvent(event)
+        apply_rounded_window_mask(self, get_shell_metrics().window_radius)
 
 
 def start_mini_app(targets: list[Path]|None, app_root: str|Path, app_id: str, title: str, description: str = "") -> int:

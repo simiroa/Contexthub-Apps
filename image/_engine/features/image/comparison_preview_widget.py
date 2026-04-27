@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QGraphicsScene,
     QGraphicsPixmapItem,
 )
+from contexthub.ui.qt.shell import get_shell_palette
 
 class ComparisonPreviewWidget(QGraphicsView):
     """
@@ -22,6 +23,7 @@ class ComparisonPreviewWidget(QGraphicsView):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        p = get_shell_palette()
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
         
@@ -32,17 +34,19 @@ class ComparisonPreviewWidget(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QFrame.NoFrame)
-        self.setBackgroundBrush(QBrush(QColor(22, 24, 28)))
+        self.setBackgroundBrush(QBrush(QColor(p.surface_subtle)))
 
         # Rounded edges and clear border
         self.setObjectName("previewView")
-        self.setStyleSheet("""
-            #previewView {
-                border: 2px solid #3f4e64;
+        self.setStyleSheet(
+            f"""
+            #previewView {{
+                border: 1px solid {p.control_border};
                 border-radius: 12px;
-                background-color: #16181c;
-            }
-        """)
+                background-color: {p.surface_subtle};
+            }}
+            """
+        )
         
         # Layers
         self.original_item = QGraphicsPixmapItem()
@@ -61,7 +65,9 @@ class ComparisonPreviewWidget(QGraphicsView):
         self._is_comparing = False
         self._overlay_label = QLabel("Drop Image to Start", self)
         self._overlay_label.setAlignment(Qt.AlignCenter)
-        self._overlay_label.setStyleSheet("color: #4a5568; font-weight: bold; background: transparent; font-size: 14px;")
+        self._overlay_label.setStyleSheet(
+            f"color: {p.text_muted}; font-weight: bold; background: transparent; font-size: 14px;"
+        )
 
     def set_pixmaps(self, original: QPixmap, result: QPixmap | None = None) -> None:
         self.original_pixmap = original

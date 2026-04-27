@@ -19,7 +19,7 @@ Contexthub 앱 설치 환경 없이도, 이 저장소의 앱을 개별적으로 
 
 여기서 `<SharedRoot>`는 다음 우선순위를 가진다.
 
-1. `Contexthub-Apps\dev-tools\runtime\Shared`
+1. `Contexthub-Apps\dev-tools\Runtimes\Shared`
 2. `C:\Users\HG\Documents\Contexthub\Runtimes\Shared`
 
 ## 현재 확인된 상태
@@ -46,7 +46,7 @@ Contexthub 앱 설치 환경 없이도, 이 저장소의 앱을 개별적으로 
 ## 추천 절차
 
 1. 허브 저장소가 로컬에 존재하는지 확인
-2. `dev-tools/sync-shared-runtime.ps1`로 `dev-tools\runtime\Shared`를 허브 `Runtimes\Shared`로 미러링
+2. `dev-tools/sync-shared-runtime.ps1`로 `dev-tools\Runtimes\Shared`를 허브 `Runtimes\Shared`로 미러링
 3. 필요한 Python 패키지 설치 확인
 4. `ai` 카테고리라면 Conda env 사용 여부를 먼저 확인
 5. `dev-tools/run-app-local.ps1`로 대상 앱 실행
@@ -96,3 +96,9 @@ Conda가 없거나 env를 찾지 못하면 경고 후 기존 Python으로 fallba
 - GUI 이슈 유형: `agent-docs/gui-issue-playbook.md`
 - 이번 GUI 수정 요약: `Diagnostics/gui-issues-2026-03-13.md`
 - 최신 캡처 기준: `Diagnostics/gui-capture-report-2026-03-13.md`
+
+## 레거시 메모
+
+- `dev-tools/runtime_Old`는 예전 수동 미러 복사본이다.
+- 새 작업 기준은 `dev-tools/Runtimes` 심볼릭 링크와 실제 허브 원본 `C:\Users\HG\Documents\Contexthub\Runtimes`다.
+- `runtime_Old`는 참조가 모두 정리되기 전까지 제거 후보로만 유지한다.

@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 from contexthub.ui.qt.shell import (
     HeaderSurface,
     apply_app_icon,
+    apply_rounded_window_mask,
     build_shell_stylesheet,
     get_shell_metrics,
     set_surface_role,
@@ -60,7 +61,7 @@ class ExtractAudioWindow(QMainWindow):
         self.service = AudioToolboxService(self.state, on_update=self.bridge.emit_update)
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         apply_app_icon(self, self.app_root)
         self.setStyleSheet(build_shell_stylesheet())
@@ -79,13 +80,15 @@ class ExtractAudioWindow(QMainWindow):
         cp = QApplication.primaryScreen().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
+        apply_rounded_window_mask(self, get_shell_metrics().window_radius)
 
     def _build_ui(self) -> None:
         m = get_shell_metrics()
         central = QWidget()
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
-        root.setContentsMargins(m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
 
         shell = QFrame()
         shell.setObjectName("windowShell")
@@ -153,7 +156,7 @@ class ExtractAudioWindow(QMainWindow):
         elif self.state.completed_count and self.state.completed_count == self.state.total_count:
             tone = "success"
             
-        set_badge_role(self.header.runtime_status_badge, "status", tone)
+        set_badge_role(self.header.runtime_status_badge, tone)
         self.header.runtime_status_badge.setText(tone.capitalize())
         self.export_card["run_btn"].setEnabled(not self.state.is_processing and bool(self.state.files))
         self.export_card["cancel_btn"].setEnabled(self.state.is_processing)
@@ -175,6 +178,10 @@ class ExtractAudioWindow(QMainWindow):
             elif self.state.last_output_path:
                 # Optionally notify completion
                 pass
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        super().resizeEvent(event)
+        apply_rounded_window_mask(self, get_shell_metrics().window_radius)
 
 
 def start_app(targets: list[Path] | None, app_root: Path) -> int:

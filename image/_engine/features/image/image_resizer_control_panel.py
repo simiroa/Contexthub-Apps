@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QLineEdit
 )
+from contexthub.ui.qt.shell import set_button_role
 
 from shared._engine.components.parameter_controls_card import ParameterCard
 from shared._engine.components.mini_execute_card import MiniExecuteCard
@@ -80,7 +81,7 @@ class ImageResizerControlPanel(QWidget):
         
         for key in parameter_order:
             if key == "link_aspect":
-                self.link_btn = build_icon_button("", icon_name="link-2", role="secondary", is_icon_only=True)
+                self.link_btn = build_icon_button("", icon_name="link-2", role="segment", is_icon_only=True)
                 self.link_btn.setCheckable(True)
                 self.link_btn.setChecked(self.service.state.parameter_values.get("aspect_locked", True))
                 self.link_btn.toggled.connect(lambda b: self._on_param_changed("aspect_locked", b))
@@ -88,19 +89,7 @@ class ImageResizerControlPanel(QWidget):
                 # Ensure 32px height and consistent styling
                 self.link_btn.setFixedHeight(32)
                 self.link_btn.setFixedWidth(32)
-                self.link_btn.setStyleSheet("""
-                    QPushButton { 
-                        background: #2d3748; 
-                        border: 1px solid #3f4e64;
-                        border-radius: 6px; 
-                    }
-                    QPushButton:checked { 
-                        background: #3b82f6; 
-                        border: none;
-                    }
-                    QPushButton:hover { background: #3f4e64; }
-                    QPushButton:checked:hover { background: #2563eb; }
-                """)
+                set_button_role(self.link_btn, "segment")
                 
                 row = VerticalParameterRow(" ", self.link_btn)
                 custom_row_layout.addWidget(row)

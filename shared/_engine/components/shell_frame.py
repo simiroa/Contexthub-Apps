@@ -26,7 +26,8 @@ def build_shell_window(
     central = QWidget()
     window.setCentralWidget(central)
     root = QVBoxLayout(central)
-    root.setContentsMargins(m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2, m.shell_margin - 2)
+    root.setContentsMargins(0, 0, 0, 0)
+    root.setSpacing(0)
 
     shell = QFrame()
     shell.setObjectName("windowShell")

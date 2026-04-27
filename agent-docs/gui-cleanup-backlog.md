@@ -76,7 +76,7 @@
 현재 색상이 앱마다 틀어지는 직접 원인은 다음과 같다.
 
 1. shared palette와 실제 stylesheet가 완전히 연결돼 있지 않다.
-   `dev-tools/runtime/Shared/contexthub/ui/qt/shell.py`의 `ShellPalette`가 있어도 `build_shell_stylesheet()` 내부에 별도 하드코딩 색이 섞여 있었다.
+`dev-tools/Runtimes/Shared/contexthub/ui/qt/shell.py`의 `ShellPalette`가 있어도 `build_shell_stylesheet()` 내부에 별도 하드코딩 색이 섞여 있었다.
 
 2. 앱별 로컬 stylesheet override가 많다.
    예시는 아래와 같다.

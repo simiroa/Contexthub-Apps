@@ -42,6 +42,7 @@ image/image_resizer/Diagnostics/
 logs/
 *.log
 Diagnostics/gui_captures/logs/
+Diagnostics/gui_runs/**/contexthub-app-locks/
 
 # App runtime data
 userdata/

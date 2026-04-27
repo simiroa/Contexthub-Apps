@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "rigreader_vectorizer",
   "name": "RigReady Vectorizer",
-  "description": "Legacy Image tool.",
+  "description": "Full Qt vectorization workspace for extracting clean line or mask shapes from source images.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,

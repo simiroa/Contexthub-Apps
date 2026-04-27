@@ -25,7 +25,7 @@ $ErrorActionPreference = "Stop"
 $appRoot = Join-Path $RepoRoot $Category
 $appDir = Join-Path $appRoot $App
 $mainPy = Join-Path $appDir "main.py"
-$localSharedRoot = Join-Path $RepoRoot "dev-tools\runtime\Shared"
+$localSharedRoot = Join-Path $RepoRoot "dev-tools\Runtimes\Shared"
 $fallbackSharedRoot = Join-Path $HubRoot "Runtimes\Shared"
 
 if (-not $SharedRoot) {

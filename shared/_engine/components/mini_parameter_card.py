@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from contexthub.ui.qt.shell import get_shell_metrics, get_shell_palette
+from contexthub.ui.qt.shell import get_shell_metrics
 
 
 class MiniParameterCard(QFrame):
@@ -20,16 +20,28 @@ class MiniParameterCard(QFrame):
     Features a top-aligned eyebrow label and status display with a full-width slider.
     """
     
-    def __init__(self, label: str, min_val: int = 0, max_val: int = 2, default_val: int = 1, value_labels: Optional[Dict[int, str]] = None, parent: Optional[QWidget] = None):
+    def __init__(
+        self,
+        label: str,
+        min_val: int = 0,
+        max_val: int = 2,
+        default_val: int = 1,
+        value_labels: Optional[Dict[int, str]] = None,
+        *,
+        embedded: bool = False,
+        parent: Optional[QWidget] = None,
+    ):
         super().__init__(parent)
         self.m = get_shell_metrics()
-        self.p = get_shell_palette()
-        self.setObjectName("card")
+        self._embedded = embedded
+        if not embedded:
+            self.setObjectName("card")
         self._init_ui(label, min_val, max_val, default_val, value_labels)
 
     def _init_ui(self, label: str, min_val: int, max_val: int, default_val: int, value_labels: Optional[Dict[int, str]]):
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(self.m.panel_padding, 8, self.m.panel_padding, 10)
+        horizontal_margin = 0 if self._embedded else self.m.panel_padding
+        self.layout.setContentsMargins(horizontal_margin, 8, horizontal_margin, 10)
         self.layout.setSpacing(4)
         
         # Header Row (Label + Value)
@@ -40,7 +52,6 @@ class MiniParameterCard(QFrame):
         
         self.value_display = QLabel("")
         self.value_display.setObjectName("summaryText")
-        self.value_display.setStyleSheet(f"font-weight: bold; color: {self.p.text};")
         
         label_row.addWidget(self.title_label)
         label_row.addStretch()
@@ -72,9 +83,18 @@ def build_mini_parameter_slider(
     min_val: int = 0, 
     max_val: int = 2, 
     default_val: int = 1,
-    value_labels: dict[int, str] | None = None
+    value_labels: dict[int, str] | None = None,
+    *,
+    embedded: bool = False,
 ) -> dict[str, object]:
-    card_obj = MiniParameterCard(label, min_val, max_val, default_val, value_labels)
+    card_obj = MiniParameterCard(
+        label,
+        min_val,
+        max_val,
+        default_val,
+        value_labels,
+        embedded=embedded,
+    )
     
     return {
         "card": card_obj,

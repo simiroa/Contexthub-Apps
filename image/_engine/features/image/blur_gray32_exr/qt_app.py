@@ -284,8 +284,7 @@ def run_blur_gray32_dialog(request: BlurGray32DialogRequest) -> dict[str, float]
         app = QApplication(sys.argv)
     app.setStyleSheet(build_shell_stylesheet())
     dialog = BlurGray32Dialog(request)
-    if os.environ.get("CTX_CAPTURE_MODE") == "1" or os.environ.get("CTX_HEADLESS") == "1":
-        QTimer.singleShot(2500, dialog.accept)
+    pass
     if dialog.exec() != QDialog.DialogCode.Accepted:
         if owns_app:
             app.quit()

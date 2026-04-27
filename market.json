@@ -11,7 +11,7 @@
     {
         "id": "ai_text_lab",
         "name": "AI Text Lab",
-        "description": "Legacy Utilities tool.",
+        "description": "Prompt workspace for translation, summarization, and structured text analysis with Gemini or Ollama.",
         "version": "1.0.0",
         "category": "ai_lite",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai_lite/ai_text_lab/icon.png",
@@ -47,25 +47,16 @@
     {
         "id": "youtube_downloader",
         "name": "Video Downloader",
-        "description": "Legacy Utilities tool.",
+        "description": "GUI downloader for capturing videos, playlists, audio-only exports, and subtitles with yt-dlp.",
         "version": "1.0.1",
         "category": "utilities",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/utilities/youtube_downloader/icon.png",
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/youtube_downloader.zip"
     },
     {
-        "id": "leave_manager_C",
-        "name": "Leave Manager (C)",
-        "description": "Manage your vacation days and countdown to freedom.",
-        "version": "1.0.0",
-        "category": "utilities",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/utilities/leave_manager/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-latest/leave_manager_C.zip"
-    },
-    {
         "id": "image_compare",
         "name": "Compare Images",
-        "description": "Legacy Image tool.",
+        "description": "Full Qt image comparison workspace for before-after review and difference inspection.",
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_compare/icon.png",
@@ -92,7 +83,7 @@
     {
         "id": "rigreader_vectorizer",
         "name": "RigReady Vectorizer",
-        "description": "Legacy Image tool.",
+        "description": "Full Qt vectorization workspace for extracting clean line or mask shapes from source images.",
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/rigreader_vectorizer/icon.png",
@@ -101,7 +92,7 @@
     {
         "id": "image_convert",
         "name": "Image Convert",
-        "description": "Legacy Image tool.",
+        "description": "Mini Qt shell for converting selected images into another format with batch-friendly defaults.",
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/image_convert/icon.png",
@@ -110,7 +101,7 @@
     {
         "id": "merge_to_exr",
         "name": "Merge to EXR",
-        "description": "Legacy Image tool.",
+        "description": "Full Qt workspace for combining image channels and exporting merged EXR outputs.",
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/merge_to_exr/icon.png",
@@ -128,7 +119,7 @@
     {
         "id": "texture_packer_orm",
         "name": "Texture Packer ORM",
-        "description": "Legacy Image tool.",
+        "description": "Specialized texture packing tool for combining occlusion, roughness, and metallic maps into one output.",
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/texture_packer_orm/icon.png",
@@ -137,7 +128,7 @@
     {
         "id": "simple_normal_roughness",
         "name": "Simple Normal Roughness",
-        "description": "Legacy Image tool.",
+        "description": "Convert images to Normal/Roughness maps in a compact Qt shell.",
         "version": "1.0.0",
         "category": "image",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/simple_normal_roughness/icon.png",
@@ -236,7 +227,7 @@
     {
         "id": "doc_convert",
         "name": "Convert Docs",
-        "description": "Legacy Document tool.",
+        "description": "Compact Qt shell for converting selected documents into a target output format.",
         "version": "1.0.0",
         "category": "document",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/doc_convert/icon.png",
@@ -254,7 +245,7 @@
     {
         "id": "pdf_merge",
         "name": "PDF Merge",
-        "description": "Legacy Document tool.",
+        "description": "Compact Qt shell for reordering and merging selected PDF files into one document.",
         "version": "1.0.0",
         "category": "document",
         "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/document/pdf_merge/icon.png",

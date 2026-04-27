@@ -17,7 +17,7 @@
   "execution": {
     "entry_point": "main.py",
     "arguments": "",
-    "mode": "console",
+    "mode": "gui",
     "working_directory": "./",
     "auto_start": false,
     "run_as_admin": false,
@@ -52,6 +52,7 @@
   "ui": {
     "enabled": true,
     "framework": "pyside6",
-    "shared_theme": "contexthub"
+    "shared_theme": "contexthub",
+    "template": "mini"
   }
 }

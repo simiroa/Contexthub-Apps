@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "image_convert",
   "name": "Image Convert",
-  "description": "Legacy Image tool.",
+  "description": "Mini Qt shell for converting selected images into another format with batch-friendly defaults.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,

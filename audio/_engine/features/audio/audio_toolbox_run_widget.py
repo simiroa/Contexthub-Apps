@@ -11,13 +11,15 @@ try:
         QHBoxLayout,
         QLabel,
         QLineEdit,
-        QPushButton,
         QSizePolicy,
         QVBoxLayout,
         QWidget,
     )
 except ImportError as exc:  # pragma: no cover
     raise ImportError("PySide6 is required for audio_toolbox run widget.") from exc
+
+from shared._engine.components.icon_button import build_icon_button
+from shared._engine.components.icon_utils import get_icon
 
 
 class AudioRunWidget(QFrame):
@@ -34,6 +36,7 @@ class AudioRunWidget(QFrame):
         self.setObjectName("card")
         m = get_shell_metrics()
         p = get_shell_palette()
+        self._palette = p
         self.setMinimumHeight(0)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
@@ -51,8 +54,7 @@ class AudioRunWidget(QFrame):
         dir_row.setSpacing(6)
         self.output_dir_edit = QLineEdit()
         self.output_dir_edit.setPlaceholderText("Custom output folder")
-        self.browse_btn = QPushButton("Browse")
-        self.browse_btn.setObjectName("iconBtn")
+        self.browse_btn = build_icon_button("Browse", icon_name="folder-open", role="secondary")
         self.browse_btn.clicked.connect(self.browse_requested.emit)
         dir_row.addWidget(self.output_dir_edit, 1)
         dir_row.addWidget(self.browse_btn, 0)
@@ -61,15 +63,12 @@ class AudioRunWidget(QFrame):
         mode_row = QHBoxLayout()
         mode_row.setContentsMargins(0, 0, 0, 0)
         mode_row.setSpacing(6)
-        self.source_btn = QPushButton("Source")
+        self.source_btn = build_icon_button("Source", icon_name="folder-open", role="segment")
         self.source_btn.setCheckable(True)
-        self.source_btn.setObjectName("segmentBtn")
-        self.task_folder_btn = QPushButton("Task Folder")
+        self.task_folder_btn = build_icon_button("Task Folder", icon_name="settings", role="segment")
         self.task_folder_btn.setCheckable(True)
-        self.task_folder_btn.setObjectName("segmentBtn")
-        self.custom_btn = QPushButton("Custom")
+        self.custom_btn = build_icon_button("Custom", icon_name="plus", role="segment")
         self.custom_btn.setCheckable(True)
-        self.custom_btn.setObjectName("segmentBtn")
         self.source_btn.clicked.connect(self.source_requested.emit)
         self.task_folder_btn.clicked.connect(self.task_folder_requested.emit)
         self.custom_btn.clicked.connect(self.custom_requested.emit)
@@ -121,11 +120,9 @@ class AudioRunWidget(QFrame):
         self.export_format_combo = QComboBox()
         self.export_format_combo.setMinimumWidth(120)
         self.export_format_combo.setObjectName("compactField")
-        self.toggle_btn = QPushButton("⋯")
-        self.toggle_btn.setObjectName("iconBtn")
+        self.toggle_btn = build_icon_button("", icon_name="chevron-down", role="icon", is_icon_only=True)
         self.toggle_btn.clicked.connect(self.toggle_requested.emit)
-        self.run_btn = QPushButton("Run Task")
-        self.run_btn.setProperty("buttonRole", "primary")
+        self.run_btn = build_icon_button("Run Task", icon_name="play", role="primary")
         self.run_btn.setMinimumWidth(220)
         self.run_btn.clicked.connect(self.run_requested.emit)
         footer.addWidget(self.export_format_combo, 0)
@@ -141,7 +138,7 @@ class AudioRunWidget(QFrame):
         self.expanded_body.setVisible(visible)
         self.export_format_combo.setVisible(self.export_format_combo.count() > 0)
         self.detail_label.setVisible(visible and bool(self.detail_label.text().strip()))
-        self.toggle_btn.setText("⌃" if visible else "⋯")
+        self.toggle_btn.setIcon(get_icon("chevron-up" if visible else "chevron-down", color=self._palette.text_muted))
         self.layout().activate()
         self.setMaximumHeight(16777215 if visible else self.minimumSizeHint().height())
         self.updateGeometry()

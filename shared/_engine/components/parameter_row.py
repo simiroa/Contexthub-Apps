@@ -1,39 +1,26 @@
 from __future__ import annotations
 
 from typing import Optional
-from PySide6.QtWidgets import (
-    QHBoxLayout,
-    QLabel,
-    QWidget,
-)
+from PySide6.QtWidgets import QWidget
 
 from contexthub.ui.qt.shell import get_shell_metrics
+from shared._engine.components.field_row import LabeledFieldRow
 
 
-class ParameterRow(QWidget):
+class ParameterRow(LabeledFieldRow):
     """
     Standardized Parameter Row for Contexthub-Apps.
     Ensures a consistent Label (Eyebrow) + Field layout with proper spacing and 26px alignment.
     """
     
     def __init__(self, label_text: str, field: QWidget, parent: Optional[QWidget] = None):
-        super().__init__(parent)
-        self.m = get_shell_metrics()
-        self._init_ui(label_text, field)
-
-    def _init_ui(self, label_text: str, field: QWidget):
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
-
-        # Label (Eyebrow)
-        self.label = QLabel(label_text.upper())
-        self.label.setObjectName("eyebrow")
-        self.label.setFixedWidth(60) # Consistent eyebrow width
-        
-        # Field (any compact field)
-        self.field = field
-        
-        layout.addWidget(self.label)
-        layout.addWidget(self.field, 1)
-        self.setFixedHeight(self.m.input_min_height)
+        super().__init__(
+            label_text,
+            field,
+            orientation="horizontal",
+            label_width=60,
+            margins=(0, 0, 0, 0),
+            spacing=8,
+            fixed_height=get_shell_metrics().input_min_height,
+            parent=parent,
+        )

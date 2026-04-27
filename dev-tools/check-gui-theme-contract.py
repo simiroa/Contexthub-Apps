@@ -13,7 +13,7 @@ HEX_COLOR_RE = re.compile(r"#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})\b")
 RGB_COLOR_RE = re.compile(r"\brgba?\s*\(")
 
 ALLOWED_COLOR_OWNERS = {
-    Path("dev-tools/runtime/Shared/contexthub/ui/qt/shell.py"),
+    Path("dev-tools/Runtimes/Shared/contexthub/ui/qt/shell.py"),
 }
 
 EXEMPT_COLOR_OWNERS = {

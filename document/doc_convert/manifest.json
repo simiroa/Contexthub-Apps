@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "doc_convert",
   "name": "Convert Docs",
-  "description": "Legacy Document tool.",
+  "description": "Compact Qt shell for converting selected documents into a target output format.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,

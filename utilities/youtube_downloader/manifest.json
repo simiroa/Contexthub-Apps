@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "youtube_downloader",
   "name": "Video Downloader",
-  "description": "Legacy Utilities tool.",
+  "description": "GUI downloader for capturing videos, playlists, audio-only exports, and subtitles with yt-dlp.",
   "author": "ContextHub Legacy",
   "version": "1.0.1",
   "icon": null,

@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "image_compare",
   "name": "Compare Images",
-  "description": "Legacy Image tool.",
+  "description": "Full Qt image comparison workspace for before-after review and difference inspection.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": null,

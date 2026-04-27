@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 )
 from contexthub.ui.qt.shell import (
     HeaderSurface, CardSurface, ScrollSurface, TitleLabel, BodyLabel, TooltipLabel,
-    set_surface_role, set_field_role, qt_t
+    set_surface_role, set_field_role, qt_t, get_shell_palette
 )
 from shared._engine.components.icon_button import build_icon_button
 
@@ -334,10 +334,11 @@ class ExportRunCard(CardSurface):
 
     def _on_foldout_toggled(self, checked):
         from shared._engine.assets.icons.icon_utils import get_qicon
+        p = get_shell_palette()
         self.foldout_content.setVisible(checked)
         self.btn_toggle.setText("Less Options" if checked else "More Options")
         icon_name = "chevron-up" if checked else "chevron-down"
-        self.btn_toggle.setIcon(get_qicon(icon_name, color="#94a3b8")) # Secondary/Subtle grey
+        self.btn_toggle.setIcon(get_qicon(icon_name, color=p.text_muted))
 
     def set_progress(self, value, status):
         self.progress_bar.setValue(value)

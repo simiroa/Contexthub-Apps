@@ -8,7 +8,7 @@ param(
     [string[]]$OnlyApps = @(),
     [int]$WaitSeconds = 20,
     [int]$CooldownSeconds = 2,
-    [int]$PaintWaitMilliseconds = 100,
+    [int]$PaintWaitMilliseconds = 500,
     [string]$PythonExe = "python",
     [switch]$DryRun,
     [switch]$Clean
@@ -33,7 +33,7 @@ $fixturesPath = Join-Path $RepoRoot $CaptureFixturesRoot
 $logPath = Join-Path $RepoRoot "Diagnostics\\gui_capture_log.md"
 $runTmpRoot = Join-Path $RepoRoot "Diagnostics\\gui_runs"
 
-$localSharedRoot = Join-Path $RepoRoot "dev-tools\runtime\Shared"
+$localSharedRoot = Join-Path $RepoRoot "dev-tools\Runtimes\Shared"
 $fallbackSharedRoot = $null
 if ($HubRoot) {
     $fallbackSharedRoot = Join-Path $HubRoot "Runtimes\Shared"
@@ -485,10 +485,10 @@ function Save-WindowScreenshot {
 
     [Win32Capture]::ShowWindow($Handle, 9) | Out-Null
     [Win32Capture]::SetForegroundWindow($Handle) | Out-Null
-    Start-Sleep -Milliseconds 250
+    Start-Sleep -Milliseconds 500
 
     [Win32Capture]::SetWindowPos($Handle, [Win32Capture]::HWND_TOPMOST, 0, 0, 0, 0, [Win32Capture]::SWP_NOMOVE -bor [Win32Capture]::SWP_NOSIZE) | Out-Null
-    Start-Sleep -Milliseconds 120
+    Start-Sleep -Milliseconds 500
 
     # Measure after restore/foreground so stale bounds don't produce shifted crops.
     $windowRect = New-Object Win32Capture+RECT
