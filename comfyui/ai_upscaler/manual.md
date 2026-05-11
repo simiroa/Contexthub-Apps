@@ -17,7 +17,7 @@ ComfyUI 워크플로우에 위임해 이미지를 업스케일·복원하는 ai 
 
 3. **워크플로우 저장**
    - ComfyUI에서 원하는 업스케일 그래프를 구성한 뒤 메뉴에서 **Save (API Format)** 으로 저장.
-   - 다음 약속된 파일명으로 `ai/_engine/assets/workflows/upscaler/` 폴더에 배치합니다:
+   - 다음 약속된 파일명으로 `comfyui/_engine/assets/workflows/upscaler/` 폴더에 배치합니다:
      - `esrgan.json`  — Real-ESRGAN 워크플로우
      - `diffbir.json` — DiffBIR-v2 워크플로우
      - `supir.json`   — SUPIR 워크플로우

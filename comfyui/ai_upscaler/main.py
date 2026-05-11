@@ -13,6 +13,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from runtime_bootstrap import resolve_shared_runtime
+from contexthub.utils.startup_errors import format_startup_error
 
 SHARED_ROOT, SHARED_PACKAGE_ROOT = resolve_shared_runtime(APP_ROOT)
 for entry in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
@@ -20,8 +21,6 @@ for entry in (LEGACY_ROOT, SHARED_ROOT, SHARED_PACKAGE_ROOT):
         entry_str = str(entry)
         if entry_str not in sys.path:
             sys.path.insert(0, entry_str)
-
-from contexthub.utils.startup_errors import format_startup_error
 
 if not os.environ.get("CTX_APP_ROOT"):
     os.environ["CTX_APP_ROOT"] = str(APP_ROOT)
@@ -51,12 +50,11 @@ def _show_dependency_error(message: str) -> None:
 
 def main():
     from utils.i18n import load_extra_strings
-
     loc_file = LEGACY_ROOT / "locales.json"
     if loc_file.exists():
         load_extra_strings(loc_file)
     try:
-        from features.ai.ai_upscaler_qt_app import start_app
+        from features.comfyui.ai_upscaler_qt_app import start_app
     except ImportError as exc:
         _show_dependency_error(format_startup_error(exc))
         return

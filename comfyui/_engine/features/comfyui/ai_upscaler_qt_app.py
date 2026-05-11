@@ -15,8 +15,8 @@ from contexthub.ui.qt.shell import (
     refresh_runtime_preferences,
     runtime_settings_signature,
 )
-from features.ai.ai_upscaler_service import AIUpscalerService
-from features.ai.ai_upscaler_state import MODEL_CHOICES
+from features.comfyui.ai_upscaler_service import AIUpscalerService
+from features.comfyui.ai_upscaler_state import MODEL_CHOICES
 
 try:
     from PySide6.QtCore import QSettings, Qt, QTimer, Signal, Slot

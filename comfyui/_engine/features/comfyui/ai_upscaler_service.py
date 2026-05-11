@@ -8,12 +8,12 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Callable
 
-from features.ai.ai_upscaler_state import (
+from features.comfyui.ai_upscaler_state import (
     AIUpscalerState,
     InputAsset,
     MODEL_CHOICES,
 )
-from features.ai import ai_upscaler_comfy_bridge as bridge
+from features.comfyui import ai_upscaler_comfy_bridge as bridge
 
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"}
