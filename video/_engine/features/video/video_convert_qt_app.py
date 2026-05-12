@@ -188,13 +188,11 @@ class VideoConvertWindow(QMainWindow):
         self.service_bridge.updated.connect(self._on_service_update)
         self.service = VideoConvertService(self.state, on_update=self.service_bridge.emit_update)
 
+        # Media player + audio output load the QtMultimedia backend (~150-300ms).
+        # Defer instantiation until the user actually previews/plays a video.
         self.media_player = None
         self.audio_output = None
-        if HAS_MEDIA and QMediaPlayer is not None:
-            self.media_player = QMediaPlayer(self)
-            self.audio_output = QAudioOutput(self)
-            self.media_player.setAudioOutput(self.audio_output)
-            self.audio_output.setVolume(self._volume_value / 100.0)
+        self.video_surface = None
 
         self.setWindowTitle(APP_TITLE)
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
@@ -259,14 +257,9 @@ class VideoConvertWindow(QMainWindow):
             no_selection_text=qt_t("video_convert_qt.no_selection", "No video selected")
         )
         
-        # Video Surface integration
-        if HAS_MEDIA and QVideoWidget is not None and self.media_player is not None:
-            self.video_surface = QVideoWidget()
-            self.media_player.setVideoOutput(self.video_surface)
-            surface_layout = QVBoxLayout(self.preview_panel.video_container)
-            surface_layout.setContentsMargins(0, 0, 0, 0)
-            surface_layout.addWidget(self.video_surface)
-        
+        # Video surface is created lazily on first preview to avoid loading
+        # the QtMultimedia backend during startup.
+
         layout.addWidget(self.preview_panel, 3)
 
         # 2. Modular Queue List
@@ -387,9 +380,7 @@ class VideoConvertWindow(QMainWindow):
         self.preview_panel.volume_changed.connect(self._on_volume_changed)
         self.preview_panel.mute_requested.connect(self._toggle_mute)
 
-        if self.media_player is not None:
-            self.media_player.positionChanged.connect(self._on_position_changed)
-            self.media_player.durationChanged.connect(self._on_duration_changed)
+        # Media player signals are connected lazily inside _ensure_media_player.
 
     def _apply_state_to_controls(self) -> None:
         formats = _format_options(self.state)
@@ -405,10 +396,29 @@ class VideoConvertWindow(QMainWindow):
         self.preset_combo.setCurrentText("Web MP4")
 
     def _refresh_all(self) -> None:
+        self._refresh_format_options()
         self._refresh_list()
         self._refresh_preview()
         self._refresh_status()
         self._refresh_option_states()
+
+    def _refresh_format_options(self) -> None:
+        """Rebuild format combo if available options changed (e.g. NVENC probe finished)."""
+        formats = _format_options(self.state)
+        current_items = [self.format_combo.itemText(i) for i in range(self.format_combo.count())]
+        if current_items == formats:
+            return
+        current = self.format_combo.currentText()
+        self.format_combo.blockSignals(True)
+        try:
+            self.format_combo.clear()
+            self.format_combo.addItems(formats)
+            if current in formats:
+                self.format_combo.setCurrentText(current)
+            elif self.state.output_format in formats:
+                self.format_combo.setCurrentText(self.state.output_format)
+        finally:
+            self.format_combo.blockSignals(False)
 
     def _refresh_list(self) -> None:
         current_path = self.state.files[self._selected_index] if 0 <= self._selected_index < len(self.state.files) else None
@@ -428,6 +438,28 @@ class VideoConvertWindow(QMainWindow):
             self.queue_panel.input_list.setCurrentRow(self._selected_index)
         self.asset_count_badge.setText(qt_t("comfyui.qt_shell.asset_count", "{count} inputs", count=len(self.state.files)))
 
+    def _ensure_media_player(self) -> bool:
+        """Lazily create QMediaPlayer/QAudioOutput/QVideoWidget on first use."""
+        if self.media_player is not None:
+            return True
+        if not HAS_MEDIA or QMediaPlayer is None or QVideoWidget is None:
+            return False
+        self.media_player = QMediaPlayer(self)
+        self.audio_output = QAudioOutput(self)
+        self.media_player.setAudioOutput(self.audio_output)
+        self.audio_output.setVolume(self._volume_value / 100.0)
+
+        self.video_surface = QVideoWidget()
+        self.media_player.setVideoOutput(self.video_surface)
+        surface_layout = QVBoxLayout(self.preview_panel.video_container)
+        surface_layout.setContentsMargins(0, 0, 0, 0)
+        surface_layout.addWidget(self.video_surface)
+
+        # Wire up the signals that _bind_actions previously set unconditionally.
+        self.media_player.positionChanged.connect(self._on_position_changed)
+        self.media_player.durationChanged.connect(self._on_duration_changed)
+        return True
+
     def _refresh_preview(self) -> None:
         path = self._current_path()
         if path is None:
@@ -438,7 +470,7 @@ class VideoConvertWindow(QMainWindow):
 
         self.preview_panel.set_placeholder_mode(False)
         self.preview_panel.set_metadata(path.name, f"0:00 / {_format_time(self._player_duration)}")
-        if self.media_player is not None and self.video_surface is not None:
+        if self._ensure_media_player() and self.media_player is not None:
             self.media_player.setSource(QUrl.fromLocalFile(str(path)))
         else:
             self.preview_panel.set_placeholder_mode(True, str(path))
@@ -616,8 +648,14 @@ class VideoConvertWindow(QMainWindow):
         self._refresh_status()
 
     def _play_media(self) -> None:
-        if self.media_player is not None and self._current_path() is not None:
-            self.media_player.play()
+        if self._current_path() is None:
+            return
+        if not self._ensure_media_player() or self.media_player is None:
+            return
+        # If we just created the player, make sure the current selection is loaded.
+        if self.media_player.source().isEmpty():
+            self.media_player.setSource(QUrl.fromLocalFile(str(self._current_path())))
+        self.media_player.play()
 
     def _pause_media(self) -> None:
         if self.media_player is not None:
@@ -675,6 +713,12 @@ def start_app(targets: list[Path] | None, app_root: str | Path) -> int:
     files = [path for path in (targets or []) if path.suffix.lower() in VIDEO_EXTS]
     state = VideoConvertState(files=files)
     app = QApplication.instance() or QApplication(sys.argv)
+    try:
+        from shared._engine.runtime.splash import show_splash, finish_splash
+        splash = show_splash(app_root)
+    except Exception:
+        splash, finish_splash = None, lambda *_: None  # type: ignore[assignment]
     window = VideoConvertWindow(state, app_root)
     window.show()
+    finish_splash(splash, window)
     return app.exec()

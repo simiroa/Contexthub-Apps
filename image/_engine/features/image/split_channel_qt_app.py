@@ -28,10 +28,13 @@ from contexthub.ui.qt.panels import (
     ExportFoldoutPanel,
 )
 
+from shared._engine.runtime.media_runtime import MediaRuntime
+from shared._engine.runtime.file_input_mixin import MultiFileInputMixin
+
 from .split_exr_state import SplitExrState
 from .split_exr_service import SplitExrService
 
-class SplitChannelWindow(QMainWindow):
+class SplitChannelWindow(QMainWindow, MultiFileInputMixin):
     def __init__(self, app_root: Path, targets: list[str] = None):
         super().__init__()
         self.app_root = app_root
@@ -42,6 +45,7 @@ class SplitChannelWindow(QMainWindow):
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(800, 600)
+        self.runtime = MediaRuntime.instance()
         apply_app_icon(self, self.app_root)
         
         self.central_widget = QWidget()
@@ -109,33 +113,24 @@ class SplitChannelWindow(QMainWindow):
         self.root_layout.addWidget(self.window_shell)
 
         self.setStyleSheet(build_shell_stylesheet())
+        
+        self.setup_file_inputs(self.add_btn, self.clear_btn, self.input_list, self.state)
         self._bind_actions()
         
         if targets:
             self._add_files([Path(t) for t in targets])
 
     def _bind_actions(self):
-        self.add_btn.clicked.connect(self._on_add_clicked)
-        self.clear_btn.clicked.connect(self._on_clear_clicked)
-        self.input_list.files_dropped.connect(self._add_files)
         self.export_panel.run_requested.connect(self._on_run_clicked)
 
-    def _on_add_clicked(self):
-        files, _ = QFileDialog.getOpenFileNames(self, "Select Images", "", "Images (*.exr *.hdr *.png *.jpg *.tiff *.tga)")
-        if files:
-            self._add_files([Path(f) for f in files])
+    def get_file_filters(self):
+        return "Images (*.exr *.hdr *.png *.jpg *.tiff *.tga)"
 
-    def _on_clear_clicked(self):
-        self.state.files.clear()
-        self.input_list.clear()
-        self.header.set_asset_count(0)
-
-    def _add_files(self, paths: list[Path]):
-        for p in paths:
-            if p not in self.state.files:
-                self.state.files.append(p)
-                self.input_list.addItem(p.name)
+    def on_files_added(self, paths):
         self.header.set_asset_count(len(self.state.files))
+
+    def on_files_cleared(self):
+        self.header.set_asset_count(0)
 
     def _on_run_clicked(self):
         if not self.state.files: 
@@ -163,9 +158,31 @@ class SplitChannelWindow(QMainWindow):
             on_complete
         )
 
-def main():
-    app = QApplication(sys.argv)
-    app_root = Path(os.environ.get("CTX_APP_ROOT", "."))
-    window = SplitChannelWindow(app_root, sys.argv[1:])
+    def handle_external_targets(self, targets: list[str]):
+        """Mixin compatibility for SingleInstance"""
+        if targets:
+            self.state.files.extend([Path(t) for t in targets])
+            # Refresh UI if needed
+            self.export_panel.set_status(f"Added {len(targets)} files.")
+
+def start_app(targets: list[str] | None = None) -> int:
+    app = QApplication.instance() or QApplication(sys.argv)
+    
+    from shared._engine.runtime.single_instance import SingleInstance
+    si = SingleInstance(APP_ID)
+    if si.is_already_running():
+        if targets: si.send_to_primary(targets)
+        return 0
+        
+    app_root = Path(__file__).resolve().parents[3] / APP_ID
+    window = SplitChannelWindow(app_root, targets)
+    
+    si.start_server()
+    si.message_received.connect(window.handle_external_targets)
+    window._si = si
+    
     window.show()
-    sys.exit(app.exec())
+    return app.exec()
+
+if __name__ == "__main__":
+    sys.exit(start_app(sys.argv[1:]))

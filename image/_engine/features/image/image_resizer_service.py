@@ -59,7 +59,7 @@ class ImageResizerService:
         for raw_path in paths:
             path = Path(raw_path)
             if not path.exists(): continue
-            if any(asset.path == path for asset in self.state.input_assets): continue
+            if path in self.state.files: continue
             
             try:
                 # Early check for image validity and resolution
@@ -68,27 +68,27 @@ class ImageResizerService:
                     if w * h > Image.MAX_IMAGE_PIXELS:
                         print(f"Skipping {path.name}: Image resolution too high ({w}x{h})")
                         continue
-                self.state.input_assets.append(InputAsset(path=path, kind="image"))
+                self.state.files.append(path)
             except Exception as e:
                 print(f"Failed to import {path.name}: {e}")
                 continue
                 
-        if self.state.input_assets and self.state.preview_path is None:
-            self.state.preview_path = self.state.input_assets[0].path
+        if self.state.files and self.state.preview_path is None:
+            self.state.preview_path = self.state.files[0]
 
     def remove_input_at(self, index: int) -> None:
-        if 0 <= index < len(self.state.input_assets):
-            removed = self.state.input_assets.pop(index)
-            if self.state.preview_path == removed.path:
-                self.state.preview_path = self.state.input_assets[0].path if self.state.input_assets else None
+        if 0 <= index < len(self.state.files):
+            removed = self.state.files.pop(index)
+            if self.state.preview_path == removed:
+                self.state.preview_path = self.state.files[0] if self.state.files else None
 
     def clear_inputs(self) -> None:
-        self.state.input_assets.clear()
+        self.state.files.clear()
         self.state.preview_path = None
 
     def set_preview_from_index(self, index: int) -> None:
-        if 0 <= index < len(self.state.input_assets):
-            self.state.preview_path = self.state.input_assets[index].path
+        if 0 <= index < len(self.state.files):
+            self.state.preview_path = self.state.files[index]
 
     def update_parameter(self, key: str, value: Any) -> None:
         self.state.parameter_values[key] = value
@@ -101,8 +101,8 @@ class ImageResizerService:
 
     def resolve_output_dir(self) -> Path | None:
         if self.state.output_options.output_dir: return self.state.output_options.output_dir
-        if not self.state.input_assets: return None
-        return self.state.input_assets[0].path.parent
+        if not self.state.files: return None
+        return self.state.files[0].parent
 
     def get_nearest_pot(self, val: int) -> int:
         if val <= 0: return 2
@@ -233,9 +233,12 @@ class ImageResizerService:
         return False
 
     def run_workflow(self) -> tuple[bool, str, Path | None]:
-        files = [a.path for a in self.state.input_assets]
-        if not files: return False, "No items", None
+        if not self.state.files:
+            return False, "No input files.", None
+            
+        session_path = self.export_session() if self.state.output_options.export_session_json else None
         
+        files = self.state.files
         target_dir = self.resolve_output_dir()
         if target_dir: target_dir.mkdir(parents=True, exist_ok=True)
         

@@ -1,6 +1,14 @@
 import os
 import sys
+import time
 from pathlib import Path
+
+_T0 = time.perf_counter()
+
+
+def _log_startup(label: str) -> None:
+    if os.environ.get("CTX_STARTUP_TRACE"):
+        print(f"[startup] {label} t+{(time.perf_counter() - _T0) * 1000:.0f}ms", file=sys.stderr)
 
 
 APP_ID = "remove_audio"
@@ -48,6 +56,7 @@ def _show_confirm(targets: list[Path]) -> bool:
 
 
 def main() -> int:
+    _log_startup("entering main")
     try:
         from utils.i18n import load_extra_strings
 
@@ -66,6 +75,7 @@ def main() -> int:
         return 0
 
     from features.video.remove_audio_console import run_remove_audio_console
+    _log_startup("qt_app imported")
 
     return run_remove_audio_console(targets, APP_ROOT)
 

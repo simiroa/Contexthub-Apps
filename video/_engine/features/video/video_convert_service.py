@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import threading
@@ -9,22 +10,120 @@ from utils.external_tools import get_ffmpeg
 from utils.files import get_safe_path
 from .video_convert_state import VideoConvertState
 
+
+_CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
+
+
+def _caps_cache_path() -> Path:
+    base = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA") or str(Path.home())
+    return Path(base) / "Contexthub" / "cache" / "ffmpeg_caps.json"
+
+
+def _load_cached_nvenc(ffmpeg_path: str) -> bool | None:
+    """Return cached has_nvenc for the given ffmpeg binary, or None if no valid cache."""
+    if not ffmpeg_path:
+        return None
+    try:
+        p = Path(ffmpeg_path)
+        if not p.exists():
+            return None
+        mtime = p.stat().st_mtime_ns
+        size = p.stat().st_size
+        cache_file = _caps_cache_path()
+        if not cache_file.exists():
+            return None
+        data = json.loads(cache_file.read_text(encoding="utf-8"))
+        entry = data.get(str(p.resolve()))
+        if not entry:
+            return None
+        if entry.get("mtime_ns") == mtime and entry.get("size") == size:
+            return bool(entry.get("has_nvenc", False))
+    except Exception:
+        return None
+    return None
+
+
+def _store_cached_nvenc(ffmpeg_path: str, has_nvenc: bool) -> None:
+    try:
+        p = Path(ffmpeg_path)
+        if not p.exists():
+            return
+        cache_file = _caps_cache_path()
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
+        data: dict = {}
+        if cache_file.exists():
+            try:
+                data = json.loads(cache_file.read_text(encoding="utf-8"))
+            except Exception:
+                data = {}
+        data[str(p.resolve())] = {
+            "mtime_ns": p.stat().st_mtime_ns,
+            "size": p.stat().st_size,
+            "has_nvenc": bool(has_nvenc),
+        }
+        cache_file.write_text(json.dumps(data), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _probe_nvenc(ffmpeg_path: str) -> bool:
+    if not ffmpeg_path:
+        return False
+    try:
+        res = subprocess.run(
+            [ffmpeg_path, "-encoders"],
+            capture_output=True,
+            text=True,
+            errors="ignore",
+            creationflags=_CREATE_NO_WINDOW,
+        )
+        return "h264_nvenc" in res.stdout
+    except Exception:
+        return False
+
+
 class VideoConvertService:
     def __init__(self, state: VideoConvertState, on_update: Callable = None):
         self.state = state
         self.on_update = on_update
         self.active_processes = []
         self.state.ffmpeg_path = get_ffmpeg()
-        self.state.has_nvenc = self.check_nvenc()
+
+        self._nvenc_ready = threading.Event()
+        # Prefer cached capability so the UI can show the correct state immediately.
+        cached = _load_cached_nvenc(self.state.ffmpeg_path)
+        if cached is not None:
+            self.state.has_nvenc = cached
+            self._nvenc_ready.set()
+        else:
+            self.state.has_nvenc = False
+            self._start_nvenc_probe()
+
+    def _start_nvenc_probe(self) -> None:
+        """Probe NVENC support in a background thread; notify UI when done."""
+        def _run():
+            try:
+                has_nvenc = _probe_nvenc(self.state.ffmpeg_path)
+                self.state.has_nvenc = has_nvenc
+                _store_cached_nvenc(self.state.ffmpeg_path, has_nvenc)
+            finally:
+                self._nvenc_ready.set()
+                if self.on_update:
+                    try:
+                        self.on_update()
+                    except Exception:
+                        pass
+        threading.Thread(target=_run, daemon=True, name="nvenc-probe").start()
+
+    def ensure_nvenc_checked(self, timeout: float = 5.0) -> bool:
+        """Block until the NVENC probe finishes (used right before encoding)."""
+        if not self._nvenc_ready.is_set():
+            self._nvenc_ready.wait(timeout)
+        return self.state.has_nvenc
 
     def check_nvenc(self) -> bool:
-        try:
-            ffmpeg = self.state.ffmpeg_path
-            if not ffmpeg: return False
-            res = subprocess.run([ffmpeg, "-encoders"], capture_output=True, text=True, errors="ignore")
-            return "h264_nvenc" in res.stdout
-        except:
-            return False
+        """Kept for backwards compatibility; prefer state.has_nvenc."""
+        return self.ensure_nvenc_checked()
 
     def add_inputs(self, paths: List[str]) -> None:
         for raw_path in paths:
@@ -50,6 +149,7 @@ class VideoConvertService:
 
     def start_conversion(self):
         if self.state.is_processing: return
+        self.ensure_nvenc_checked()
         self.state.is_processing = True
         self.state.cancel_flag = False
         self.state.completed_count = 0

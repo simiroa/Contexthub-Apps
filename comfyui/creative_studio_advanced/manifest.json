@@ -2,7 +2,7 @@
   "schema_version": "1.2",
   "id": "creative_studio_advanced",
   "name": "ComfyUI Creative Studio (Advanced)",
-  "description": "Professional workspace with Checkpoint, LoRA Stacking, FaceDetailer \u0026 SUPIR.",
+  "description": "Professional workspace with Checkpoint, LoRA Stacking, FaceDetailer & SUPIR.",
   "author": "ContextHub Legacy",
   "version": "1.0.0",
   "icon": "icon.png",
@@ -49,5 +49,26 @@
     "enabled": true,
     "framework": "pyside6",
     "shared_theme": "contexthub"
+  },
+  "compatibility": {
+    "engine_min": "1.0.0",
+    "engine_max": null,
+    "hub_min": "1.0.0",
+    "os": [
+      "windows"
+    ]
+  },
+  "dependencies": {
+    "external_binaries": [],
+    "python_packages": [],
+    "models": []
+  },
+  "lifecycle": {
+    "ready_signal": "stdout:[ctx] window_ready",
+    "graceful_shutdown_timeout_ms": 3000
+  },
+  "permissions": {
+    "filesystem": "user-files",
+    "network": "none"
   }
 }

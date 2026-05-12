@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.2",
+  "id": "image_enhancer",
+  "name": "AI Image Enhancer",
+  "description": "Layered image enhancement with painting, repair passes, and ComfyUI workflows.",
+  "author": "ContextHub",
+  "version": "0.1.0",
+  "icon": "icon.png",
+  "runtime": {
+    "category": "comfyui",
+    "environment_id": null,
+    "python_version": "3.11",
+    "required_binaries": [
+      "ComfyUI"
+    ]
+  },
+  "execution": {
+    "entry_point": "main.py",
+    "arguments": "",
+    "mode": "console",
+    "working_directory": "./",
+    "auto_start": false,
+    "run_as_admin": false,
+    "single_instance": false,
+    "env_vars": {}
+  },
+  "monitoring": {
+    "enabled": false,
+    "type": "process",
+    "target": "image_enhancer",
+    "interval": 5000,
+    "on_active": null,
+    "on_inactive": null,
+    "on_error": null
+  },
+  "triggers": {
+    "tray": true,
+    "quick_launcher": false,
+    "context_menu": {
+      "enabled": true,
+      "extensions": [
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".webp",
+        ".bmp",
+        ".tif",
+        ".tiff"
+      ],
+      "scopes": []
+    },
+    "sidebar_widget": null
+  },
+  "ui": {
+    "enabled": true,
+    "framework": "pyside6",
+    "shared_theme": "contexthub",
+    "template": "special"
+  },
+  "compatibility": {
+    "engine_min": "1.0.0",
+    "engine_max": null,
+    "hub_min": "1.0.0",
+    "os": [
+      "windows"
+    ]
+  },
+  "dependencies": {
+    "external_binaries": [],
+    "python_packages": [],
+    "models": []
+  },
+  "lifecycle": {
+    "ready_signal": "stdout:[ctx] window_ready",
+    "graceful_shutdown_timeout_ms": 3000
+  },
+  "permissions": {
+    "filesystem": "user-files",
+    "network": "none"
+  }
+}

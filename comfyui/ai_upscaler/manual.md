@@ -15,6 +15,11 @@ ComfyUI 워크플로우에 위임해 이미지를 업스케일·복원하는 ai 
    - DiffBIR-v2: `ComfyUI-DiffBIR` 커스텀 노드 + 가중치(`general_full_v1.ckpt` 등).
    - SUPIR: `ComfyUI-SUPIR` 커스텀 노드 + SDXL 베이스 + SUPIR 가중치. **VRAM ≥ 16GB 권장.**
 
+4. **최신 호환성 메모**
+   - `DiffBIR`는 저장소 기준으로 별도 ComfyUI 버전 하한을 명시하지 않으므로, 워크플로우 JSON을 넣기 전 실제 설치본에서 확인이 필요합니다.
+   - `SUPIR`은 최신 안내 기준으로 ComfyUI core 쪽에서도 사용 가능하며, 외부 wrapper 노드는 유지보수 범위가 축소된 상태입니다.
+   - 현재 이 앱은 커스텀 노드 이름을 코드에서 고정 검사하지 않으므로, JSON 안의 실제 노드명은 설치된 ComfyUI 환경과 일치해야 합니다.
+
 3. **워크플로우 저장**
    - ComfyUI에서 원하는 업스케일 그래프를 구성한 뒤 메뉴에서 **Save (API Format)** 으로 저장.
    - 다음 약속된 파일명으로 `comfyui/_engine/assets/workflows/upscaler/` 폴더에 배치합니다:

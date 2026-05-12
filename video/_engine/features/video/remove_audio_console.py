@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -10,6 +11,7 @@ from utils.i18n import t
 
 
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
+_CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 
 
 def _echo(message: str) -> None:
@@ -59,7 +61,13 @@ def _run_single(ffmpeg: str, source: Path) -> tuple[bool, Path, str]:
         str(output_path),
     ]
     try:
-        completed = subprocess.run(cmd, capture_output=True, text=True, errors="ignore")
+        completed = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            errors="ignore",
+            creationflags=_CREATE_NO_WINDOW,
+        )
     except Exception as exc:
         return False, output_path, str(exc)
 

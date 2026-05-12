@@ -1,6 +1,14 @@
 import os
 import sys
+import time
 from pathlib import Path
+
+_T0 = time.perf_counter()
+
+
+def _log_startup(label: str) -> None:
+    if os.environ.get("CTX_STARTUP_TRACE"):
+        print(f"[startup] {label} t+{(time.perf_counter() - _T0) * 1000:.0f}ms", file=sys.stderr)
 
 
 APP_ROOT = Path(__file__).resolve().parent
@@ -27,8 +35,10 @@ enforce_single_instance_if_app()
 
 
 def main() -> None:
+    _log_startup("entering main")
     try:
         from features.image.simple_normal_roughness_qt_app import start_app
+        _log_startup("qt_app imported")
     except ImportError as exc:
         print(format_startup_error(exc), file=sys.stderr)
         return

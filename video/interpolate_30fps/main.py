@@ -1,6 +1,14 @@
 import os
 import sys
+import time
 from pathlib import Path
+
+_T0 = time.perf_counter()
+
+
+def _log_startup(label: str) -> None:
+    if os.environ.get("CTX_STARTUP_TRACE"):
+        print(f"[startup] {label} t+{(time.perf_counter() - _T0) * 1000:.0f}ms", file=sys.stderr)
 
 
 APP_ROOT = Path(__file__).resolve().parent
@@ -56,6 +64,7 @@ def _show_confirm(targets: list[Path]) -> bool:
 
 
 def main() -> int:
+    _log_startup("entering main")
     _load_locales()
     targets = _pick_targets()
     if not targets and not _capture_mode():
@@ -66,6 +75,7 @@ def main() -> int:
         return 0
 
     from features.video.interpolate_30fps_console import run_interpolate_30fps_console
+    _log_startup("qt_app imported")
 
     return run_interpolate_30fps_console(targets)
 

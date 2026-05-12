@@ -6,5 +6,31 @@
   "category": "image",
   "icon": "icon.png",
   "entry": "main.py",
-  "tags": ["image", "pbr", "normal", "roughness"]
+  "tags": [
+    "image",
+    "pbr",
+    "normal",
+    "roughness"
+  ],
+  "compatibility": {
+    "engine_min": "1.0.0",
+    "engine_max": null,
+    "hub_min": "1.0.0",
+    "os": [
+      "windows"
+    ]
+  },
+  "dependencies": {
+    "external_binaries": [],
+    "python_packages": [],
+    "models": []
+  },
+  "lifecycle": {
+    "ready_signal": "stdout:[ctx] window_ready",
+    "graceful_shutdown_timeout_ms": 3000
+  },
+  "permissions": {
+    "filesystem": "user-files",
+    "network": "none"
+  }
 }

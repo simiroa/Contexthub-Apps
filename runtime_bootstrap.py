@@ -39,9 +39,50 @@ def _candidate_runtime_roots(app_root: Path) -> list[Path | None]:
 
 
 def resolve_shared_runtime(app_root: str | Path) -> tuple[Path, Path]:
+    """Resolve the shared runtime root for an app launch.
+
+    Resolution order (see HUB_CONTRACT.md §2 for the variable contract):
+
+    1. **Hub fast path** — when the host (`ProcessRunner.cs`) launches us, it
+       sets `CTX_SHARED_ROOT` to the `contexthub` python package. Its parent
+       is the `Shared` runtime root. Zero filesystem probing.
+    2. **Session cache** — `CTX_RESOLVED_SHARED_ROOT` exported by a prior call
+       within the same shell session (multi-app dev workflow).
+    3. **Dev override** — `CTX_SHARED_RUNTIME_ROOT` / `CTX_DEV_RUNTIME_ROOT`
+       for capture or local-mirror tooling.
+    4. **Fallback probing** — well-known repo-relative paths. Dev-only.
+    """
     app_root = Path(app_root).resolve()
     os.environ.setdefault("CTX_APP_ROOT", str(app_root))
 
+    # (1) Hub fast path. CTX_SHARED_ROOT points at the `contexthub` package
+    # itself; the runtime "Shared" dir is its parent.
+    hub_shared = os.environ.get("CTX_SHARED_ROOT")
+    if hub_shared:
+        try:
+            pkg_root = Path(hub_shared)
+            shared_root = pkg_root.parent
+            if pkg_root.exists():
+                # Surface CTX_RUNTIME_ROOT for downstream code, even though
+                # the hub doesn't set it directly today.
+                os.environ.setdefault("CTX_RUNTIME_ROOT", str(shared_root.parent))
+                os.environ.setdefault("CTX_RESOLVED_SHARED_ROOT", str(shared_root))
+                return shared_root, pkg_root
+        except Exception:
+            pass
+
+    # (2) Session cache from an earlier dev launch.
+    cached_runtime = os.environ.get("CTX_RESOLVED_RUNTIME_ROOT")
+    cached_shared = os.environ.get("CTX_RESOLVED_SHARED_ROOT")
+    if cached_runtime and cached_shared:
+        try:
+            shared_root = Path(cached_shared)
+            if shared_root.exists():
+                return shared_root, shared_root / "contexthub"
+        except Exception:
+            pass
+
+    # (3) + (4) Dev fallbacks.
     runtime_root: Path | None = None
     for candidate in _candidate_runtime_roots(app_root):
         if candidate is not None and candidate.exists():
@@ -59,6 +100,14 @@ def resolve_shared_runtime(app_root: str | Path) -> tuple[Path, Path]:
 
     if shared_root is None:
         shared_root = runtime_root / "Shared"
+
+    # Flag this as dev mode so app code can opt into dev-only behaviour
+    # (splash, single-instance via lock files, capture mode, etc.).
+    os.environ.setdefault("CTX_DEV_MODE", "1")
+
+    # Export for subsequent child app launches in the same shell/session.
+    os.environ.setdefault("CTX_RESOLVED_RUNTIME_ROOT", str(runtime_root))
+    os.environ.setdefault("CTX_RESOLVED_SHARED_ROOT", str(shared_root))
 
     shared_package_root = shared_root / "contexthub"
     return shared_root, shared_package_root
@@ -111,6 +160,9 @@ def _read_lock_pid(lock_path: Path) -> int | None:
     return None
 
 
+_CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
+
+
 def _kill_process_tree(pid: int) -> bool:
     if pid <= 0 or pid == os.getpid():
         return False
@@ -120,30 +172,43 @@ def _kill_process_tree(pid: int) -> bool:
             capture_output=True,
             text=True,
             check=False,
+            creationflags=_CREATE_NO_WINDOW,
         )
         return result.returncode == 0
     except Exception:
         return False
 
 
-def _wait_for_process_exit(pid: int, timeout: float = 6.0) -> bool:
+def _process_is_alive(pid: int) -> bool:
+    """Single tasklist probe; True if pid is currently running."""
     if pid <= 0:
+        return False
+    try:
+        result = subprocess.run(
+            ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+            capture_output=True,
+            text=True,
+            check=False,
+            creationflags=_CREATE_NO_WINDOW,
+        )
+        output = (result.stdout or "") + (result.stderr or "")
+        return str(pid) in output
+    except Exception:
+        # On error, assume alive to be safe; caller can still time out.
+        return True
+
+
+def _wait_for_process_exit(pid: int, timeout: float = 1.5) -> bool:
+    if pid <= 0:
+        return True
+    # Fast path: if the process is already gone, return immediately.
+    if not _process_is_alive(pid):
         return True
     deadline = time.time() + timeout
     while time.time() < deadline:
-        try:
-            result = subprocess.run(
-                ["tasklist", "/FI", f"PID eq {pid}"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            output = (result.stdout or "") + (result.stderr or "")
-            if str(pid) not in output:
-                return True
-        except Exception:
+        time.sleep(0.1)
+        if not _process_is_alive(pid):
             return True
-        time.sleep(0.2)
     return False
 
 
@@ -180,8 +245,10 @@ def _acquire_instance_lock(app_root: Path):
             except Exception:
                 pass
 
-            _kill_process_tree(existing_pid)
-            _wait_for_process_exit(existing_pid)
+            # If the recorded process is already gone, skip the kill+wait entirely.
+            if _process_is_alive(existing_pid):
+                _kill_process_tree(existing_pid)
+                _wait_for_process_exit(existing_pid)
             try:
                 lock_path.unlink(missing_ok=True)
             except Exception:

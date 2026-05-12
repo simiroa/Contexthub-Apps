@@ -47,6 +47,7 @@
 | [ComfyUI Dashboard](file:///c:/Users/HG/Documents/Contexthub-Apps/comfyui/comfyui_dashboard) (`comfyui_dashboard`) | GUI | ComfyUI 실행/중지/열기 대시보드 | [ ] |
 | [Creative Studio (Advanced)](file:///c:/Users/HG/Documents/Contexthub-Apps/comfyui/creative_studio_advanced) (`creative_studio_advanced`) | GUI | Checkpoint, LoRA, SUPIR 지원 전문 워크스페이스 | [ ] |
 | [Creative Studio (Z)](file:///c:/Users/HG/Documents/Contexthub-Apps/comfyui/creative_studio_z) (`creative_studio_z`) | GUI | 프롬프트 레이어 및 아이콘 생성 통합 워크스페이스 | [ ] |
+| [AI Image Enhancer](file:///c:/Users/HG/Documents/Contexthub-Apps/comfyui/image_enhancer) (`image_enhancer`) | GUI | 페인팅/레이어 기반 이미지 보정 워크벤치 | [ ] |
 | [Inpainting Tools](file:///c:/Users/HG/Documents/Contexthub-Apps/comfyui/inpainting) (`inpainting`) | GUI | ComfyUI 기반 인페인팅 및 마스크 도구 | [ ] |
 
 ## 📄 Document Tools (document)

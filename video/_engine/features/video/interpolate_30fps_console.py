@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -8,6 +9,7 @@ from utils.files import get_safe_path
 
 
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
+_CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 
 
 def _echo(message: str) -> None:
@@ -60,7 +62,13 @@ def run_interpolate_30fps_console(targets: list[Path]) -> int:
             "-y",
             str(output_path),
         ]
-        completed = subprocess.run(cmd, capture_output=True, text=True, errors="ignore")
+        completed = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            errors="ignore",
+            creationflags=_CREATE_NO_WINDOW,
+        )
         if completed.returncode == 0:
             success += 1
             _echo(f"Created: {output_path}")

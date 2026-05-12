@@ -1,196 +1,165 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import cv2
 import numpy as np
-from PIL import Image
 
-from features.document.doc_scan_state import DocScanState, ScanItem
+from features.document.doc_scan_state import DocScanState
 
 
 class DocScanService:
     def __init__(self, state: DocScanState) -> None:
         self.state = state
 
+    def load_image(self, path_str: str) -> bool:
+        path = Path(path_str)
+        if not path.exists():
+            return False
+        image = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
+        if image is None:
+            return False
+        self.state.image_path = path
+        self.state.image = image
+        self.state.corners = self._detect_corners(image)
+        return True
+
     def load_targets(self, targets: List[str]) -> None:
-        valid_exts = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
-        for path_str in targets:
-            path = Path(path_str)
-            if path.suffix.lower() not in valid_exts or not path.exists():
-                continue
-            image = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
-            if image is not None:
-                item = ScanItem(path=path, image=image)
-                # Initialize default corners (top-left, top-right, bottom-right, bottom-left)
-                item.corners = [(0.1, 0.1), (0.9, 0.1), (0.9, 0.9), (0.1, 0.9)]
-                self.state.items.append(item)
-        
-        if self.state.items and self.state.current_index < 0:
-            self.state.current_index = 0
+        if targets:
+            self.load_image(targets[0])
+
+    def reset_corners(self) -> bool:
+        if self.state.image is None:
+            return False
+        self.state.corners = self._detect_corners(self.state.image)
+        return True
+
+    def rotate_image(self, clockwise: bool) -> bool:
+        if self.state.image is None:
+            return False
+        rotation = cv2.ROTATE_90_CLOCKWISE if clockwise else cv2.ROTATE_90_COUNTERCLOCKWISE
+        self.state.image = cv2.rotate(self.state.image, rotation)
+        self.state.corners = self._detect_corners(self.state.image)
+        return True
+
+    def _detect_corners(self, image: np.ndarray) -> List[Tuple[float, float]]:
+        h, w = image.shape[:2]
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        edged = cv2.Canny(blurred, 75, 200)
+
+        contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)
+
+        for c in contours[:5]:
+            peri = cv2.arcLength(c, True)
+            approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+            if len(approx) == 4:
+                pts = approx.reshape(4, 2).astype(float)
+                pts[:, 0] /= w
+                pts[:, 1] /= h
+                return _order_points(pts.tolist())
+
+        return [(0.05, 0.05), (0.95, 0.05), (0.95, 0.95), (0.05, 0.95)]
+
+    def get_warped(self) -> Optional[np.ndarray]:
+        if self.state.image is None:
+            return None
+        h, w = self.state.image.shape[:2]
+        src = np.float32([[c[0] * w, c[1] * h] for c in self.state.corners])
+        tl, tr, br, bl = src
+
+        out_w = int(max(np.linalg.norm(tr - tl), np.linalg.norm(br - bl)))
+        out_h = int(max(np.linalg.norm(bl - tl), np.linalg.norm(br - tr)))
+
+        if out_w < 1 or out_h < 1:
+            result = self.state.image.copy()
+        else:
+            dst = np.float32([[0, 0], [out_w - 1, 0], [out_w - 1, out_h - 1], [0, out_h - 1]])
+            M = cv2.getPerspectiveTransform(src, dst)
+            result = cv2.warpPerspective(self.state.image, M, (out_w, out_h))
+
+        if self.state.is_grayscale:
+            result = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
+            result = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR)
+
+        return result
+
+    def toggle_grayscale(self) -> None:
+        self.state.is_grayscale = not self.state.is_grayscale
 
     def load_signature(self, path_str: str) -> bool:
         path = Path(path_str)
         if not path.exists():
             return False
-        image = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
-        if image is not None:
-            self.state.signature_image = image
-            self.state.signature_path = path
-            return True
-        return False
+        sig_image = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
+        if sig_image is None:
+            return False
+        self.state.signature_image = sig_image
+        self.state.signature_path = path
+        return True
 
-    def get_rendered_image(self, index: int, apply_signature: bool = True) -> Optional[np.ndarray]:
-        if not (0 <= index < len(self.state.items)):
-            return None
-        
-        item = self.state.items[index]
-        image = item.image.copy()
-        
-        # 1. Rotation (apply before unwarp or after? Usually after for raw scan, but here we follow initial logic)
-        if item.rotation == 90:
-            image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
-        elif item.rotation == 180:
-            image = cv2.rotate(image, cv2.ROTATE_180)
-        elif item.rotation == 270:
-            image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            
-        # 2. Perspective Unwarp
-        if item.unwarp_active and item.corners:
-            h, w = image.shape[:2]
-            src_pts = np.float32([[c[0] * w, c[1] * h] for c in item.corners])
-            
-            # Calculate output dimensions (standardize to a rectangle)
-            # Find max width and height among edges
-            width_a = np.sqrt(((src_pts[2][0] - src_pts[3][0]) ** 2) + ((src_pts[2][1] - src_pts[3][1]) ** 2))
-            width_b = np.sqrt(((src_pts[1][0] - src_pts[0][0]) ** 2) + ((src_pts[1][1] - src_pts[0][1]) ** 2))
-            max_w = max(int(width_a), int(width_b))
-            
-            height_a = np.sqrt(((src_pts[1][0] - src_pts[2][0]) ** 2) + ((src_pts[1][1] - src_pts[2][1]) ** 2))
-            height_b = np.sqrt(((src_pts[0][0] - src_pts[3][0]) ** 2) + ((src_pts[0][1] - src_pts[3][1]) ** 2))
-            max_h = max(int(height_a), int(height_b))
-            
-            dst_pts = np.float32([[0, 0], [max_w - 1, 0], [max_w - 1, max_h - 1], [0, max_h - 1]])
-            matrix = cv2.getPerspectiveTransform(src_pts, dst_pts)
-            image = cv2.warpPerspective(image, matrix, (max_w, max_h))
+    def _overlay_signature(self, image: np.ndarray) -> np.ndarray:
+        if self.state.signature_image is None:
+            return image
+        result = image.copy()
+        h, w = image.shape[:2]
+        sig = self.state.signature_image
+        sig_h, sig_w = sig.shape[:2]
+        if sig_w <= 0 or sig_h <= 0:
+            return result
+        scaled_w = max(1, int(w * self.state.signature_scale))
+        scaled_h = max(1, int(sig_h * scaled_w / sig_w))
+        sig_resized = cv2.resize(sig, (scaled_w, scaled_h), interpolation=cv2.INTER_AREA)
+        x = int(w * self.state.signature_x - scaled_w / 2)
+        y = int(h * self.state.signature_y - scaled_h / 2)
+        x = max(0, min(x, w - scaled_w))
+        y = max(0, min(y, h - scaled_h))
 
-        # 3. Filter
-        if item.filter_type == "bw":
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            bw = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 10)
-            image = cv2.cvtColor(bw, cv2.COLOR_GRAY2BGR)
-        elif item.filter_type == "magic":
-            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            h, s, v = cv2.split(hsv)
-            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-            v_eq = clahe.apply(v)
-            s_eq = cv2.add(s, 50)
-            hsv_eq = cv2.merge((h, s_eq, v_eq))
-            colored = cv2.cvtColor(hsv_eq, cv2.COLOR_HSV2BGR)
-            kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-            image = cv2.filter2D(colored, -1, kernel)
-            
-        # 4. Signature Overlay
-        if apply_signature and self.state.signature_image is not None and item.signature_pos:
-            image = self._overlay_signature(image, self.state.signature_image, item.signature_pos, item.signature_scale)
-            
-        return image
-
-    def _overlay_signature(self, base: np.ndarray, sig: np.ndarray, pos: Tuple[float, float], scale: float) -> np.ndarray:
-        bh, bw = base.shape[:2]
-        
-        # Calculate signature size based on base width
-        target_w = int(bw * scale)
-        sh, sw = sig.shape[:2]
-        ratio = target_w / sw
-        target_h = int(sh * ratio)
-        
-        sig_resized = cv2.resize(sig, (target_w, target_h), interpolation=cv2.INTER_AREA)
-        
-        # Calculate top-left from normalized center pos
-        cx, cy = int(pos[0] * bw), int(pos[1] * bh)
-        tx, ty = cx - target_w // 2, cy - target_h // 2
-        
-        # Bounds check and clipping
-        x1, y1 = max(0, tx), max(0, ty)
-        x2, y2 = min(bw, tx + target_w), min(bh, ty + target_h)
-        
-        # If clipped out completely
-        if x1 >= x2 or y1 >= y2:
-            return base
-            
-        # Portion of signature to overlay
-        sx1, sy1 = x1 - tx, y1 - ty
-        sx2, sy2 = sx1 + (x2 - x1), sy1 + (y2 - y1)
-        
-        overlay = sig_resized[sy1:sy2, sx1:sx2]
-        roi = base[y1:y2, x1:x2]
-        
-        if overlay.shape[2] == 4:  # With Alpha
-            alpha = overlay[:, :, 3] / 255.0
-            alpha_inv = 1.0 - alpha
-            
-            for c in range(3):
-                roi[:, :, c] = (alpha * overlay[:, :, c] + alpha_inv * roi[:, :, c])
+        if sig_resized.ndim == 2:
+            sig_rgb = cv2.cvtColor(sig_resized, cv2.COLOR_GRAY2BGR)
+            alpha_chan = None
+        elif sig_resized.shape[2] == 4:
+            sig_rgb = sig_resized[:, :, :3]
+            alpha_chan = sig_resized[:, :, 3].astype(np.float32) / 255.0
         else:
-            base[y1:y2, x1:x2] = overlay[:, :, :3]
-            
-        return base
+            sig_rgb = sig_resized
+            alpha_chan = None
 
-    def update_item_corners(self, index: int, corners: List[Tuple[float, float]]) -> None:
-        if 0 <= index < len(self.state.items):
-            self.state.items[index].corners = corners
+        opacity = self.state.signature_opacity / 100.0
+        region = result[y:y+scaled_h, x:x+scaled_w].astype(np.float32)
+        sig_f = sig_rgb.astype(np.float32)
 
-    def set_unwarp(self, index: int, active: bool) -> None:
-        if 0 <= index < len(self.state.items):
-            self.state.items[index].unwarp_active = active
+        mode = getattr(self.state, "signature_blend_mode", "normal")
+        if mode == "multiply":
+            blended = region * sig_f / 255.0
+        elif mode == "darken":
+            blended = np.minimum(region, sig_f)
+        else:
+            blended = sig_f
 
-    def set_signature_pos(self, index: int, pos: Optional[Tuple[float, float]]) -> None:
-        if 0 <= index < len(self.state.items):
-            self.state.items[index].signature_pos = pos
+        if alpha_chan is not None:
+            a = (alpha_chan * opacity)[:, :, np.newaxis]
+            out = region * (1.0 - a) + blended * a
+        else:
+            out = region * (1.0 - opacity) + blended * opacity
 
-    def set_signature_scale(self, index: int, scale: float) -> None:
-        if 0 <= index < len(self.state.items):
-            self.state.items[index].signature_scale = scale
+        result[y:y+scaled_h, x:x+scaled_w] = np.clip(out, 0, 255).astype(np.uint8)
+        return result
 
-    def update_item_rotation(self, index: int, delta: int) -> None:
-        if 0 <= index < len(self.state.items):
-            self.state.items[index].rotation = (self.state.items[index].rotation + delta) % 360
+    def save_png(self, output_path: str) -> bool:
+        warped = self.get_warped()
+        if warped is None:
+            return False
+        with_signature = self._overlay_signature(warped)
+        cv2.imencode(".png", with_signature)[1].tofile(Path(output_path))
+        return True
 
-    def update_item_filter(self, index: int, filter_type: str) -> None:
-        if 0 <= index < len(self.state.items):
-            self.state.items[index].filter_type = filter_type
 
-    def reset_item(self, index: int) -> None:
-        if 0 <= index < len(self.state.items):
-            item = self.state.items[index]
-            item.rotation = 0
-            item.filter_type = "orig"
-            item.unwarp_active = False
-            item.signature_pos = None
-
-    def save_current_as_png(self, index: int) -> str:
-        if not (0 <= index < len(self.state.items)):
-            return "Error: No item selected"
-        
-        item = self.state.items[index]
-        rendered = self.get_rendered_image(index)
-        output = item.path.with_stem(f"{item.path.stem}_scanned").with_suffix(".png")
-        cv2.imencode(".png", rendered)[1].tofile(output)
-        return str(output)
-
-    def save_all_as_pdf(self) -> str:
-        if not self.state.items:
-            return "Error: No items to save"
-            
-        output = self.state.items[0].path.with_stem(f"{self.state.items[0].path.stem}_batch_scanned").with_suffix(".pdf")
-        pil_images = []
-        for i in range(len(self.state.items)):
-            rendered = self.get_rendered_image(i)
-            rgb = cv2.cvtColor(rendered, cv2.COLOR_BGR2RGB)
-            pil_images.append(Image.fromarray(rgb))
-            
-        pil_images[0].save(output, "PDF", resolution=100.0, save_all=True, append_images=pil_images[1:])
-        return str(output)
+def _order_points(pts: list) -> List[Tuple[float, float]]:
+    """Sort 4 points into TL, TR, BR, BL order."""
+    pts_sorted = sorted(pts, key=lambda p: p[1])
+    top = sorted(pts_sorted[:2], key=lambda p: p[0])
+    bottom = sorted(pts_sorted[2:], key=lambda p: p[0])
+    return [tuple(top[0]), tuple(top[1]), tuple(bottom[1]), tuple(bottom[0])]

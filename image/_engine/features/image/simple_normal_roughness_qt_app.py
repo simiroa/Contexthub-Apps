@@ -390,11 +390,24 @@ class SimpleNormalRoughnessWindow(QMainWindow):
         super().closeEvent(event)
 
 
-def main(targets: list[str] | None = None) -> int:
+def main(targets: list[str] | None = None, app_root: Path | None = None) -> int:
     app = QApplication.instance() or QApplication(sys.argv)
     service = SimpleNormalRoughnessService()
     # Correct pathing to engine module
-    app_root = Path(__file__).resolve().parents[3] / APP_ID
+    if app_root is None:
+        app_root = Path(__file__).resolve().parents[3] / APP_ID
+
+    try:
+        from shared._engine.runtime.splash import show_splash, finish_splash
+        splash = show_splash(app_root)
+    except Exception:
+        splash, finish_splash = None, lambda *_: None  # type: ignore[assignment]
+
     window = SimpleNormalRoughnessWindow(service, app_root, targets)
     window.show()
+    finish_splash(splash, window)
     return app.exec()
+
+
+# Compat alias: the launcher imports `start_app`
+start_app = main

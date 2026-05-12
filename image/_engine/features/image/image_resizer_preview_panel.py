@@ -1,4 +1,4 @@
-from PySide6.QtCore import QTimer, Qt, QThreadPool
+from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QPixmap, QImage
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PIL import Image
@@ -7,11 +7,15 @@ from contexthub.ui.qt.shell import get_shell_palette, set_surface_role
 from features.image.comparison_preview_widget import ComparisonPreviewWidget
 from features.image.image_resizer_workers import ProcessLivePreviewWorker
 
+from shared._engine.runtime.media_runtime import MediaRuntime
+from shared._engine.runtime.thumbnail_service import request_thumbnail
+
 class ImageResizerPreviewPanel(QWidget):
     def __init__(self, service, thread_pool=None):
         super().__init__()
         self.service = service
-        self.thread_pool = thread_pool or QThreadPool.globalInstance()
+        self.runtime = MediaRuntime.instance()
+        self.thread_pool = thread_pool or self.runtime.thread_pool
         self._build_ui()
         
         # Debounce timer for processing real-time feedback

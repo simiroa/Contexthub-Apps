@@ -1,11 +1,29 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, TYPE_CHECKING
 
-import cv2
-import numpy as np
-from PIL import Image
+if TYPE_CHECKING:
+    import cv2
+    import numpy as np
+    from PIL import Image
+
+# Heavy modules (cv2 ~300ms, numpy ~100ms, PIL ~80ms) are loaded on first use
+# to keep window-paint latency low. Call `_ensure_heavy()` at the start of any
+# public function that needs them.
+cv2 = None  # type: ignore[assignment]
+np = None  # type: ignore[assignment]
+Image = None  # type: ignore[assignment]
+
+
+def _ensure_heavy() -> None:
+    global cv2, np, Image
+    if cv2 is not None:
+        return
+    import cv2 as _cv2
+    import numpy as _np
+    from PIL import Image as _Image
+    cv2, np, Image = _cv2, _np, _Image
 
 try:
     from core.logger import setup_logger
@@ -67,6 +85,7 @@ def blur_to_gray32_exr(path: Path, radius: float) -> Path:
     if radius < 0:
         raise ValueError("Blur radius must be greater than or equal to 0")
 
+    _ensure_heavy()
     with Image.open(path) as img:
         rgb_img = img.convert("RGB")
         arr = np.asarray(rgb_img, dtype=np.uint8)

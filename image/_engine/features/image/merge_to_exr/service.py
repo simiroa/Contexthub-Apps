@@ -1,10 +1,23 @@
+from __future__ import annotations
+
 import os
 import re
 import threading
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, TYPE_CHECKING
 
-import numpy as np
+if TYPE_CHECKING:
+    import numpy as np
+
+np = None  # type: ignore[assignment]
+
+
+def _ensure_heavy() -> None:
+    global np
+    if np is not None:
+        return
+    import numpy as _np
+    np = _np
 
 from .state import ChannelConfig, ExrMergeState
 
@@ -164,6 +177,7 @@ class ExrMergeService:
         on_progress: Callable[[float, str], None],
         on_complete: Callable[[bool, str], None],
     ) -> None:
+        _ensure_heavy()
         missing = self.get_missing_dependencies()
         if missing:
             on_complete(False, f"Missing dependencies: {', '.join(missing)}")

@@ -1,18 +1,37 @@
+from __future__ import annotations
+
 import os
 import re
 import io
 import threading
-import numpy as np
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple, Callable
-from PIL import Image
+from typing import List, Dict, Optional, Tuple, Callable, Any, TYPE_CHECKING
 
-try:
-    import OpenEXR
-    import Imath
-    HAS_EXR = True
-except ImportError:
-    HAS_EXR = False
+if TYPE_CHECKING:
+    import numpy as np
+    from PIL import Image
+
+np = None  # type: ignore[assignment]
+Image = None  # type: ignore[assignment]
+OpenEXR = None  # type: ignore[assignment]
+Imath = None  # type: ignore[assignment]
+HAS_EXR = False
+
+
+def _ensure_heavy() -> None:
+    global np, Image, OpenEXR, Imath, HAS_EXR
+    if np is not None:
+        return
+    import numpy as _np
+    from PIL import Image as _Image
+    np, Image = _np, _Image
+    try:
+        import OpenEXR as _OpenEXR
+        import Imath as _Imath
+        OpenEXR, Imath = _OpenEXR, _Imath
+        HAS_EXR = True
+    except ImportError:
+        HAS_EXR = False
 
 try:
     from core.logger import setup_logger
@@ -75,6 +94,7 @@ class TexturePackerService:
         return results
 
     def pack_textures(self, slots: Dict[str, Optional[Path]], labels: Dict[str, str], output_path: Path, resize_size: Optional[Tuple[int, int]], on_complete: Callable[[bool, str], None]):
+        _ensure_heavy()
         def _task():
             try:
                 target_size = resize_size
@@ -152,7 +172,8 @@ class TexturePackerService:
         out.writePixels(chan_data)
         out.close()
 
-    def get_preview_bytes(self, img_pil: Image.Image) -> bytes:
+    def get_preview_bytes(self, img_pil) -> bytes:
+        _ensure_heavy()
         buf = io.BytesIO()
         img_pil.save(buf, format="PNG")
         return buf.getvalue()

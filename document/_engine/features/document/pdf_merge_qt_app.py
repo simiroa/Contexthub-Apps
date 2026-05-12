@@ -364,10 +364,10 @@ class PdfMergeWindow(QMainWindow):
 
     def _set_drop_highlight(self, active: bool) -> None:
         if active:
-            set_surface_role(self.list_card, "card", "accent")
+            set_surface_role(self.list_card, "accent")
             self.drop_hint.setText("Drop PDF files to append them to the merge order.")
         else:
-            set_surface_role(self.list_card, "card", "default")
+            set_surface_role(self.list_card, "default")
             self.drop_hint.setText(
                 qt_t("pdf_merge.drop_hint_empty", "Drop PDF files here or use Add PDFs.")
                 if not self.service.state.files

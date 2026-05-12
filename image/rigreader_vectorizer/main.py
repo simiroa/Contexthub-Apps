@@ -1,6 +1,15 @@
 import os
 import sys
+import time
 from pathlib import Path
+
+_T0 = time.perf_counter()
+
+
+def _log_startup(label: str) -> None:
+    if os.environ.get("CTX_STARTUP_TRACE"):
+        print(f"[startup] {label} t+{(time.perf_counter() - _T0) * 1000:.0f}ms", file=sys.stderr)
+
 
 LEGACY_ID = 'rigreader_vectorizer'
 LEGACY_SCOPE = 'file'
@@ -43,10 +52,12 @@ def _pick_targets():
 
 def _run_qt(targets):
     from features.image.vectorizer.rigreader_vectorizer_qt_app import start_app
+    _log_startup("qt_app imported")
     start_app(targets)
 
 
 def main():
+    _log_startup("entering main")
     targets = _pick_targets()
     # For Qt, we allow starting without targets to show the workspace
     _run_qt(targets)

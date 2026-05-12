@@ -6,10 +6,23 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Callable
+from typing import Any, List, Optional, Tuple, Callable, TYPE_CHECKING
 import multiprocessing
 
-from PIL import Image, ImageOps
+if TYPE_CHECKING:
+    from PIL import Image, ImageOps
+
+Image = None  # type: ignore[assignment]
+ImageOps = None  # type: ignore[assignment]
+
+
+def _ensure_heavy() -> None:
+    global Image, ImageOps
+    if Image is not None:
+        return
+    from PIL import Image as _Image
+    from PIL import ImageOps as _ImageOps
+    Image, ImageOps = _Image, _ImageOps
 
 from features.image.image_convert_state import ImageConvertState, InputAsset
 
@@ -69,26 +82,25 @@ class ImageConvertService:
             path = Path(raw_path)
             if not path.exists():
                 continue
-            if any(asset.path == path for asset in self.state.input_assets):
+            if path in self.state.files:
                 continue
-            kind = "image" if path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".ico", ".exr"} else "file"
-            self.state.input_assets.append(InputAsset(path=path, kind=kind))
-        if self.state.input_assets and self.state.preview_path is None:
-            self.state.preview_path = self.state.input_assets[0].path
+            self.state.files.append(path)
+        if self.state.files and self.state.preview_path is None:
+            self.state.preview_path = self.state.files[0]
 
     def remove_input_at(self, index: int) -> None:
-        if 0 <= index < len(self.state.input_assets):
-            removed = self.state.input_assets.pop(index)
-            if self.state.preview_path == removed.path:
-                self.state.preview_path = self.state.input_assets[0].path if self.state.input_assets else None
+        if 0 <= index < len(self.state.files):
+            removed = self.state.files.pop(index)
+            if self.state.preview_path == removed:
+                self.state.preview_path = self.state.files[0] if self.state.files else None
 
     def clear_inputs(self) -> None:
-        self.state.input_assets.clear()
+        self.state.files.clear()
         self.state.preview_path = None
 
     def set_preview_from_index(self, index: int) -> None:
-        if 0 <= index < len(self.state.input_assets):
-            self.state.preview_path = self.state.input_assets[index].path
+        if 0 <= index < len(self.state.files):
+            self.state.preview_path = self.state.files[index]
 
     def update_parameter(self, key: str, value: Any) -> None:
         self.state.parameter_values[key] = value
@@ -117,7 +129,7 @@ class ImageConvertService:
                 "name": self.state.workflow_name,
                 "description": self.state.workflow_description,
             },
-            "inputs": [{"path": str(asset.path), "kind": asset.kind} for asset in self.state.input_assets],
+            "inputs": [{"path": str(p), "kind": "image"} for p in self.state.files],
             "parameters": self.state.parameter_values,
             "output": asdict(self.state.output_options),
         }
@@ -129,12 +141,13 @@ class ImageConvertService:
         return export_path
 
     def run_workflow(self, on_progress: Callable[[float, int, int], None], on_complete: Callable[[int, List[str]], None]) -> tuple[bool, str, Path | None]:
-        if not self.state.input_assets:
+        _ensure_heavy()
+        if not self.state.files:
             return False, "No input files.", None
             
         session_path = self.export_session() if self.state.output_options.export_session_json else None
         
-        files = [asset.path for asset in self.state.input_assets]
+        files = self.state.files
         target_fmt = str(self.state.parameter_values.get("target_format", "PNG"))
         resize_enabled = self.state.parameter_values.get("resize_enabled") == "Enable"
         try:
@@ -191,6 +204,7 @@ class ImageConvertService:
         return True, "Processing...", session_path
 
     def _convert_single(self, args) -> Tuple[bool, Optional[str]]:
+        _ensure_heavy()
         path, target_fmt, resize_size, out_path = args
         try:
             img = Image.open(path)

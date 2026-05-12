@@ -1,9 +1,25 @@
+from __future__ import annotations
+
 import os
 import threading
-import numpy as np
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple, Callable
-from PIL import Image
+from typing import List, Dict, Optional, Tuple, Callable, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy as np
+    from PIL import Image
+
+np = None  # type: ignore[assignment]
+Image = None  # type: ignore[assignment]
+
+
+def _ensure_heavy() -> None:
+    global np, Image
+    if np is not None:
+        return
+    import numpy as _np
+    from PIL import Image as _Image
+    np, Image = _np, _Image
 
 try:
     import OpenEXR
@@ -36,6 +52,7 @@ class SplitExrService:
         return HAS_EXR
 
     def analyze_file(self, path: Path) -> Tuple[str, List[Dict]]:
+        _ensure_heavy()
         if not path.exists():
             return "File not found", []
             
@@ -104,13 +121,13 @@ class SplitExrService:
             layers[layer_name].append(chan)
         return layers
 
-    def run_batch_split(self, 
-                       files: List[Path], 
+    def run_batch_split(self,
+                       files: List[Path],
                        layer_configs: List[Dict],
                        format_ext: str,
                        on_progress: Callable[[float, str], None],
                        on_complete: Callable[[int, List[str]], None]):
-        
+        _ensure_heavy()
         self._cancel_flag = False
         
         def _task():
@@ -217,14 +234,15 @@ class SplitExrService:
                         band_img = Image.eval(band_img, lambda x: 255 - x)
                     out_base = f"{path.stem}{suffix}"
                     band_img.save(out_dir / f"{out_base}.{out_format.lower()}")
-    def run_automation_split(self, 
-                            files: List[Path], 
+    def run_automation_split(self,
+                            files: List[Path],
                             format_ext: str,
                             on_progress: Callable[[float, str], None],
                             on_complete: Callable[[int, List[str]], None]):
         """
         Automated split: Analyze each file and split all detected layers/channels.
         """
+        _ensure_heavy()
         def _task():
             success = 0
             errors = []

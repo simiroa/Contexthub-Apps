@@ -125,6 +125,46 @@ class InpaintingCanvas(QGraphicsView):
         self._refresh_mask()
         self.mask_changed.emit()
 
+    def save_mask(self, path: str | Path) -> bool:
+        """Persist the current mask as a PNG-like image."""
+        qimg = self.get_mask_qimage()
+        if qimg is None:
+            return False
+        target = Path(path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        return qimg.save(str(target))
+
+    def load_mask(self, path: str | Path) -> bool:
+        """Load a previously saved mask image into the overlay layer."""
+        if self._mask_image is None or self._source_pixmap is None:
+            return False
+        source = QImage(str(path))
+        if source.isNull():
+            return False
+
+        self._push_undo()
+        if source.size() != self._mask_image.size():
+            source = source.scaled(
+                self._mask_image.size(),
+                Qt.AspectRatioMode.IgnoreAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+
+        overlay = QImage(self._mask_image.size(), QImage.Format.Format_ARGB32_Premultiplied)
+        overlay.fill(QColor(0, 0, 0, 0))
+        red = QColor(255, 60, 60, 120)
+        for y in range(source.height()):
+            for x in range(source.width()):
+                pixel = QColor(source.pixel(x, y))
+                active = pixel.alpha() > 0 or max(pixel.red(), pixel.green(), pixel.blue()) > 32
+                if active:
+                    overlay.setPixelColor(x, y, red)
+
+        self._mask_image = overlay
+        self._refresh_mask()
+        self.mask_changed.emit()
+        return True
+
     def get_mask_qimage(self) -> Optional[QImage]:
         """Return the mask as a black-and-white QImage (white = inpaint area)."""
         if self._mask_image is None:

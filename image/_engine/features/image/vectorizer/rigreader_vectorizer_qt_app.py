@@ -394,6 +394,14 @@ def start_app(targets: list[str] | None = None) -> int:
     app = QApplication.instance() or QApplication(sys.argv)
     service = RigreaderVectorizerService()
     app_root = Path(__file__).resolve().parents[4] / "rigreader_vectorizer"
+
+    try:
+        from shared._engine.runtime.splash import show_splash, finish_splash
+        splash = show_splash(app_root)
+    except Exception:
+        splash, finish_splash = None, lambda *_: None  # type: ignore[assignment]
+
     window = VectorizerWindow(service, app_root, targets)
     window.show()
+    finish_splash(splash, window)
     return app.exec()

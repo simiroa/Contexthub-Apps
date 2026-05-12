@@ -1,6 +1,15 @@
 import os
 import sys
+import time
 from pathlib import Path
+
+_T0 = time.perf_counter()
+
+
+def _log_startup(label: str) -> None:
+    if os.environ.get("CTX_STARTUP_TRACE"):
+        print(f"[startup] {label} t+{(time.perf_counter() - _T0) * 1000:.0f}ms", file=sys.stderr)
+
 
 # Standard Contexthub Path Resolution
 APP_ROOT = Path(__file__).resolve().parent
@@ -17,10 +26,12 @@ for path in (engine_path, shared_root, shared_pkg_root):
         sys.path.insert(0, str(path))
 
 def main():
+    _log_startup("entering main")
     abs_app_root = APP_ROOT
     os.environ["CTX_APP_ROOT"] = str(abs_app_root)
 
     from features.image.texture_packer_orm_qt_app import main as qt_main
+    _log_startup("qt_app imported")
     qt_main()
 
 if __name__ == "__main__":

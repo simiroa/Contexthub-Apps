@@ -3,11 +3,11 @@ import math
 from PySide6.QtCore import Qt, QPointF, QRectF, Signal, Slot
 from PySide6.QtGui import QPainter, QPixmap, QImage, QColor, QPen, QBrush, QTransform
 from PySide6.QtWidgets import (
-    QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, 
-    QGraphicsItem, QFrame, QVBoxLayout, QWidget, QGraphicsRectItem
+    QGraphicsView, QGraphicsScene, QGraphicsPixmapItem,
+    QGraphicsItem, QFrame, QVBoxLayout, QWidget, QGraphicsRectItem, QGraphicsObject
 )
 
-class SplitSliderItem(QGraphicsItem):
+class SplitSliderItem(QGraphicsObject):
     """
     A vertical line that acts as a divider for split-screen comparison.
     """
@@ -66,8 +66,23 @@ class SplitSliderItem(QGraphicsItem):
             # Constrain to view width
             x = max(0.0, min(self._view_width, new_pos.x()))
             self._ratio = x / self._view_width if self._view_width > 0 else 0.5
+            self.position_changed.emit(self._ratio)
             return QPointF(x, 0)
         return super().itemChange(change, value)
+
+class DiffVisualizationItem(QGraphicsPixmapItem):
+    """Renders difference heatmap with semi-transparent blending."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.alpha_blend = 0.6
+
+    def paint(self, painter: QPainter, option, widget):
+        if self.pixmap().isNull():
+            return
+        painter.save()
+        painter.setOpacity(self.alpha_blend)
+        super().paint(painter, option, widget)
+        painter.restore()
 
 class DedicatedCompareView(QGraphicsView):
     """
@@ -77,32 +92,37 @@ class DedicatedCompareView(QGraphicsView):
         super().__init__(parent)
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
-        
-        # Rendering hints for quality
+
         self.setRenderHint(QPainter.Antialiasing)
-        self.setRenderHint(QPainter.SmoothPixmapTransform)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
-        self.setOptimizationFlags(QGraphicsView.IndirectPainting)
-        self.setViewportUpdateMode(QGraphicsView.SmartViewportUpdate)
+        self.setViewportUpdateMode(QGraphicsView.MinimalViewportUpdate)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-        
+
         # Background
         self.setBackgroundBrush(QBrush(QColor(18, 18, 18)))
-        
+
         # State
         self.mode = "split"
-        self.img_item_a = QGraphicsPixmapItem()
-        self.img_item_b = QGraphicsPixmapItem()
+
+        # Create items with correct types from initialization
+        self.slider = SplitSliderItem()
+        self.img_item_a = ClippingPixmapItem("left", self.slider)
+        self.img_item_b = ClippingPixmapItem("right", self.slider)
+        self.diff_item = DiffVisualizationItem()
+
         self.scene.addItem(self.img_item_a)
         self.scene.addItem(self.img_item_b)
-        
-        # Split Slider
-        self.slider = SplitSliderItem()
+        self.scene.addItem(self.diff_item)
         self.scene.addItem(self.slider)
+
+        # Z-order: slider on top, B on top for clip-side, diff in middle
+        self.img_item_a.setZValue(10)
+        self.img_item_b.setZValue(11)
+        self.diff_item.setZValue(12)
         self.slider.setZValue(100)
-        
+
         # Initial Zoom
         self._zoom = 1.0
 
@@ -114,6 +134,7 @@ class DedicatedCompareView(QGraphicsView):
         if not pixmaps:
             self.img_item_a.setPixmap(QPixmap())
             self.img_item_b.setPixmap(QPixmap())
+            self.diff_item.setPixmap(QPixmap())
             return
 
         self.img_item_a.setPixmap(pixmaps[0])
@@ -123,38 +144,45 @@ class DedicatedCompareView(QGraphicsView):
             self.img_item_b.setPos(0, 0)
         else:
             self.img_item_b.setPixmap(QPixmap())
-        
+
+        # Set diff pixmap if provided (index 2)
+        if len(pixmaps) > 2:
+            self.diff_item.setPixmap(pixmaps[2])
+        else:
+            self.diff_item.setPixmap(QPixmap())
+
         self.update_layout()
-        self.fitInView(self.img_item_a, Qt.KeepAspectRatio)
+        if self.mode == "grid":
+            self.fitInView(self.scene.itemsBoundingRect(), Qt.KeepAspectRatio)
+        elif not self.img_item_a.pixmap().isNull():
+            self.fitInView(self.img_item_a, Qt.KeepAspectRatio)
 
     def update_layout(self):
         if self.mode == "split":
             self.img_item_a.setVisible(True)
             self.img_item_b.setVisible(True)
+            self.img_item_b.setPos(0, 0)  # reset after grid mode
             self.slider.setVisible(True)
-            # Clip logic will be handled in paintEvent or via Shader-like approach
-            # For simplicity in pure Python/Qt, we use ClipPath in a custom Item
-            # but here we'll use a wrapper or the viewport's paint overrider.
+            self.diff_item.setVisible(False)
         elif self.mode == "grid":
             self.slider.setVisible(False)
             self.img_item_a.setVisible(True)
             self.img_item_b.setVisible(True)
-            # Side by side
-            w_a = self.img_item_a.pixmap().width()
-            self.img_item_b.setPos(w_a + 20, 0)
+            self.diff_item.setVisible(False)
+            if not self.img_item_a.pixmap().isNull():
+                w_a = self.img_item_a.pixmap().width()
+                self.img_item_b.setPos(w_a + 20, 0)
         elif self.mode == "single":
             self.slider.setVisible(False)
             self.img_item_a.setVisible(True)
             self.img_item_b.setVisible(False)
+            self.diff_item.setVisible(False)
         elif self.mode == "diff":
             self.slider.setVisible(False)
             self.img_item_a.setVisible(True)
-            self.img_item_b.setVisible(True)
-            # We would need a custom shader or pixel-manipulated image for diff
-            # For now, let's just stack them.
-            self.img_item_b.setPos(0, 0)
-        
-        self.scene.update()
+            self.img_item_b.setVisible(False)  # B hidden; A is the base
+            self.diff_item.setVisible(True)
+            self.diff_item.setPos(0, 0)
 
     def wheelEvent(self, event):
         zoom_in_factor = 1.15
@@ -166,29 +194,6 @@ class DedicatedCompareView(QGraphicsView):
             zoom_factor = zoom_out_factor
             
         self.scale(zoom_factor, zoom_factor)
-
-    def drawForeground(self, painter: QPainter, rect: QRectF):
-        """
-        Handle the split-screen clipping effect.
-        """
-        if self.mode != "split" or self.img_item_b.pixmap().isNull():
-            return super().drawForeground(painter, rect)
-
-        # Get slider position in scene coordinates
-        slider_x = self.slider.pos().x()
-        
-        # We want to draw img_item_a for x < slider_x 
-        # and img_item_b for x > slider_x
-        # But QGraphicsScene draws items in Z order.
-        # To achieve "Wipe", we can clip the top item.
-        
-        # Actually, it's easier to override the paint of the items, 
-        # but for a quick fix, let's use the painter's clip.
-        # But drawForeground is called after items.
-        
-        # Better approach: AdvancedCompareWidget handles the clipping 
-        # by overriding paint in a custom QGraphicsPixmapItem.
-        pass
 
 class ClippingPixmapItem(QGraphicsPixmapItem):
     def __init__(self, side="left", slider_target=None):
@@ -224,21 +229,10 @@ class AdvancedCompareWidget(QWidget):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        
+
         self.view = DedicatedCompareView()
         self.layout.addWidget(self.view)
-        
-        # Replace items with clipping ones
-        self.view.scene.removeItem(self.view.img_item_a)
-        self.view.scene.removeItem(self.view.img_item_b)
-        
-        self.view.img_item_a = ClippingPixmapItem("left", self.view.slider)
-        self.view.img_item_b = ClippingPixmapItem("right", self.view.slider)
-        
-        self.view.scene.addItem(self.view.img_item_a)
-        self.view.scene.addItem(self.view.img_item_b)
-        self.view.img_item_a.setZValue(10)
-        self.view.img_item_b.setZValue(11) # B on top clip-side
+        self._current_pixmap_width = 0
 
     def set_mode(self, mode: str):
         self.view.set_mode(mode)
@@ -252,6 +246,13 @@ class AdvancedCompareWidget(QWidget):
     def set_pixmap_list(self, pixmaps: list[QPixmap]):
         self.view.set_pixmaps(pixmaps)
         # Update slider constraints
-        if self.view.mode == "split" and pixmaps:
-            self.view.slider.set_view_width(pixmaps[0].width())
-            self.view.slider.setPos(pixmaps[0].width() * 0.5, 0)
+        if pixmaps and pixmaps[0]:
+            self._current_pixmap_width = pixmaps[0].width()
+            if self.view.mode == "split":
+                self.view.slider.set_view_width(pixmaps[0].width())
+                self.view.slider.setPos(pixmaps[0].width() * 0.5, 0)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.view.mode == "split" and self._current_pixmap_width > 0:
+            self.view.slider.set_view_width(self._current_pixmap_width)

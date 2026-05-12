@@ -23,6 +23,6 @@ class ImageConvertState:
     workflow_name: str = "Batch Conversion"
     workflow_description: str = "Convert images to various formats with optional long-edge resizing."
     preview_path: Path | None = None
-    input_assets: list[InputAsset] = field(default_factory=list)
+    files: list[Path] = field(default_factory=list)
     parameter_values: dict[str, object] = field(default_factory=dict)
     output_options: OutputOptions = field(default_factory=OutputOptions)

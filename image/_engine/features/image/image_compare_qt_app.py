@@ -1,25 +1,20 @@
-import os
 import sys
 from pathlib import Path
+
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon, QPixmap, QImage
+from PySide6.QtGui import QPixmap, QImage
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
-    QPushButton,
     QLabel,
-    QFileDialog,
     QComboBox,
     QListWidget,
-    QListWidgetItem,
     QFrame,
-    QListView,
     QAbstractItemView,
 )
-from PySide6.QtCore import Qt, QSize
 
 from contexthub.ui.qt.shell import (
     HeaderSurface,
@@ -30,17 +25,28 @@ from contexthub.ui.qt.shell import (
 )
 from shared._engine.components.icon_button import build_icon_button
 
-from .image_compare_state import ImageCompareState
-from .image_compare_service import ImageCompareService, ImageLoadWorker
-from .advanced_compare_widget import AdvancedCompareWidget
+try:
+    # Try relative imports first (when run as part of package)
+    from .image_compare_state import ImageCompareState
+    from .image_compare_service import ImageCompareService
+    from .advanced_compare_widget import AdvancedCompareWidget
+except ImportError:
+    # Fall back to absolute imports (when run as standalone script)
+    from features.image.image_compare_state import ImageCompareState
+    from features.image.image_compare_service import ImageCompareService
+    from features.image.advanced_compare_widget import AdvancedCompareWidget
 
-class ImageCompareWindow(QMainWindow):
+from shared._engine.runtime.file_input_mixin import MultiFileInputMixin
+
+APP_ID = "image_compare"
+
+class ImageCompareWindow(QMainWindow, MultiFileInputMixin):
     def __init__(self, app_root: Path, targets: list[str] = None):
         super().__init__()
         self.app_root = app_root
         self.state = ImageCompareState()
         self.service = ImageCompareService()
-        
+
         self.setWindowTitle("Image Compare")
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
@@ -135,57 +141,40 @@ class ImageCompareWindow(QMainWindow):
         self.root_layout.addWidget(self.window_shell)
 
         self.setStyleSheet(build_shell_stylesheet())
+        self.setup_file_inputs(self.add_btn, self.clear_btn, self.input_list, self.state)
         self._bind_actions()
         
         if targets:
             self._add_files([Path(t) for t in targets])
 
-    def _bind_actions(self):
-        self.add_btn.clicked.connect(self._on_add_clicked)
-        self.clear_btn.clicked.connect(self._on_clear_clicked)
-        self.input_list.itemSelectionChanged.connect(self._on_selection_changed)
-        self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
+    def get_file_filters(self):
+        return "Images (*.png *.jpg *.exr *.hdr *.tga *.tiff)"
 
-    def _on_add_clicked(self):
-        files, _ = QFileDialog.getOpenFileNames(self, "Select Images", "", "Images (*.png *.jpg *.exr *.hdr *.tga *.tiff)")
-        if files:
-            self._add_files([Path(f) for f in files])
+    def load_thumbnail(self, path):
+        """Returns a PIL Image for thumbnail — called on worker thread, must NOT create QPixmap."""
+        pil_img = self.service.get_pil_image(str(path), "RGB")
+        if pil_img:
+            thumb = pil_img.copy()
+            thumb.thumbnail((200, 200))
+            return thumb
+        return None
 
-    def _on_clear_clicked(self):
-        self.state.files.clear()
-        self.input_list.clear()
-        self.comp_preview.set_pixmaps(QPixmap(), QPixmap())
+    def on_files_added(self, paths):
+        count = self.input_list.count()
+        if count >= 2:
+            self.input_list.item(0).setSelected(True)
+            self.input_list.item(1).setSelected(True)
+        elif count == 1:
+            self.input_list.item(0).setSelected(True)
+        self._on_selection_changed()
+
+    def on_files_cleared(self):
+        self.comp_preview.set_pixmap_list([])
         self.metrics_label.setText("Select two files to compare")
 
-    def _add_files(self, paths: list[Path]):
-        for p in paths:
-            if p not in self.state.files:
-                self.state.files.append(p)
-                
-                # Add Thumbnail Item
-                item = QListWidgetItem(p.name)
-                # Generate a quick thumbnail if it's an image
-                try:
-                    pil_img = self.service.get_pil_image(str(p), "RGB")
-                    if pil_img:
-                        pil_img.thumbnail((200, 200))
-                        pm = self._pil_to_pixmap(pil_img)
-                        item.setIcon(QIcon(pm))
-                except:
-                    pass
-                
-                item.setToolTip(str(p))
-                self.input_list.addItem(item)
-
-        self.input_list.setIconSize(QSize(100, 100))
-        self.input_list.setSpacing(4)
-        if self.input_list.count() > 0 and not self.input_list.selectedItems():
-            self.input_list.setCurrentRow(0)
-            self._on_selection_changed()
-        if len(self.state.files) >= 1 and self.input_list.selectedItems() == []:
-            self.input_list.item(0).setSelected(True)
-            if len(self.state.files) >= 2:
-                self.input_list.item(1).setSelected(True)
+    def _bind_actions(self):
+        self.input_list.itemSelectionChanged.connect(self._on_selection_changed)
+        self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
 
     def _on_selection_changed(self):
         selected = self.input_list.selectedItems()
@@ -223,7 +212,8 @@ class ImageCompareWindow(QMainWindow):
 
     def _on_mode_changed(self, index):
         mode_map = {0: "split", 1: "grid", 2: "diff", 3: "single"}
-        self.comp_preview.set_mode(mode_map.get(index, "split"))
+        self.state.mode = mode_map.get(index, "split")
+        self.comp_preview.set_mode(self.state.mode)
         self._on_selection_changed()
 
     def _refresh_single_view(self, idx):
@@ -244,8 +234,15 @@ class ImageCompareWindow(QMainWindow):
         if pil_a and pil_b:
             pm_a = self._pil_to_pixmap(pil_a)
             pm_b = self._pil_to_pixmap(pil_b)
-            self.comp_preview.set_pixmap_list([pm_a, pm_b])
-            
+            pixmaps = [pm_a, pm_b]
+
+            if self.state.mode == "diff":
+                diff_pil = self.service.get_diff_visualization(path_a, path_b, "RGB")
+                if diff_pil:
+                    pixmaps.append(self._pil_to_pixmap(diff_pil))
+
+            self.comp_preview.set_pixmap_list(pixmaps)
+
             try:
                 ssim, diff = self.service.compute_metrics(path_a, path_b, "RGB")
                 self.metrics_label.setText(f"SSIM: {ssim:.4f} | Diff: {diff:,}px")
@@ -260,9 +257,24 @@ class ImageCompareWindow(QMainWindow):
         qimg = QImage(data, img.size[0], img.size[1], QImage.Format_RGBA8888).copy()
         return QPixmap.fromImage(qimg)
 
-def main():
-    app = QApplication(sys.argv)
-    app_root = Path(os.environ.get("CTX_APP_ROOT", "."))
-    window = ImageCompareWindow(app_root, sys.argv[1:])
+def start_app(targets: list[str] | None = None) -> int:
+    app = QApplication.instance() or QApplication(sys.argv)
+    
+    from shared._engine.runtime.single_instance import SingleInstance
+    si = SingleInstance(APP_ID)
+    if si.is_already_running():
+        if targets: si.send_to_primary(targets)
+        return 0
+        
+    app_root = Path(__file__).resolve().parents[3] / APP_ID
+    window = ImageCompareWindow(app_root, targets)
+    
+    si.start_server()
+    si.message_received.connect(window.handle_external_targets)
+    window._si = si
+    
     window.show()
-    sys.exit(app.exec())
+    return app.exec()
+
+if __name__ == "__main__":
+    sys.exit(start_app(sys.argv[1:]))

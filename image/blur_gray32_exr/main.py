@@ -1,6 +1,14 @@
 import os
 import sys
+import time
 from pathlib import Path
+
+_T0 = time.perf_counter()
+
+
+def _log_startup(label: str) -> None:
+    if os.environ.get("CTX_STARTUP_TRACE"):
+        print(f"[startup] {label} t+{(time.perf_counter() - _T0) * 1000:.0f}ms", file=sys.stderr)
 
 
 APP_ROOT = Path(__file__).resolve().parent
@@ -31,6 +39,7 @@ def _pick_targets() -> list[Path]:
 
 def _prompt_radius(targets: list[Path]) -> float | None:
     from features.image.blur_gray32_exr.qt_app import BlurGray32DialogRequest, run_blur_gray32_dialog
+    _log_startup("qt_app imported")
 
     request = BlurGray32DialogRequest(
         app_root=APP_ROOT,
@@ -49,6 +58,7 @@ def _prompt_radius(targets: list[Path]) -> float | None:
 
 
 def main() -> int:
+    _log_startup("entering main")
     targets = _pick_targets()
     if not targets and not _capture_mode():
         return 0

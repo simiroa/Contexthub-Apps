@@ -414,10 +414,10 @@ class MergeToExrWindow(QMainWindow):
 
     def _set_drop_highlight(self, active: bool) -> None:
         if active:
-            set_surface_role(self.layer_card, "card", "accent")
+            set_surface_role(self.layer_card, "accent")
             self.drop_hint.setText("Drop image files to append new EXR layers.")
         else:
-            set_surface_role(self.layer_card, "card", "default")
+            set_surface_role(self.layer_card, "default")
             self.drop_hint.setText(
                 qt_t("merge_to_exr.drop_hint_empty", "Drop image files anywhere in this window to add EXR layers.")
                 if not self.service.state.channels
@@ -453,6 +453,13 @@ class MergeToExrWindow(QMainWindow):
 def start_app(targets: list[str] | None = None) -> int:
     app = QApplication.instance() or QApplication(sys.argv)
     app_root = Path(__file__).resolve().parents[3] / "merge_to_exr"
+    try:
+        from shared._engine.runtime.splash import show_splash, finish_splash
+        splash = show_splash(app_root)
+    except Exception:
+        splash, finish_splash = None, lambda *_: None  # type: ignore[assignment]
+
     window = MergeToExrWindow(ExrMergeService(), app_root, targets)
     window.show()
+    finish_splash(splash, window)
     return app.exec()

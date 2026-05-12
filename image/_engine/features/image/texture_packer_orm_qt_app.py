@@ -391,9 +391,42 @@ class TexturePackerWindow(QMainWindow):
         else:
             self.status_label.setText(f"Error: {message}")
 
-def main():
-    app = QApplication(sys.argv)
-    app_root = Path(os.environ.get("CTX_APP_ROOT", "."))
-    window = TexturePackerWindow(app_root, sys.argv[1:])
+    def handle_external_targets(self, targets: list[str]):
+        """SingleInstance compatibility"""
+        if targets:
+            # Auto-fill starting from the first target
+            self._set_slot_file("diffuse", Path(targets[0]))
+
+def start_app(targets: list[str] | None = None) -> int:
+    app = QApplication.instance() or QApplication(sys.argv)
+
+    from shared._engine.runtime.single_instance import SingleInstance
+    si = SingleInstance(APP_ID)
+    if si.is_already_running():
+        if targets: si.send_to_primary(targets)
+        return 0
+
+    app_root = Path(__file__).resolve().parents[3] / APP_ID
+
+    try:
+        from shared._engine.runtime.splash import show_splash, finish_splash
+        splash = show_splash(app_root)
+    except Exception:
+        splash, finish_splash = None, lambda *_: None  # type: ignore[assignment]
+
+    window = TexturePackerWindow(app_root, targets)
+
+    si.start_server()
+    si.message_received.connect(window.handle_external_targets)
+    window._si = si
+
     window.show()
-    sys.exit(app.exec())
+    finish_splash(splash, window)
+    return app.exec()
+
+
+# Compat alias: the launcher imports `main`
+main = start_app
+
+if __name__ == "__main__":
+    sys.exit(start_app(sys.argv[1:]))

@@ -4,16 +4,32 @@ import json
 import os
 import io
 import threading
-import numpy as np
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Callable, Dict
-from PIL import Image, ImageEnhance
+from typing import Any, List, Optional, Tuple, Callable, Dict, TYPE_CHECKING
 
-try:
-    from scipy.ndimage import sobel
-except ImportError:
-    sobel = None
+if TYPE_CHECKING:
+    import numpy as np
+    from PIL import Image, ImageEnhance
+
+np = None  # type: ignore[assignment]
+Image = None  # type: ignore[assignment]
+ImageEnhance = None  # type: ignore[assignment]
+sobel = None
+
+
+def _ensure_heavy() -> None:
+    global np, Image, ImageEnhance, sobel
+    if np is not None:
+        return
+    import numpy as _np
+    from PIL import Image as _Image, ImageEnhance as _ImageEnhance
+    try:
+        from scipy.ndimage import sobel as _sobel
+    except ImportError:
+        _sobel = None
+    np, Image, ImageEnhance, sobel = _np, _Image, _ImageEnhance, _sobel
+
 
 from _engine.features.image.simple_normal_roughness_state import SimpleNormalRoughnessState, InputAsset
 from contexthub.ui.qt.shell import qt_t
@@ -93,7 +109,8 @@ class SimpleNormalRoughnessService:
             return None
         return self.state.input_assets[0].path.parent
 
-    def generate_maps(self, img_pil: Image.Image) -> Tuple[Image.Image, Image.Image]:
+    def generate_maps(self, img_pil) -> Tuple[Any, Any]:
+        _ensure_heavy()
         params = self.state.parameter_values
         n_str = float(params.get('normal_strength', 1.0))
         n_flip = bool(params.get('normal_flip_g', False))
@@ -141,7 +158,8 @@ class SimpleNormalRoughnessService:
         
         return norm_img, rough_img
 
-    def get_processed_preview(self, path: Path) -> Image.Image:
+    def get_processed_preview(self, path: Path):
+        _ensure_heavy()
         mode = self.state.parameter_values.get("preview_mode", "Normal")
         with Image.open(path) as img:
             rgb = img.convert("RGB")
@@ -157,6 +175,7 @@ class SimpleNormalRoughnessService:
         if os.name == "nt": os.startfile(path)
 
     def run_workflow(self) -> tuple[bool, str, Path | None]:
+        _ensure_heavy()
         files = [a.path for a in self.state.input_assets]
         if not files:
             return False, "No files to process.", None
