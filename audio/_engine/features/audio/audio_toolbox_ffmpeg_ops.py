@@ -7,6 +7,7 @@ from pathlib import Path
 
 from contexthub.utils.external_tools import get_ffmpeg
 from contexthub.utils.files import get_safe_path
+from shared._engine.runtime.subprocess_runner import CREATE_NO_WINDOW
 
 
 def parse_timecode(raw: str) -> float | None:
@@ -63,7 +64,7 @@ def build_trimmed_input(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        creationflags=CREATE_NO_WINDOW,
     )
     _stdout, stderr = process.communicate()
     if process.returncode != 0 or not trimmed_path.exists():
@@ -99,7 +100,7 @@ def run_ffmpeg_compress(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        creationflags=CREATE_NO_WINDOW,
     )
     _stdout, stderr = process.communicate()
     if process.returncode != 0 or not output_path.exists():
@@ -141,7 +142,7 @@ def run_ffmpeg_enhance(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        creationflags=CREATE_NO_WINDOW,
     )
     _stdout, stderr = process.communicate()
     if process.returncode != 0 or not output_path.exists():

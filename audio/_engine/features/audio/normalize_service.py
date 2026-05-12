@@ -5,6 +5,7 @@ from typing import List, Callable, Optional
 
 from utils.external_tools import get_ffmpeg
 from utils.files import get_safe_path
+from shared._engine.runtime.subprocess_runner import CREATE_NO_WINDOW
 
 class AudioNormalizeService:
     def __init__(self):
@@ -48,7 +49,7 @@ class AudioNormalizeService:
 
                 self.current_process = subprocess.Popen(
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+                    creationflags=CREATE_NO_WINDOW
                 )
                 self.current_process.wait()
 

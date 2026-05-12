@@ -6,19 +6,7 @@ import multiprocessing
 from PIL import Image, ImageOps
 import threading
 
-try:
-    from core.logger import setup_logger
-except ModuleNotFoundError:
-    try:
-        from contexthub.core.logger import setup_logger
-    except ModuleNotFoundError:
-        import logging
-
-        def setup_logger(name: str):
-            logger = logging.getLogger(name)
-            if not logger.handlers:
-                logging.basicConfig(level=logging.INFO)
-            return logger
+from contexthub.core.logger import setup_logger
 
 logger = setup_logger("image_convert_service")
 

@@ -5,13 +5,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+from shared._engine.runtime.subprocess_runner import CREATE_NO_WINDOW
 from utils.external_tools import get_ffmpeg
 from utils.files import get_safe_path
 from utils.i18n import t
 
 
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
-_CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 
 
 def _echo(message: str) -> None:
@@ -66,7 +66,7 @@ def _run_single(ffmpeg: str, source: Path) -> tuple[bool, Path, str]:
             capture_output=True,
             text=True,
             errors="ignore",
-            creationflags=_CREATE_NO_WINDOW,
+            creationflags=CREATE_NO_WINDOW,
         )
     except Exception as exc:
         return False, output_path, str(exc)

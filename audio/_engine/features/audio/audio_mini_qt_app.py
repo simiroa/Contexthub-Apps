@@ -30,14 +30,8 @@ from features.audio.audio_toolbox_tasks import (
 
 # Shared components
 from shared._engine.components.export_foldout_card import build_export_foldout_card
+from shared._engine.runtime.service_bridge import ServiceBridge
 from components.mini_parameter_card import build_mini_parameter_slider
-
-class ServiceBridge(QObject):
-    updated = Signal(dict)
-
-    def emit_update(self, **payload) -> None:
-        self.updated.emit(payload)
-
 
 class AudioMiniWindow(QMainWindow):
     def __init__(

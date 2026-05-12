@@ -27,18 +27,7 @@ def _ensure_compare_core():
     compare_core = _cc
     return compare_core
 
-try:
-    from core.logger import setup_logger
-except ModuleNotFoundError:
-    try:
-        from contexthub.core.logger import setup_logger
-    except ModuleNotFoundError:
-        import logging
-        def setup_logger(name: str):
-            logger = logging.getLogger(name)
-            if not logger.handlers:
-                logging.basicConfig(level=logging.INFO)
-            return logger
+from contexthub.core.logger import setup_logger
 
 logger = setup_logger("image_compare_service")
 

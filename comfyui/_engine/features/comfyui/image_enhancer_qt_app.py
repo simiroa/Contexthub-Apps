@@ -18,6 +18,7 @@ from contexthub.ui.qt.shell import (
 from features.comfyui.image_enhancer_service import ImageEnhancerService
 from features.comfyui.image_enhancer_state import WORKFLOW_CHOICES
 from features.comfyui.inpainting_canvas import InpaintingCanvas
+from shared._engine.runtime.file_input_mixin import MultiFileInputMixin
 
 try:
     from PySide6.QtCore import QSettings, Qt, QTimer, Signal, Slot
@@ -53,7 +54,7 @@ APP_SUBTITLE = qt_t(
 )
 
 
-class ImageEnhancerWindow(QMainWindow):
+class ImageEnhancerWindow(QMainWindow, MultiFileInputMixin):
     log_signal = Signal(str)
     finished_signal = Signal(bool, str)
 
@@ -622,21 +623,10 @@ class ImageEnhancerWindow(QMainWindow):
         self._refresh_selected_layer()
         self._refresh_runtime_status()
 
-    def dragEnterEvent(self, event) -> None:  # noqa: N802
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-            return
-        super().dragEnterEvent(event)
-
-    def dropEvent(self, event) -> None:  # noqa: N802
-        if event.mimeData().hasUrls():
-            paths = [url.toLocalFile() for url in event.mimeData().urls() if url.isLocalFile()]
-            if paths:
-                self.service.add_inputs(paths)
-                self._refresh_all()
-            event.acceptProposedAction()
-            return
-        super().dropEvent(event)
+    def _add_files(self, paths) -> None:  # noqa: N802 (mixin override)
+        if paths:
+            self.service.add_inputs([str(p) for p in paths])
+            self._refresh_all()
 
     def _restore_window_state(self) -> None:
         geometry = self._settings.value("geometry")

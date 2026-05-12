@@ -6,12 +6,10 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, List, Dict, Any
 
+from shared._engine.runtime.subprocess_runner import CREATE_NO_WINDOW
 from utils.external_tools import get_ffmpeg
 from utils.files import get_safe_path
 from .video_convert_state import VideoConvertState
-
-
-_CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 
 
 def _caps_cache_path() -> Path:
@@ -75,7 +73,7 @@ def _probe_nvenc(ffmpeg_path: str) -> bool:
             capture_output=True,
             text=True,
             errors="ignore",
-            creationflags=_CREATE_NO_WINDOW,
+            creationflags=CREATE_NO_WINDOW,
         )
         return "h264_nvenc" in res.stdout
     except Exception:

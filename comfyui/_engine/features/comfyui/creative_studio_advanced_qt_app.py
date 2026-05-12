@@ -5,6 +5,7 @@ from pathlib import Path
 
 from features.comfyui.creative_studio_advanced_service import CreativeStudioAdvancedService
 from contexthub.ui.qt.panels import AssetWorkspacePanel, ExportFoldoutPanel
+from shared._engine.runtime.file_input_mixin import MultiFileInputMixin
 from contexthub.ui.qt.shell import (
     apply_app_icon,
     CollapsibleSection,
@@ -59,7 +60,7 @@ class WorkerThread(QThread):
         self.finished_with_result.emit(ok, message, payload)
 
 
-class CreativeStudioAdvancedWindow(QMainWindow):
+class CreativeStudioAdvancedWindow(QMainWindow, MultiFileInputMixin):
     def __init__(self, service: CreativeStudioAdvancedService, app_root: str | Path, targets: list[str] | None = None) -> None:
         super().__init__()
         self.service = service
@@ -476,20 +477,10 @@ class CreativeStudioAdvancedWindow(QMainWindow):
         self._refresh_preview()
         self._refresh_status(qt_t("comfyui.qt_advanced.added_items", "Added {count} item(s).", count=len(paths)), "ready")
 
-    def dragEnterEvent(self, event) -> None:  # noqa: N802
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-            return
-        super().dragEnterEvent(event)
-
-    def dropEvent(self, event) -> None:  # noqa: N802
-        if event.mimeData().hasUrls():
-            paths = [url.toLocalFile() for url in event.mimeData().urls() if url.isLocalFile()]
-            if paths:
-                self._handle_dropped_inputs(paths)
-            event.acceptProposedAction()
-            return
-        super().dropEvent(event)
+    def _add_files(self, paths) -> None:  # noqa: N802 (mixin override)
+        # Forward to existing service-backed dropped-inputs handler.
+        if paths:
+            self._handle_dropped_inputs([str(p) for p in paths])
 
     def _start_runtime_probe(self) -> None:
         self._refresh_status(qt_t("comfyui.qt_advanced.checking_runtime", "Checking ComfyUI runtime..."), "warning")

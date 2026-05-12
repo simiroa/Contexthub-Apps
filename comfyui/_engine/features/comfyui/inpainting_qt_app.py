@@ -11,6 +11,7 @@ from pathlib import Path
 
 from features.comfyui.inpainting_canvas import InpaintingCanvas
 from features.comfyui.inpainting_service import InpaintingService
+from shared._engine.runtime.file_input_mixin import MultiFileInputMixin
 
 from contexthub.ui.qt.shell import (
     CollapsibleSection,
@@ -65,7 +66,7 @@ class WorkerThread(QThread):
         self.finished.emit(ok, msg, payload)
 
 
-class InpaintingWindow(QMainWindow):
+class InpaintingWindow(QMainWindow, MultiFileInputMixin):
     def __init__(
         self,
         service: InpaintingService,
@@ -480,26 +481,18 @@ class InpaintingWindow(QMainWindow):
         self.status_badge.setText(text[:40])
 
     # ==================================================================
-    # Drag & drop
+    # Drag & drop (provided by MultiFileInputMixin)
     # ==================================================================
 
-    def dragEnterEvent(self, event) -> None:
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-            return
-        super().dragEnterEvent(event)
+    def get_accepted_extensions(self) -> set[str]:
+        return {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"}
 
-    def dropEvent(self, event) -> None:
-        if event.mimeData().hasUrls():
-            for url in event.mimeData().urls():
-                if url.isLocalFile():
-                    path = url.toLocalFile()
-                    if self.canvas.load_image(path):
-                        self.service.set_source_image(path)
-                        break
-            event.acceptProposedAction()
-            return
-        super().dropEvent(event)
+    def _add_files(self, paths) -> None:
+        # Single-image canvas: load the first valid image.
+        for p in paths:
+            if self.canvas.load_image(str(p)):
+                self.service.set_source_image(str(p))
+                break
 
     # ==================================================================
     # Window state

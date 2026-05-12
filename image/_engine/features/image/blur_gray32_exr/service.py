@@ -25,20 +25,7 @@ def _ensure_heavy() -> None:
     from PIL import Image as _Image
     cv2, np, Image = _cv2, _np, _Image
 
-try:
-    from core.logger import setup_logger
-except ModuleNotFoundError:
-    try:
-        from contexthub.core.logger import setup_logger
-    except ModuleNotFoundError:
-        import logging
-
-        def setup_logger(name: str):
-            logger = logging.getLogger(name)
-            if not logger.handlers:
-                logging.basicConfig(level=logging.INFO)
-            return logger
-
+from contexthub.core.logger import setup_logger
 
 logger = setup_logger("blur_gray32_exr_service")
 

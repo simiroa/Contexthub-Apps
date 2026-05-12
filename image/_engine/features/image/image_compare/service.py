@@ -5,19 +5,7 @@ from PIL import Image
 
 # Import core logic from existing compare_core
 import features.image.compare_core as compare_core
-try:
-    from core.logger import setup_logger
-except ModuleNotFoundError:
-    try:
-        from contexthub.core.logger import setup_logger
-    except ModuleNotFoundError:
-        import logging
-
-        def setup_logger(name: str):
-            logger = logging.getLogger(name)
-            if not logger.handlers:
-                logging.basicConfig(level=logging.INFO)
-            return logger
+from contexthub.core.logger import setup_logger
 
 logger = setup_logger("image_compare_service")
 

@@ -21,20 +21,7 @@ def _ensure_heavy() -> None:
 
 from .state import ChannelConfig, ExrMergeState
 
-try:
-    from core.logger import setup_logger
-except ModuleNotFoundError:
-    try:
-        from contexthub.core.logger import setup_logger
-    except ModuleNotFoundError:
-        import logging
-
-        def setup_logger(name: str):
-            logger = logging.getLogger(name)
-            if not logger.handlers:
-                logging.basicConfig(level=logging.INFO)
-            return logger
-
+from contexthub.core.logger import setup_logger
 
 logger = setup_logger("merge_to_exr_service")
 

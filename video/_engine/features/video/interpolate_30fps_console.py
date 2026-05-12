@@ -4,12 +4,12 @@ import os
 import subprocess
 from pathlib import Path
 
+from shared._engine.runtime.subprocess_runner import CREATE_NO_WINDOW
 from utils.external_tools import get_ffmpeg
 from utils.files import get_safe_path
 
 
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
-_CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 
 
 def _echo(message: str) -> None:
@@ -67,7 +67,7 @@ def run_interpolate_30fps_console(targets: list[Path]) -> int:
             capture_output=True,
             text=True,
             errors="ignore",
-            creationflags=_CREATE_NO_WINDOW,
+            creationflags=CREATE_NO_WINDOW,
         )
         if completed.returncode == 0:
             success += 1

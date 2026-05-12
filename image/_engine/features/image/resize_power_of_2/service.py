@@ -8,19 +8,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple, Callable
 from PIL import Image
 
-try:
-    from core.logger import setup_logger
-except ModuleNotFoundError:
-    try:
-        from contexthub.core.logger import setup_logger
-    except ModuleNotFoundError:
-        import logging
-
-        def setup_logger(name: str):
-            logger = logging.getLogger(name)
-            if not logger.handlers:
-                logging.basicConfig(level=logging.INFO)
-            return logger
+from contexthub.core.logger import setup_logger
 from utils.files import get_safe_path
 
 logger = setup_logger("resize_pot_service")

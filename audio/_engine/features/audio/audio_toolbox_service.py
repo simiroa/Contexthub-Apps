@@ -11,6 +11,7 @@ from typing import Callable
 
 from contexthub.utils.external_tools import get_ffmpeg
 from contexthub.utils.files import get_safe_path
+from shared._engine.runtime.subprocess_runner import CREATE_NO_WINDOW
 from features.audio.audio_convert.service import AudioConvertService
 from features.audio.audio_toolbox_ffmpeg_ops import (
     build_trimmed_input,
@@ -371,7 +372,7 @@ class AudioToolboxService:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+            creationflags=CREATE_NO_WINDOW,
         )
         _stdout, stderr = self.current_process.communicate()
         if self.current_process.returncode != 0:
@@ -427,7 +428,7 @@ class AudioToolboxService:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+            creationflags=CREATE_NO_WINDOW,
         )
         _stdout, stderr = self.current_process.communicate()
         if self.current_process.returncode != 0:
@@ -473,7 +474,7 @@ class AudioToolboxService:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+            creationflags=CREATE_NO_WINDOW,
         )
         _stdout, stderr = self.current_process.communicate()
         if self.current_process.returncode != 0:
@@ -531,7 +532,7 @@ class AudioToolboxService:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                creationflags=CREATE_NO_WINDOW,
             )
             _stdout, stderr = self.current_process.communicate()
             if self.current_process.returncode == 0 and output_path.exists():

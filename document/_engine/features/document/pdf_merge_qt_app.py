@@ -17,6 +17,7 @@ from contexthub.ui.qt.shell import (
 )
 from features.document.pdf_merge.service import PdfMergeService
 from shared._engine.components.icon_button import build_icon_button
+from shared._engine.runtime.file_input_mixin import MultiFileInputMixin
 
 try:
     from PySide6.QtCore import Qt, QTimer
@@ -41,7 +42,7 @@ APP_TITLE = qt_t("pdf_merge.title", "PDF Merge")
 APP_SUBTITLE = qt_t("pdf_merge.subtitle", "Merge multiple PDFs in your chosen order.")
 
 
-class PdfMergeWindow(QMainWindow):
+class PdfMergeWindow(QMainWindow, MultiFileInputMixin):
     def __init__(self, service: PdfMergeService, app_root: Path, targets: list[str] | None = None) -> None:
         super().__init__()
         self.service = service
@@ -328,39 +329,16 @@ class PdfMergeWindow(QMainWindow):
         if button is not None:
             button.setEnabled(enabled)
 
-    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
-        paths = self._extract_pdf_paths(event)
-        if paths:
-            event.acceptProposedAction()
-            self._set_drop_highlight(True)
-            return
-        super().dragEnterEvent(event)
+    def get_accepted_extensions(self) -> set[str]:
+        return {".pdf"}
 
-    def dragLeaveEvent(self, event) -> None:
-        self._set_drop_highlight(False)
-        super().dragLeaveEvent(event)
+    def on_drag_highlight(self, active: bool) -> None:
+        self._set_drop_highlight(active)
 
-    def dropEvent(self, event: QDropEvent) -> None:
-        paths = self._extract_pdf_paths(event)
-        self._set_drop_highlight(False)
+    def _add_files(self, paths) -> None:  # noqa: N802 (mixin override)
         if paths:
-            self.service.add_inputs([str(path) for path in paths])
+            self.service.add_inputs([str(p) for p in paths])
             self._refresh_all()
-            event.acceptProposedAction()
-            return
-        super().dropEvent(event)
-
-    def _extract_pdf_paths(self, event) -> list[Path]:
-        if not event.mimeData().hasUrls():
-            return []
-        paths: list[Path] = []
-        for url in event.mimeData().urls():
-            if not url.isLocalFile():
-                continue
-            path = Path(url.toLocalFile())
-            if path.suffix.lower() == ".pdf":
-                paths.append(path)
-        return paths
 
     def _set_drop_highlight(self, active: bool) -> None:
         if active:

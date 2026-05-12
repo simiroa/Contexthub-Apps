@@ -6,19 +6,7 @@ from pathlib import Path
 from typing import List, Optional, Callable, Dict
 from PIL import Image
 
-try:
-    from core.logger import setup_logger
-except ModuleNotFoundError:
-    try:
-        from contexthub.core.logger import setup_logger
-    except ModuleNotFoundError:
-        import logging
-
-        def setup_logger(name: str):
-            logger = logging.getLogger(name)
-            if not logger.handlers:
-                logging.basicConfig(level=logging.INFO)
-            return logger
+from contexthub.core.logger import setup_logger
 from .state import LayerStateEntry, VectorizerState
 from features.image.vectorizer.vectorizer_core import vectorize_image, DEFAULT_CONFIG
 from features.image.vectorizer.anchor_estimator import estimate_anchor_point

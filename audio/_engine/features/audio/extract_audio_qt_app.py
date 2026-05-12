@@ -38,17 +38,11 @@ from features.audio.audio_toolbox_state import (
 
 # Reuse standard components
 from shared._engine.components.export_foldout_card import build_export_foldout_card
+from shared._engine.runtime.service_bridge import ServiceBridge
 
 APP_ID = "extract_audio"
 APP_TITLE = "Extract Audio"
 APP_SUBTITLE = "Extract audio tracks or isolate vocals/bgm."
-
-
-class ServiceBridge(QObject):
-    updated = Signal(dict)
-
-    def emit_update(self, **payload) -> None:
-        self.updated.emit(payload)
 
 
 class ExtractAudioWindow(QMainWindow):

@@ -6,6 +6,7 @@ from typing import List, Callable, Optional
 import threading
 
 from utils.ai_runner import kill_process_tree
+from shared._engine.runtime.subprocess_runner import CREATE_NO_WINDOW
 
 class AudioSeparateService:
     def __init__(self):
@@ -62,7 +63,7 @@ class AudioSeparateService:
                     stdout=subprocess.PIPE, 
                     stderr=subprocess.STDOUT, 
                     text=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+                    creationflags=CREATE_NO_WINDOW
                 )
                 
                 # We need to capture the output for logs

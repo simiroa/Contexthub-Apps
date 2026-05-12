@@ -11,6 +11,7 @@ from typing import Any
 from features.ai.marigold_pbr_state import MarigoldPBRState, InputAsset
 from core.paths import TOOLS_DIR
 from core.settings import load_settings
+from shared._engine.runtime.subprocess_runner import CREATE_NO_WINDOW
 
 
 class MarigoldPBRService:
@@ -128,7 +129,7 @@ class MarigoldPBRService:
         
         args = [python_exe, str(setup_script)]
         try:
-            result = subprocess.run(args, capture_output=True, text=True, creationflags=0x08000000)
+            result = subprocess.run(args, capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
             if result.returncode != 0:
                 return False, f"Download failed: {result.stderr or result.stdout}"
             return True, "Models installed successfully."
@@ -176,7 +177,7 @@ class MarigoldPBRService:
         if params.get("fp16"): args.append("--fp16")
 
         try:
-            result = subprocess.run(args, capture_output=True, text=True, creationflags=0x08000000)
+            result = subprocess.run(args, capture_output=True, text=True, creationflags=CREATE_NO_WINDOW)
             if result.returncode != 0:
                 return False, f"Inference failed: {result.stderr or result.stdout}", None
         except Exception as e:

@@ -18,6 +18,7 @@ from contexthub.ui.qt.shell import (
     set_transparent_surface,
 )
 from shared._engine.components.icon_button import build_icon_button
+from shared._engine.runtime.service_bridge import ServiceBridge
 from contexthub.ui.qt.panels_export import ExportFoldoutPanel
 from contexthub.ui.qt.panels_parameters import FixedParameterPanel
 from contexthub.ui.qt.panels_preview import PreviewListPanel, VideoPreviewCard
@@ -161,13 +162,6 @@ def _output_path_for(state: VideoConvertState, path: Path) -> str:
     if out_dir is None:
         return name
     return str(out_dir / name)
-
-
-class ServiceBridge(QObject):
-    updated = Signal(dict)
-
-    def emit_update(self, **payload) -> None:
-        self.updated.emit(payload)
 
 
 class VideoConvertWindow(QMainWindow):

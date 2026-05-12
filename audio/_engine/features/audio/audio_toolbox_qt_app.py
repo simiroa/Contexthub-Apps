@@ -15,6 +15,7 @@ from contexthub.ui.qt.shell import (
     set_surface_role,
 )
 from shared._engine.components.icon_button import build_icon_button
+from shared._engine.runtime.service_bridge import ServiceBridge
 from features.audio.audio_toolbox_panels import build_option_panels
 from features.audio.audio_toolbox_run_widget import AudioRunWidget
 from features.audio.audio_toolbox_workspace import build_player_card, build_queue_card
@@ -63,13 +64,6 @@ APP_SUBTITLE = qt_t(
     "Unified audio processing shell for separation, normalization, and conversion.",
 )
 FILTER_TEXT = "Audio Files (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;All Files (*.*)"
-
-
-class ServiceBridge(QObject):
-    updated = Signal(dict)
-
-    def emit_update(self, **payload) -> None:
-        self.updated.emit(payload)
 
 
 class AudioToolboxWindow(QMainWindow):
