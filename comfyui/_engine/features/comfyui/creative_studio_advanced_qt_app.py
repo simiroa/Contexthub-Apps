@@ -5,6 +5,7 @@ from pathlib import Path
 
 from features.comfyui.creative_studio_advanced_service import CreativeStudioAdvancedService
 from contexthub.ui.qt.panels import AssetWorkspacePanel, ExportFoldoutPanel
+from shared._engine.runtime.base_window import BaseAppWindow
 from shared._engine.runtime.file_input_mixin import MultiFileInputMixin
 from contexthub.ui.qt.shell import (
     apply_app_icon,
@@ -60,27 +61,19 @@ class WorkerThread(QThread):
         self.finished_with_result.emit(ok, message, payload)
 
 
-class CreativeStudioAdvancedWindow(QMainWindow, MultiFileInputMixin):
+class CreativeStudioAdvancedWindow(BaseAppWindow, MultiFileInputMixin):
+    APP_ID = "creative_studio_advanced"
+
     def __init__(self, service: CreativeStudioAdvancedService, app_root: str | Path, targets: list[str] | None = None) -> None:
-        super().__init__()
+        super().__init__(app_root)
         self.service = service
-        self.app_root = Path(app_root)
         self._run_thread: WorkerThread | None = None
         self._probe_thread: WorkerThread | None = None
-        self._settings = QSettings("Contexthub", APP_ID)
-        self._runtime_signature = runtime_settings_signature()
         self._section_widgets: dict[str, CollapsibleSection] = {}
-        self._runtime_timer = QTimer(self)
-        self._runtime_timer.setInterval(1500)
-        self._runtime_timer.timeout.connect(self._check_runtime_preferences)
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1500, 980)
         self.setMinimumSize(1240, 840)
-        self.setAcceptDrops(True)
-        apply_app_icon(self, self.app_root)
 
         self._apply_style()
         self._build_ui()
@@ -393,12 +386,9 @@ class CreativeStudioAdvancedWindow(QMainWindow, MultiFileInputMixin):
         set_badge_role(self.runtime_status_badge, "status", tone)
         self.export_panel.status_label.setText(text)
 
-    def _check_runtime_preferences(self) -> None:
-        current = runtime_settings_signature()
-        if current == self._runtime_signature:
-            return
-        self._runtime_signature = current
-        refresh_runtime_preferences()
+    def on_runtime_preferences_changed(self) -> None:
+        # BaseAppWindow already refreshed prefs + stylesheet; reapply the
+        # custom translation pass.
         self._apply_runtime_preferences()
 
     def _apply_runtime_preferences(self) -> None:

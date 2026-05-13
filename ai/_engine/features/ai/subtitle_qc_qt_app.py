@@ -19,6 +19,7 @@ from contexthub.ui.qt.shell import (
 from features.ai.subtitle_qc_document_logic import format_timestamp
 from features.ai.subtitle_qc_qt_components import MediaPreviewHost, QueueDialog, ServiceBridge
 from features.ai.subtitle_qc_service import SubtitleQcService
+from shared._engine.runtime.base_window import BaseAppWindow
 
 try:
     from PySide6.QtCore import Qt, QSettings, QTimer, QUrl, Slot
@@ -75,16 +76,12 @@ def _document_has_timestamps(document) -> bool:
     return any(float(segment.end) > float(segment.start) for segment in getattr(document, "segments", []))
 
 
-class MeetingNotesWindow(QMainWindow):
+class MeetingNotesWindow(BaseAppWindow):
+    APP_ID = "subtitle_qc"
+
     def __init__(self, service: SubtitleQcService, app_root: str | Path, targets: list[str | Path] | None = None) -> None:
-        super().__init__()
+        super().__init__(app_root)
         self.service = service
-        self.app_root = Path(app_root)
-        self._settings = QSettings("Contexthub", APP_ID)
-        self._runtime_signature = runtime_settings_signature()
-        self._runtime_timer = QTimer(self)
-        self._runtime_timer.setInterval(1500)
-        self._runtime_timer.timeout.connect(self._check_runtime_preferences)
         self._bridge = ServiceBridge()
         self._bridge.updated.connect(self._on_service_update)
         self.service._on_update = self._bridge.updated.emit
@@ -109,11 +106,8 @@ class MeetingNotesWindow(QMainWindow):
             self.audio_output = None
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1680, 980)
         self.setMinimumSize(1420, 860)
-        apply_app_icon(self, self.app_root)
         self.setStyleSheet(build_shell_stylesheet())
 
         self._build_ui()
@@ -876,29 +870,16 @@ class MeetingNotesWindow(QMainWindow):
     def _on_service_update(self, _payload: dict) -> None:
         QTimer.singleShot(0, self._sync_from_state)
 
-    def _check_runtime_preferences(self) -> None:
-        current = runtime_settings_signature()
-        if current == self._runtime_signature:
-            return
-        self._runtime_signature = current
-        refresh_runtime_preferences()
-        self.setStyleSheet(build_shell_stylesheet())
+    def on_runtime_preferences_changed(self) -> None:
+        # BaseAppWindow has already refreshed prefs + stylesheet; reapply
+        # the per-app palette tweaks on top.
         self._apply_styles()
-
-    def _restore_window_state(self) -> None:
-        geometry = self._settings.value("geometry")
-        if geometry:
-            self.restoreGeometry(geometry)
-        if self._settings.value("is_maximized", False, bool):
-            self.showMaximized()
 
     def closeEvent(self, event) -> None:  # noqa: N802
         if self._transcript_dirty_local and self.transcript_edit.toPlainText().strip():
             self._apply_transcript_edits()
-        self._settings.setValue("geometry", self.saveGeometry())
-        self._settings.setValue("is_maximized", self.isMaximized())
         self.service.export_session()
-        super().closeEvent(event)
+        super().closeEvent(event)  # base handles geometry/maximized persistence
 
 
 def start_app(targets: list[str] | None = None, app_root: str | Path | None = None) -> int:

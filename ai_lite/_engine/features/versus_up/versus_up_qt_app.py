@@ -18,6 +18,7 @@ from features.versus_up import versus_up_matrix_controller as matrix_controller
 from features.versus_up import versus_up_project_controller as project_controller
 from features.versus_up import versus_up_workspace_controller as workspace_controller
 from features.versus_up.versus_up_service import PROJECT_EXTENSION, VersusUpService
+from shared._engine.runtime.base_window import BaseAppWindow
 from features.versus_up.versus_up_qt_panels import (
     HeaderUtilityPanel,
     WorkspacePanel,
@@ -65,16 +66,12 @@ APP_SUBTITLE = "Weighted decision support with OCR and hover vision review."
 LAYOUT_STATE_VERSION = 3
 
 
-class VersusUpWindow(QMainWindow):
+class VersusUpWindow(BaseAppWindow):
+    APP_ID = "versus_up"
+
     def __init__(self, service: VersusUpService, app_root: str | Path, targets: list[str] | None = None) -> None:
-        super().__init__()
+        super().__init__(app_root)
         self.service = service
-        self.app_root = Path(app_root)
-        self._settings = QSettings("Contexthub", APP_ID)
-        self._runtime_signature = runtime_settings_signature()
-        self._runtime_timer = QTimer(self)
-        self._runtime_timer.setInterval(1500)
-        self._runtime_timer.timeout.connect(self._check_runtime_preferences)
         self._vision_threads: dict[str, tuple[QThread, VisionWorker]] = {}
         self._vision_focus_product_id: str | None = None
         self._vision_focus_criterion_id: str | None = None
@@ -85,11 +82,8 @@ class VersusUpWindow(QMainWindow):
         self._history_mode = "recent"
         install_qt_warning_probe()
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1560, 940)
         self.setMinimumSize(1380, 920)
-        apply_app_icon(self, self.app_root)
         apply_explicit_base_font(self)
         self.setStyleSheet(build_shell_stylesheet())
         self._build_dialogs()
@@ -574,29 +568,14 @@ class VersusUpWindow(QMainWindow):
     def _open_detail_from_context_menu(self, pos: QPoint) -> None:
         workspace_controller.open_detail_from_context_menu(self, pos)
 
-    def _check_runtime_preferences(self) -> None:
-        current = runtime_settings_signature()
-        if current == self._runtime_signature:
-            return
-        self._runtime_signature = current
-        refresh_runtime_preferences()
-        self.setStyleSheet(build_shell_stylesheet())
+    def on_runtime_preferences_changed(self) -> None:
         for dialog in self._all_dialogs():
             dialog.setStyleSheet(build_shell_stylesheet())
             normalize_font_tree(dialog)
 
-    def _restore_window_state(self) -> None:
-        geometry = self._settings.value("geometry")
-        if geometry:
-            self.restoreGeometry(geometry)
-        if self._settings.value("is_maximized", False, bool):
-            self.showMaximized()
-
     def closeEvent(self, event) -> None:
-        self._settings.setValue("geometry", self.saveGeometry())
         self._settings.setValue("layout_state_version", LAYOUT_STATE_VERSION)
-        self._settings.setValue("is_maximized", self.isMaximized())
-        super().closeEvent(event)
+        super().closeEvent(event)  # base persists geometry + is_maximized
 
 
 def start_app(targets: list[str] | None = None) -> int:

@@ -21,6 +21,7 @@ from contexthub.ui.qt.shell import (
     set_transparent_surface,
 )
 from shared._engine.components.icon_button import build_icon_button
+from shared._engine.runtime.base_window import BaseAppWindow
 from features.video.youtube_downloader_service import DownloadItem, YoutubeDownloaderService
 
 try:
@@ -58,17 +59,13 @@ class WorkerSignals(QObject):
     engine_updated = Signal(bool, str)
 
 
-class YoutubeDownloaderWindow(QMainWindow):
+class YoutubeDownloaderWindow(BaseAppWindow):
+    APP_ID = "youtube_downloader"
+
     def __init__(self, service: YoutubeDownloaderService, app_root: str | Path, targets: list[str] | None = None) -> None:
-        super().__init__()
+        super().__init__(app_root)
         self.service = service
-        self.app_root = Path(app_root)
         self._default_window_size = QSize(650, 920)
-        self._settings = QSettings("Contexthub", APP_ID)
-        self._runtime_signature = runtime_settings_signature()
-        self._runtime_timer = QTimer(self)
-        self._runtime_timer.setInterval(1500)
-        self._runtime_timer.timeout.connect(self._check_runtime_preferences)
         self._queue_widgets: dict[int, dict[str, QWidget]] = {}
         self._engine_update_started = False
 
@@ -80,11 +77,8 @@ class YoutubeDownloaderWindow(QMainWindow):
         self.signals.engine_updated.connect(self._on_engine_updated)
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(self._default_window_size)
         self.setMinimumSize(620, 840)
-        apply_app_icon(self, self.app_root)
 
         self.setStyleSheet(build_shell_stylesheet())
         self._build_ui()
@@ -502,16 +496,11 @@ class YoutubeDownloaderWindow(QMainWindow):
     def _set_download_status(self, text: str) -> None:
         self.download_status_label.setText(text)
 
-    def _check_runtime_preferences(self) -> None:
-        current = runtime_settings_signature()
-        if current == self._runtime_signature:
-            return
-        self._runtime_signature = current
-        refresh_runtime_preferences()
-        self.setStyleSheet(build_shell_stylesheet())
+    def on_runtime_preferences_changed(self) -> None:
         self._restore_preview_placeholder()
 
     def _restore_window_state(self) -> None:
+        # Override base: clamp oversized restored geometries back to default.
         geometry = self._settings.value("geometry")
         if geometry:
             self.restoreGeometry(geometry)
@@ -521,11 +510,6 @@ class YoutubeDownloaderWindow(QMainWindow):
                 self.move(restored_pos)
         if self._settings.value("is_maximized", False, bool):
             self.showMaximized()
-
-    def closeEvent(self, event) -> None:  # noqa: N802
-        self._settings.setValue("geometry", self.saveGeometry())
-        self._settings.setValue("is_maximized", self.isMaximized())
-        super().closeEvent(event)
 
 
 def start_app(targets: list[str] | None = None) -> int:

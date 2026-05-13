@@ -17,6 +17,7 @@ from contexthub.ui.qt.shell import (
     set_button_role,
 )
 from shared._engine.components.icon_button import build_icon_button
+from shared._engine.runtime.base_window import BaseAppWindow
 from shared._engine.components.input_card import build_input_card
 from _engine.features.image.simple_normal_roughness_service import SimpleNormalRoughnessService
 
@@ -97,24 +98,17 @@ class DropZoneCard(QFrame):
             event.acceptProposedAction()
 
 
-class SimpleNormalRoughnessWindow(QMainWindow):
+class SimpleNormalRoughnessWindow(BaseAppWindow):
+    APP_ID = "simple_normal_roughness"
+
     def __init__(self, service: SimpleNormalRoughnessService, app_root: str | Path, targets: list[str] | None = None) -> None:
-        super().__init__()
+        super().__init__(app_root)
         self.service = service
-        self.app_root = Path(app_root)
-        self._settings = QSettings("Contexthub", APP_ID)
-        self._runtime_signature = runtime_settings_signature()
-        self._runtime_timer = QTimer(self)
-        self._runtime_timer.setInterval(1500)
-        self._runtime_timer.timeout.connect(self._check_runtime_preferences)
         self._field_widgets: dict[str, QWidget] = {}
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(700, 940)
         self.setMinimumSize(620, 800)
-        apply_app_icon(self, self.app_root)
 
         self.setStyleSheet(build_shell_stylesheet())
         self._build_ui()
@@ -375,19 +369,6 @@ class SimpleNormalRoughnessWindow(QMainWindow):
         ok, msg, _ = self.service.run_workflow()
         self.status_label.setText(msg)
 
-    def _check_runtime_preferences(self) -> None:
-        if self._runtime_signature != runtime_settings_signature():
-            self._runtime_signature = runtime_settings_signature()
-            refresh_runtime_preferences()
-            self.setStyleSheet(build_shell_stylesheet())
-
-    def _restore_window_state(self) -> None:
-        geo = self._settings.value("geometry")
-        if geo: self.restoreGeometry(geo)
-
-    def closeEvent(self, event) -> None:
-        self._settings.setValue("geometry", self.saveGeometry())
-        super().closeEvent(event)
 
 
 def main(targets: list[str] | None = None, app_root: Path | None = None) -> int:

@@ -16,6 +16,7 @@ from contexthub.ui.qt.shell import (
     runtime_settings_signature,
 )
 from features.ai.marigold_pbr_service import MarigoldPBRService
+from shared._engine.runtime.base_window import BaseAppWindow
 
 try:
     import ctypes
@@ -75,28 +76,20 @@ class MapSwitcher(QFrame):
         self.layout.addStretch(1)
 
 
-class MarigoldPBRWindow(QMainWindow):
+class MarigoldPBRWindow(BaseAppWindow):
+    APP_ID = "marigold_pbr"
     map_selected = Signal(str) # "Original", "Depth", "Normal", etc.
 
     def __init__(self, service: MarigoldPBRService, app_root: Path, targets: list[str] | None = None) -> None:
-        super().__init__()
+        super().__init__(app_root)
         self.service = service
-        self.app_root = app_root
         self.targets = targets
         self.setObjectName("card")
-        self._settings = QSettings("Contexthub", APP_ID)
-        self._runtime_signature = runtime_settings_signature()
-        self._runtime_timer = QTimer(self)
-        self._runtime_timer.setInterval(1500)
-        self._runtime_timer.timeout.connect(self._check_runtime_preferences)
         self._field_widgets: dict[str, QWidget] = {}
         self.current_preview_kind = "Original"
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1340, 900)
-        apply_app_icon(self, self.app_root)
 
         self.setStyleSheet(build_shell_stylesheet())
         self._build_ui()
@@ -358,24 +351,9 @@ class MarigoldPBRWindow(QMainWindow):
             QApplication.restoreOverrideCursor()
             self.export_panel.run_btn.setEnabled(True)
 
-    def _check_runtime_preferences(self) -> None:
-        current = runtime_settings_signature()
-        if current != self._runtime_signature:
-            self._runtime_signature = current
-            refresh_runtime_preferences()
-            self.setStyleSheet(build_shell_stylesheet())
-
-    def _restore_window_state(self) -> None:
-        geom = self._settings.value("geometry")
-        if geom: self.restoreGeometry(geom)
-
     def resizeEvent(self, event) -> None:
         self._sync_preview()
         super().resizeEvent(event)
-
-    def closeEvent(self, event) -> None:
-        self._settings.setValue("geometry", self.saveGeometry())
-        super().closeEvent(event)
 
 
 def start_app(targets: list[str] | None = None) -> int:

@@ -17,6 +17,7 @@ from contexthub.ui.qt.shell import (
     runtime_settings_signature,
 )
 from features.image.vectorizer.rigreader_vectorizer_service import RigreaderVectorizerService
+from shared._engine.runtime.base_window import BaseAppWindow
 
 try:
     from PySide6.QtCore import QSettings, Qt, QTimer, QPoint, QRect, QSize, Signal
@@ -195,23 +196,16 @@ class LayerNavigatorPanel(QFrame):
         item = self.list_widget.currentItem()
         return item.data(Qt.UserRole) if item else None
 
-class VectorizerWindow(QMainWindow):
+class VectorizerWindow(BaseAppWindow):
+    APP_ID = "rigreader_vectorizer"
+
     def __init__(self, service: RigreaderVectorizerService, app_root: str | Path, targets: list[str] | None = None) -> None:
-        super().__init__()
+        super().__init__(app_root)
         self.service = service
-        self.app_root = Path(app_root)
-        self._settings = QSettings("Contexthub", APP_ID)
-        self._runtime_signature = runtime_settings_signature()
-        self._runtime_timer = QTimer(self)
-        self._runtime_timer.setInterval(1500)
-        self._runtime_timer.timeout.connect(self._check_runtime_preferences)
         self._field_widgets: dict[str, QWidget] = {}
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1300, 900)
-        apply_app_icon(self, self.app_root)
 
         self.setStyleSheet(build_shell_stylesheet())
         self._build_ui()
@@ -378,17 +372,7 @@ class VectorizerWindow(QMainWindow):
                 w = QLineEdit(str(val)); w.textChanged.connect(lambda t, k=key: self.service.update_parameter(k, t))
             self.param_panel.add_field(defn["label"], w)
 
-    def _check_runtime_preferences(self) -> None:
-        sig = runtime_settings_signature()
-        if sig != self._runtime_signature:
-            self._runtime_signature = sig; refresh_runtime_preferences(); self.setStyleSheet(build_shell_stylesheet())
 
-    def _restore_window_state(self) -> None:
-        geom = self._settings.value("geometry")
-        if geom: self.restoreGeometry(geom)
-
-    def closeEvent(self, event) -> None:
-        self._settings.setValue("geometry", self.saveGeometry()); super().closeEvent(event)
 
 def start_app(targets: list[str] | None = None) -> int:
     app = QApplication.instance() or QApplication(sys.argv)
