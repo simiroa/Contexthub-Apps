@@ -40,25 +40,17 @@ APP_TITLE = qt_t("esrgan_upscale.title", "AI Image Upscaler")
 APP_SUBTITLE = qt_t("esrgan_upscale.subtitle", "Enhance image resolution using Real-ESRGAN")
 
 
-class UpscaleWindow(QMainWindow):
+class UpscaleWindow(BaseAppWindow):
+    APP_ID = "esrgan_upscale"
     def __init__(self, service: UpscaleService, app_root: str | Path, targets: list[str] | None = None) -> None:
-        super().__init__()
+        super().__init__(app_root)
         self.service = service
-        self.app_root = Path(app_root)
-        self._settings = QSettings("Contexthub", APP_ID)
-        self._runtime_signature = runtime_settings_signature()
-        self._runtime_timer = QTimer(self)
-        self._runtime_timer.setInterval(1500)
-        self._runtime_timer.timeout.connect(self._check_runtime_preferences)
         
         self.is_running = False
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1280, 860)
         self.setMinimumSize(1000, 700)
-        apply_app_icon(self, self.app_root)
 
         self.setStyleSheet(build_shell_stylesheet())
         self._build_ui()
@@ -294,26 +286,6 @@ class UpscaleWindow(QMainWindow):
 
     def _toggle_export_details(self) -> None:
         self.export_panel.set_expanded(not self.export_panel.details.isVisible())
-
-    def _check_runtime_preferences(self) -> None:
-        current = runtime_settings_signature()
-        if current == self._runtime_signature:
-            return
-        self._runtime_signature = current
-        refresh_runtime_preferences()
-        self.setStyleSheet(build_shell_stylesheet())
-
-    def _restore_window_state(self) -> None:
-        geometry = self._settings.value("geometry")
-        if geometry:
-            self.restoreGeometry(geometry)
-        if self._settings.value("is_maximized", False, bool):
-            self.showMaximized()
-
-    def closeEvent(self, event) -> None:
-        self._settings.setValue("geometry", self.saveGeometry())
-        self._settings.setValue("is_maximized", self.isMaximized())
-        super().closeEvent(event)
 
 
 def start_app(targets: list[str] | None = None) -> int:

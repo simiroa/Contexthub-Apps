@@ -6,18 +6,16 @@ from pathlib import Path
 from contexthub.ui.qt.shell import (
     HeaderSurface,
     attach_size_grip,
-    apply_app_icon,
     build_shell_stylesheet,
     get_shell_metrics,
     get_shell_palette,
     qt_t,
-    refresh_runtime_preferences,
-    runtime_settings_signature,
     set_button_role,
     set_surface_role,
     set_transparent_surface,
 )
 from shared._engine.components.icon_button import build_icon_button
+from shared._engine.runtime.base_window import BaseAppWindow
 from shared._engine.runtime.service_bridge import ServiceBridge
 from contexthub.ui.qt.panels_export import ExportFoldoutPanel
 from contexthub.ui.qt.panels_parameters import FixedParameterPanel
@@ -26,7 +24,7 @@ from features.video.video_convert_service import VideoConvertService
 from features.video.video_convert_state import VideoConvertState
 
 try:
-    from PySide6.QtCore import QObject, QSettings, Qt, QTimer, QUrl, Signal
+    from PySide6.QtCore import QObject, Qt, QUrl, Signal
     from PySide6.QtWidgets import (
         QApplication,
         QCheckBox,
@@ -54,7 +52,7 @@ try:
     from PySide6.QtMultimediaWidgets import QVideoWidget
     HAS_MEDIA = True
 except ImportError:  # pragma: no cover
-    from PySide6.QtCore import QObject, QSettings, Qt, QTimer, Signal
+    from PySide6.QtCore import QObject, Qt, Signal
     from PySide6.QtWidgets import (
         QApplication,
         QCheckBox,
@@ -164,16 +162,12 @@ def _output_path_for(state: VideoConvertState, path: Path) -> str:
     return str(out_dir / name)
 
 
-class VideoConvertWindow(QMainWindow):
+class VideoConvertWindow(BaseAppWindow):
+    APP_ID = "video_convert"
+
     def __init__(self, state: VideoConvertState, app_root: str | Path) -> None:
-        super().__init__()
+        super().__init__(app_root)
         self.state = state
-        self.app_root = Path(app_root)
-        self._settings = QSettings("Contexthub", APP_ID)
-        self._runtime_signature = runtime_settings_signature()
-        self._runtime_timer = QTimer(self)
-        self._runtime_timer.setInterval(1500)
-        self._runtime_timer.timeout.connect(self._check_runtime_preferences)
         self._selected_index = 0 if self.state.files else -1
         self._player_duration = 0
         self._volume_value = 60
@@ -189,11 +183,8 @@ class VideoConvertWindow(QMainWindow):
         self.video_surface = None
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1080, 720)
         self.setMinimumSize(960, 640)
-        apply_app_icon(self, self.app_root)
 
         self.setStyleSheet(build_shell_stylesheet())
         self._build_ui()
@@ -681,26 +672,6 @@ class VideoConvertWindow(QMainWindow):
         self._player_duration = duration
         self.preview_panel.slider.setRange(0, duration)
         self.preview_panel.time_label.setText(f"{_format_time(0)} / {_format_time(duration)}")
-
-    def _check_runtime_preferences(self) -> None:
-        current = runtime_settings_signature()
-        if current == self._runtime_signature:
-            return
-        self._runtime_signature = current
-        refresh_runtime_preferences()
-        self.setStyleSheet(build_shell_stylesheet())
-
-    def _restore_window_state(self) -> None:
-        geometry = self._settings.value("geometry")
-        if geometry:
-            self.restoreGeometry(geometry)
-        if self._settings.value("is_maximized", False, bool):
-            self.showMaximized()
-
-    def closeEvent(self, event) -> None:
-        self._settings.setValue("geometry", self.saveGeometry())
-        self._settings.setValue("is_maximized", self.isMaximized())
-        super().closeEvent(event)
 
 
 def start_app(targets: list[Path] | None, app_root: str | Path) -> int:

@@ -7,11 +7,10 @@ from typing import Optional
 from contexthub.ui.qt.shell import qt_t
 
 try:
-    from PySide6.QtCore import QSettings, Qt, QThreadPool
+    from PySide6.QtCore import Qt, QThreadPool
     from PySide6.QtWidgets import (
         QApplication,
         QFrame,
-        QMainWindow,
         QScrollArea,
         QVBoxLayout,
         QWidget,
@@ -20,6 +19,7 @@ try:
 except ImportError as exc:
     raise ImportError("PySide6 is required for image_resizer.") from exc
 
+from shared._engine.runtime.base_window import BaseAppWindow
 from shared._engine.runtime.media_runtime import MediaRuntime
 from shared._engine.runtime.file_input_mixin import MultiFileInputMixin
 from shared._engine.components.batch_list_card import build_batch_list_card
@@ -35,23 +35,19 @@ APP_TITLE = qt_t("image_resizer.title", "Image Resizer")
 APP_SUBTITLE = qt_t("image_resizer.subtitle", "Versatile Scaling Utility")
 
 
-class ImageResizerWindow(QMainWindow, MultiFileInputMixin):
+class ImageResizerWindow(BaseAppWindow, MultiFileInputMixin):
+    APP_ID = "image_resizer"
+
     def __init__(self, service: ImageResizerService, app_root: str | Path, targets: list[str] | None = None) -> None:
-        super().__init__()
+        super().__init__(app_root)
         self.service = service
-        self.app_root = Path(app_root)
-        self._settings = QSettings("Contexthub", APP_ID)
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
-        
+
         # Spacious UI: 380px Width, 810px Height (+160 for comfort)
         self.setFixedWidth(380)
         self.setMinimumHeight(810)
-        
-        # Enable Drag and Drop
-        self.setAcceptDrops(True)
+
         self.runtime = MediaRuntime.instance()
         self.thread_pool = self.runtime.thread_pool
         
@@ -143,14 +139,6 @@ class ImageResizerWindow(QMainWindow, MultiFileInputMixin):
         self.control_panel.update_run_status(True, "Processing...")
         ok, msg, _ = self.service.run_workflow()
         self.control_panel.update_run_status(False, "Done" if ok else f"Error: {msg}")
-
-    def _restore_window_state(self) -> None:
-        geo = self._settings.value("geometry")
-        if geo: self.restoreGeometry(geo)
-
-    def closeEvent(self, event) -> None:
-        self._settings.setValue("geometry", self.saveGeometry())
-        super().closeEvent(event)
 
     def dragEnterEvent(self, event) -> None:
         if event.mimeData().hasUrls():

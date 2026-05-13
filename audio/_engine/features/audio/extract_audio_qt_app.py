@@ -20,7 +20,6 @@ from PySide6.QtWidgets import (
 
 from contexthub.ui.qt.shell import (
     HeaderSurface,
-    apply_app_icon,
     apply_rounded_window_mask,
     build_shell_stylesheet,
     get_shell_metrics,
@@ -38,6 +37,7 @@ from features.audio.audio_toolbox_state import (
 
 # Reuse standard components
 from shared._engine.components.export_foldout_card import build_export_foldout_card
+from shared._engine.runtime.base_window import BaseAppWindow
 from shared._engine.runtime.service_bridge import ServiceBridge
 
 APP_ID = "extract_audio"
@@ -45,19 +45,18 @@ APP_TITLE = "Extract Audio"
 APP_SUBTITLE = "Extract audio tracks or isolate vocals/bgm."
 
 
-class ExtractAudioWindow(QMainWindow):
+class ExtractAudioWindow(BaseAppWindow):
+    APP_ID = "extract_audio"
+
     def __init__(self, state: AudioToolboxState, app_root: Path) -> None:
-        super().__init__()
+        super().__init__(app_root, frameless=False)
         self.state = state
-        self.app_root = app_root
         self.bridge = ServiceBridge()
         self.bridge.updated.connect(self._on_service_update)
         self.service = AudioToolboxService(self.state, on_update=self.bridge.emit_update)
 
         self.setWindowTitle(APP_TITLE)
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
-        apply_app_icon(self, self.app_root)
         self.setStyleSheet(build_shell_stylesheet())
 
         self._build_ui()

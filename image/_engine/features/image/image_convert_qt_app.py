@@ -7,21 +7,19 @@ from contexthub.ui.qt.panels import ExportRunPanel, FixedParameterPanel
 from contexthub.ui.qt.shell import (
     HeaderSurface,
     attach_size_grip,
-    apply_app_icon,
     build_shell_stylesheet,
     get_shell_metrics,
     get_shell_palette,
     qt_t,
-    refresh_runtime_preferences,
-    runtime_settings_signature,
 )
 from features.image.image_convert_service import ImageConvertService
+from shared._engine.runtime.base_window import BaseAppWindow
 from shared._engine.runtime.media_runtime import MediaRuntime
 from shared._engine.runtime.file_input_mixin import MultiFileInputMixin
 from shared._engine.components.batch_list_card import build_batch_list_card
 
 try:
-    from PySide6.QtCore import QSettings, Qt, QTimer
+    from PySide6.QtCore import Qt
     from PySide6.QtGui import QImage, QPixmap
     from PySide6.QtWidgets import (
         QApplication,
@@ -30,7 +28,6 @@ try:
         QFrame,
         QHBoxLayout,
         QLineEdit,
-        QMainWindow,
         QSplitter,
         QTextEdit,
         QVBoxLayout,
@@ -44,26 +41,18 @@ APP_ID = "image_convert"
 APP_TITLE = qt_t("image_convert.title", "Image Converter")
 APP_SUBTITLE = qt_t("image_convert.subtitle", "Batch convert images efficiently.")
 
-class ImageConvertWindow(QMainWindow, MultiFileInputMixin):
+class ImageConvertWindow(BaseAppWindow, MultiFileInputMixin):
+    APP_ID = "image_convert"
+
     def __init__(self, service: ImageConvertService, app_root: str | Path, targets: list[str] | None = None) -> None:
-        super().__init__()
+        super().__init__(app_root)
         self.service = service
-        self.app_root = Path(app_root)
         self.runtime = MediaRuntime.instance()
-        
-        self._settings = QSettings("Contexthub", APP_ID)
-        self._runtime_signature = runtime_settings_signature()
-        self._runtime_timer = QTimer(self)
-        self._runtime_timer.setInterval(1500)
-        self._runtime_timer.timeout.connect(self._check_runtime_preferences)
         self._field_widgets: dict[str, QWidget] = {}
 
         self.setWindowTitle(APP_TITLE)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1200, 800)
         self.setMinimumSize(1000, 700)
-        apply_app_icon(self, self.app_root)
 
         self.setStyleSheet(build_shell_stylesheet())
         self._build_ui()
@@ -248,22 +237,7 @@ class ImageConvertWindow(QMainWindow, MultiFileInputMixin):
         )
         self.export_panel.refresh_summary()
 
-    def _check_runtime_preferences(self) -> None:
-        current = runtime_settings_signature()
-        if current == self._runtime_signature: return
-        self._runtime_signature = current
-        refresh_runtime_preferences()
-        self.setStyleSheet(build_shell_stylesheet())
 
-    def _restore_window_state(self) -> None:
-        geometry = self._settings.value("geometry")
-        if geometry: self.restoreGeometry(geometry)
-        if self._settings.value("is_maximized", False, bool): self.showMaximized()
-
-    def closeEvent(self, event) -> None:
-        self._settings.setValue("geometry", self.saveGeometry())
-        self._settings.setValue("is_maximized", self.isMaximized())
-        super().closeEvent(event)
 
 def start_app(targets: list[str] | None = None) -> int:
     app = QApplication.instance() or QApplication(sys.argv)

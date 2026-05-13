@@ -5,7 +5,6 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QImage
 from PySide6.QtWidgets import (
     QApplication,
-    QMainWindow,
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -20,9 +19,9 @@ from contexthub.ui.qt.shell import (
     HeaderSurface,
     get_shell_metrics,
     build_shell_stylesheet,
-    apply_app_icon,
     attach_size_grip,
 )
+from shared._engine.runtime.base_window import BaseAppWindow
 from shared._engine.components.icon_button import build_icon_button
 
 try:
@@ -40,18 +39,16 @@ from shared._engine.runtime.file_input_mixin import MultiFileInputMixin
 
 APP_ID = "image_compare"
 
-class ImageCompareWindow(QMainWindow, MultiFileInputMixin):
+class ImageCompareWindow(BaseAppWindow, MultiFileInputMixin):
+    APP_ID = "image_compare"
+
     def __init__(self, app_root: Path, targets: list[str] = None):
-        super().__init__()
-        self.app_root = app_root
+        super().__init__(app_root)
         self.state = ImageCompareState()
         self.service = ImageCompareService()
 
         self.setWindowTitle("Image Compare")
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1200, 850)
-        apply_app_icon(self, self.app_root)
         
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)

@@ -6,7 +6,6 @@ from pathlib import Path
 from contexthub.ui.qt.shell import (
     HeaderSurface,
     attach_size_grip,
-    apply_app_icon,
     apply_rounded_window_mask,
     build_shell_stylesheet,
     get_shell_metrics,
@@ -15,6 +14,7 @@ from contexthub.ui.qt.shell import (
     set_surface_role,
 )
 from shared._engine.components.icon_button import build_icon_button
+from shared._engine.runtime.base_window import BaseAppWindow
 from shared._engine.runtime.service_bridge import ServiceBridge
 from features.audio.audio_toolbox_panels import build_option_panels
 from features.audio.audio_toolbox_run_widget import AudioRunWidget
@@ -66,11 +66,12 @@ APP_SUBTITLE = qt_t(
 FILTER_TEXT = "Audio Files (*.wav *.mp3 *.ogg *.flac *.m4a *.aac *.wma);;All Files (*.*)"
 
 
-class AudioToolboxWindow(QMainWindow):
+class AudioToolboxWindow(BaseAppWindow):
+    APP_ID = "audio_toolbox"
+
     def __init__(self, state: AudioToolboxState, app_root: str | Path) -> None:
-        super().__init__()
+        super().__init__(app_root, frameless=False)
         self.state = state
-        self.app_root = Path(app_root)
         self.bridge = ServiceBridge()
         self.bridge.updated.connect(self._on_service_update)
         self.service = AudioToolboxService(self.state, on_update=self.bridge.emit_update)
@@ -82,10 +83,8 @@ class AudioToolboxWindow(QMainWindow):
 
         self.setWindowTitle(APP_TITLE)
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.resize(1180, 840)
         self.setMinimumSize(980, 760)
-        apply_app_icon(self, self.app_root)
         self.setStyleSheet(build_shell_stylesheet())
 
         self._build_ui()

@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
 
 from contexthub.ui.qt.shell import (
     HeaderSurface,
-    apply_app_icon,
     apply_rounded_window_mask,
     build_shell_stylesheet,
     get_shell_metrics,
@@ -30,10 +29,13 @@ from features.audio.audio_toolbox_tasks import (
 
 # Shared components
 from shared._engine.components.export_foldout_card import build_export_foldout_card
+from shared._engine.runtime.base_window import BaseAppWindow
 from shared._engine.runtime.service_bridge import ServiceBridge
 from components.mini_parameter_card import build_mini_parameter_slider
 
-class AudioMiniWindow(QMainWindow):
+class AudioMiniWindow(BaseAppWindow):
+    APP_ID = "audio_mini"
+
     def __init__(
         self,
         targets: list[Path],
@@ -42,15 +44,15 @@ class AudioMiniWindow(QMainWindow):
         title: str,
         subtitle: str = "",
     ):
-        super().__init__()
+        # Unique app_id per task to allow multiple instances; must be set
+        # before super().__init__ so BaseAppWindow's QSettings picks it up.
+        self.APP_ID = f"audio_mini_{default_task}"
+        super().__init__(app_root, frameless=False)
         self.targets = targets
-        self.app_root = app_root
         self.default_task = default_task
         self.app_title = title
-        
-        # Unique app_id to allow multiple instances
-        self.app_id = f"audio_mini_{default_task}"
-        
+        self.app_id = self.APP_ID
+
         self.state = AudioToolboxState(files=list(targets))
         self.state.task_type = default_task
         if self.state.files:
@@ -61,16 +63,13 @@ class AudioMiniWindow(QMainWindow):
         self.service = AudioToolboxService(self.state, on_update=self.bridge.emit_update)
 
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
-        
+
         self._init_ui()
         self._sync_from_state()
 
     def _init_ui(self) -> None:
         self.setWindowTitle(self.app_title)
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
-        apply_app_icon(self, self.app_root)
         self.setStyleSheet(build_shell_stylesheet())
         self._build_ui()
         self._sync_from_state()
