@@ -14,6 +14,10 @@ try:
     from google import genai
 except Exception:
     genai = None
+try:
+    from openai import OpenAI
+except Exception:
+    OpenAI = None
 from core.settings import load_settings
 from core.logger import setup_logger
 
@@ -32,6 +36,11 @@ class AITextLabService:
         self.settings = load_settings()
         self.gemini_api_key = self.settings.get("GEMINI_API_KEY", "")
         self.gemini_client = None
+        # Custom OpenAI-compatible endpoint (own API / local LLM server / background agent).
+        # Populated from this app's own config.json "settings" section (see ai_text_lab_qt_app._load_config).
+        self.custom_endpoint_url = ""
+        self.custom_endpoint_api_key = ""
+        self.custom_endpoint_model = ""
         self.translator = GoogleTranslator(source='auto', target='ko') if GoogleTranslator is not None else None
         
     def list_ollama_models(self):
@@ -81,7 +90,7 @@ class AITextLabService:
 
     def warmup_model(self, model_name="qwen3.5:4b"):
         """Pre-loads a model into memory."""
-        if model_name.startswith("✦ ") or "Google" in model_name:
+        if model_name.startswith(("✦ ", "⚡ ")) or "Google" in model_name:
             return
         if ollama is None:
             return
@@ -103,7 +112,7 @@ class AITextLabService:
 
     def unload_model(self, model_name):
         """Explicitly unloads a model from VRAM by setting keep_alive to 0."""
-        if model_name.startswith("✦ ") or "Google" in model_name:
+        if model_name.startswith(("✦ ", "⚡ ")) or "Google" in model_name:
             return
         if ollama is None:
             return
@@ -205,3 +214,33 @@ class AITextLabService:
         except Exception as e:
             logger.error(f"Gemini stream error: {e}")
             raise e
+
+    def stream_custom(self, model_name, system_prompt, prompt, callback, cancel_event):
+        """Streams response from a user-configured OpenAI-compatible endpoint
+        (own API, local LLM server such as Ollama/LM Studio's /v1 API, or a background agent)."""
+        if OpenAI is None:
+            raise RuntimeError("openai package is not installed.")
+        if not self.custom_endpoint_url:
+            raise ValueError("Custom Endpoint URL is missing (set custom_endpoint_url in config.json)")
+
+        clean_model = self.custom_endpoint_model or model_name.replace("⚡ ", "")
+
+        try:
+            client = OpenAI(base_url=self.custom_endpoint_url, api_key=self.custom_endpoint_api_key or "not-needed")
+            stream = client.chat.completions.create(
+                model=clean_model,
+                messages=[
+                    {'role': 'system', 'content': system_prompt},
+                    {'role': 'user', 'content': prompt}
+                ],
+                stream=True
+            )
+            for chunk in stream:
+                if cancel_event.is_set():
+                    break
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    callback(delta)
+        except Exception as e:
+            logger.error(f"Custom endpoint stream error: {e}")
+            raise RuntimeError(f"Custom endpoint unreachable or errored ({self.custom_endpoint_url}): {e}") from e

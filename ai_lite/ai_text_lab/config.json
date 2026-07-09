@@ -13,6 +13,9 @@
   "settings": {
     "default_model": "qwen3:4b",
     "theme": "dark",
-    "history_limit": 50
+    "history_limit": 50,
+    "custom_endpoint_url": "",
+    "custom_endpoint_api_key": "",
+    "custom_endpoint_model": ""
   }
 }

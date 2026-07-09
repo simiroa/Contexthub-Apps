@@ -19,6 +19,8 @@ class StreamWorker(QObject):
         try:
             if self.model.startswith("✦ "):
                 self.service.stream_gemini(self.model, self.system_prompt, self.prompt, self.chunk_received.emit, self.cancel_event)
+            elif self.model.startswith("⚡ "):
+                self.service.stream_custom(self.model, self.system_prompt, self.prompt, self.chunk_received.emit, self.cancel_event)
             else:
                 self.service.stream_ollama(self.model, self.system_prompt, self.prompt, self.chunk_received.emit, self.cancel_event)
             self.finished.emit("Completed")

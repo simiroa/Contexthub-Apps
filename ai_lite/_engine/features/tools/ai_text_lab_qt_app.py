@@ -78,12 +78,12 @@ class AITextLabWindow(QMainWindow):
         """Warm up the default model without blocking UI."""
         def warmup():
             try:
-                self.service.warmup_model(DEFAULT_MODEL)
-                self.status_label.setText(f"Ready ({DEFAULT_MODEL})")
+                self.service.warmup_model(self.state.current_model)
+                self.status_label.setText(f"Ready ({self.state.current_model})")
             except Exception as e:
                 self.status_label.setText(f"Backend Error: {e}")
-        
-        self.status_label.setText(f"Warming up {DEFAULT_MODEL}...")
+
+        self.status_label.setText(f"Warming up {self.state.current_model}...")
         self._warmup_thread = threading.Thread(target=warmup, daemon=True)
         self._warmup_thread.start()
 
@@ -95,6 +95,13 @@ class AITextLabWindow(QMainWindow):
                     config = json.load(f)
                     if "presets" in config:
                         self.state.presets.update(config["presets"])
+                    settings = config.get("settings", {})
+                    # Reactivate the (previously unused) default_model config field so
+                    # non-Ollama backends (Gemini "✦ ", custom endpoint "⚡ ") are reachable.
+                    self.state.current_model = settings.get("default_model") or DEFAULT_MODEL
+                    self.service.custom_endpoint_url = settings.get("custom_endpoint_url", "")
+                    self.service.custom_endpoint_api_key = settings.get("custom_endpoint_api_key", "")
+                    self.service.custom_endpoint_model = settings.get("custom_endpoint_model", "")
             except: pass
 
     def _build_ui(self) -> None:
@@ -239,7 +246,7 @@ class AITextLabWindow(QMainWindow):
         sys_prompt = f"{SYSTEM_PROMPT_BASE}{instruction}{DIRECT_OUTPUT_PROMPT}"
         full_prompt = f"{prompt_template}\n\nText:\n{text}"
         
-        self.worker = StreamWorker(self.service, DEFAULT_MODEL, sys_prompt, full_prompt)
+        self.worker = StreamWorker(self.service, self.state.current_model, sys_prompt, full_prompt)
         self.thread = threading.Thread(target=self.worker.run, daemon=True)
         self.worker.chunk_received.connect(lambda c: self.output_edit.insertPlainText(c))
         self.worker.finished.connect(self._on_finished)
@@ -312,7 +319,7 @@ class AITextLabWindow(QMainWindow):
     def closeEvent(self, event):
         self._settings.setValue("geometry", self.saveGeometry())
         self._settings.setValue("opacity", int(self.windowOpacity() * 100))
-        try: self.service.unload_model(DEFAULT_MODEL)
+        try: self.service.unload_model(self.state.current_model)
         except: pass
         super().closeEvent(event)
 
