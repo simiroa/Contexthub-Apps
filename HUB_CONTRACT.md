@@ -95,17 +95,20 @@ An app shipped in this repo MUST:
 1. **Have a `manifest.json` v1.2+** at the app folder root (see §4).
 2. **Have a `manual.md`** (packaging fails without it).
 3. **Have an `icon.png`** (preferred) or `icon.ico` at the folder root.
-4. **Read `CTX_APP_ROOT` for resource paths**, not the script's `__file__`
+4. **Have the declared `execution.entry_point` file in the app folder**.
+   Refactors may move implementation into `_engine` or `shared`, but the
+   app-level entry point remains the hub-facing adapter.
+5. **Read `CTX_APP_ROOT` for resource paths**, not the script's `__file__`
    parent (capture mode relies on this).
-5. **Read `CTX_SHARED_ROOT` (or rely on `PYTHONPATH`)** to import
+6. **Read `CTX_SHARED_ROOT` (or rely on `PYTHONPATH`)** to import
    `contexthub.*` packages. Do not probe filesystem for the shared runtime
    when these are set.
-6. **Not write outside `CTX_APP_DATA_DIR`** (when set). Until hub provides
+7. **Not write outside `CTX_APP_DATA_DIR`** (when set). Until hub provides
    it, apps may use `%LOCALAPPDATA%/Contexthub/{app_id}/` as a transitional
    fallback.
-7. **Respect `CTX_CAPTURE_MODE` / `CTX_HEADLESS`** by suppressing modal
+8. **Respect `CTX_CAPTURE_MODE` / `CTX_HEADLESS`** by suppressing modal
    popups and auto-confirm dialogs when these are set.
-8. **Emit `[ctx] window_ready` to stdout** after `window.show()` returns,
+9. **Emit `[ctx] window_ready` to stdout** after `window.show()` returns,
    so hub can dismiss splash and mark the app `running`. (Planned hub
    support; line is harmless without it.)
 

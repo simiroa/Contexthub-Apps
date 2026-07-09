@@ -13,6 +13,35 @@ from pathlib import Path
 import sys
 import threading
 
+
+def _load_hub_tool_override(tool_name):
+    candidates = []
+    try:
+        candidates.append(Path.cwd())
+    except Exception:
+        pass
+    current = Path(__file__).resolve()
+    candidates.extend(current.parents)
+
+    seen = set()
+    for base in candidates:
+        for parent in [base] + list(base.parents):
+            if parent in seen:
+                continue
+            seen.add(parent)
+            config_path = parent / "config.json"
+            if not config_path.exists():
+                continue
+            try:
+                data = json.loads(config_path.read_text(encoding="utf-8-sig"))
+                paths = data.get("paths", {})
+                override = paths.get("tool_overrides", {}).get(tool_name)
+                if override:
+                    return str(override).strip()
+            except Exception:
+                continue
+    return ""
+
 class ComfyUIManager:
     """
     Manages Local ComfyUI Instance and API interactions.
@@ -32,7 +61,7 @@ class ComfyUIManager:
         # Load Settings for custom path
         from core.settings import load_settings
         settings = load_settings()
-        custom_path = settings.get("COMFYUI_PATH", "").strip()
+        custom_path = settings.get("COMFYUI_PATH", "").strip() or _load_hub_tool_override("comfyui")
         self.use_launcher = bool(settings.get("COMFYUI_USE_LAUNCHER", False))
         
         if custom_path and Path(custom_path).exists():
@@ -196,6 +225,9 @@ class ComfyUIManager:
                 log_path = Path(log_file)
                 log_path.parent.mkdir(exist_ok=True, parents=True)
                 self._log_handle = open(log_path, "a", encoding="utf-8")
+                self._log_handle.write(f"\n[INFO] Starting ComfyUI from {self.comfy_dir}\n")
+                self._log_handle.write(f"[INFO] Command: {' '.join(cmd)}\n")
+                self._log_handle.flush()
                 stdout_target = self._log_handle
                 stderr_target = self._log_handle
             except Exception as exc:
@@ -239,17 +271,36 @@ class ComfyUIManager:
                         pass
                 return False
 
-        self.process = subprocess.Popen(
-            cmd,
-            cwd=str(self.comfy_dir),
-            creationflags=creationflags,
-            stdout=stdout_target,
-            stderr=stderr_target,
-        )
+        try:
+            self.process = subprocess.Popen(
+                cmd,
+                cwd=str(self.comfy_dir),
+                creationflags=creationflags,
+                stdout=stdout_target,
+                stderr=stderr_target,
+            )
+        except Exception as exc:
+            print(f"[ERROR] Failed to launch ComfyUI: {exc}")
+            if self._log_handle:
+                try:
+                    self._log_handle.write(f"[ERROR] Failed to launch ComfyUI: {exc}\n")
+                    self._log_handle.flush()
+                except Exception:
+                    pass
+            return False
         
         # Wait for valid response
         for _ in range(60):
             time.sleep(1)
+            if self.process and self.process.poll() is not None:
+                print(f"[ERROR] ComfyUI process exited early with code {self.process.returncode}.")
+                if self._log_handle:
+                    try:
+                        self._log_handle.write(f"[ERROR] ComfyUI process exited early with code {self.process.returncode}.\n")
+                        self._log_handle.flush()
+                    except Exception:
+                        pass
+                break
             if self._check_port(self.preferred_port):
                 self.active_port = self.preferred_port
                 self._update_addresses()

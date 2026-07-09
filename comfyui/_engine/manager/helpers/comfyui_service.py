@@ -1,8 +1,11 @@
 import json
 import os
+import re
+import shutil
 import subprocess
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 from core.logger import setup_logger
 from core.paths import LOGS_DIR
@@ -103,6 +106,53 @@ def _is_pid_running(pid):
             return False
 
 
+def _run_command(command, cwd=None, timeout=120):
+    try:
+        result = subprocess.run(
+            command,
+            cwd=str(cwd) if cwd else None,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+        output = "\n".join(part.strip() for part in (result.stdout, result.stderr) if part and part.strip())
+        return result.returncode == 0, output.strip()
+    except FileNotFoundError:
+        return False, f"{command[0]} is not installed or not in PATH."
+    except subprocess.TimeoutExpired:
+        return False, f"{command[0]} command timed out after {timeout} seconds."
+    except Exception as exc:
+        return False, str(exc)
+
+
+def _repo_folder_name(repo_url):
+    parsed = urlparse(repo_url.strip())
+    name = Path(parsed.path.rstrip("/")).name if parsed.path else ""
+    if name.endswith(".git"):
+        name = name[:-4]
+    name = re.sub(r"[^A-Za-z0-9_.-]+", "-", name).strip(".-")
+    return name or "custom-node"
+
+
+def _tail_log_line(max_bytes=12000):
+    if not LOG_FILE.exists():
+        return ""
+    try:
+        with LOG_FILE.open("rb") as handle:
+            handle.seek(0, os.SEEK_END)
+            size = handle.tell()
+            handle.seek(max(0, size - max_bytes))
+            data = handle.read().decode("utf-8", errors="replace")
+        for line in reversed(data.splitlines()):
+            stripped = line.strip()
+            if stripped:
+                return stripped
+    except Exception:
+        return ""
+    return ""
+
+
 class ComfyUIService:
     def __init__(self, host="127.0.0.1", port=None):
         self.host = host
@@ -123,6 +173,45 @@ class ComfyUIService:
             return (time.time() - float(last_seen)) <= STATE_FRESH_SECONDS
         except Exception:
             return False
+
+    def read_last_log_line(self):
+        return _tail_log_line()
+
+    def status_snapshot(self):
+        running, port = self.is_running()
+        state = _load_state()
+        state_port = state.get("port") or port or self.service_port
+        pid = state.get("pid")
+        paths = self.runtime_paths()
+        return {
+            "running": running,
+            "port": state_port,
+            "status": state.get("status") or ("running" if running else "stopped"),
+            "pid": pid,
+            "pid_running": bool(pid and _is_pid_running(pid)),
+            "last_log": self.read_last_log_line(),
+            "paths": paths,
+        }
+
+    @property
+    def service_port(self):
+        return self.client.port or self.port
+
+    def runtime_paths(self):
+        comfy_dir = Path(getattr(self.client, "comfy_dir", ""))
+        python_exe = Path(getattr(self.client, "python_exe", ""))
+        main_py = getattr(self.client, "main_py_override", None) or (comfy_dir / "main.py")
+        custom_nodes = comfy_dir / "custom_nodes"
+        return {
+            "comfy_dir": str(comfy_dir),
+            "python_exe": str(python_exe),
+            "main_py": str(main_py),
+            "custom_nodes": str(custom_nodes),
+            "comfy_exists": bool(Path(main_py).exists()),
+            "python_exists": bool(python_exe.exists()),
+            "custom_nodes_exists": bool(custom_nodes.exists()),
+            "launcher": str(getattr(self.client, "launcher_path", "") or ""),
+        }
 
     def is_running(self):
         state = _load_state()
@@ -193,6 +282,87 @@ class ComfyUIService:
             return False, None, False
         finally:
             _release_lock()
+
+    def update_comfyui(self, update_nodes=True):
+        paths = self.runtime_paths()
+        comfy_dir = Path(paths["comfy_dir"])
+        if not paths["comfy_exists"]:
+            return False, f"ComfyUI main.py not found: {paths['main_py']}", None
+        if not (comfy_dir / ".git").exists():
+            return False, f"ComfyUI is not a git checkout: {comfy_dir}", None
+        ok, output = _run_command(["git", "pull", "--ff-only"], cwd=comfy_dir, timeout=180)
+        if not ok:
+            return False, f"ComfyUI update failed: {output}", None
+
+        node_results = []
+        if update_nodes:
+            custom_nodes = Path(paths["custom_nodes"])
+            if custom_nodes.exists():
+                for node_dir in sorted(path for path in custom_nodes.iterdir() if path.is_dir()):
+                    if not (node_dir / ".git").exists():
+                        continue
+                    node_ok, node_output = _run_command(["git", "pull", "--ff-only"], cwd=node_dir, timeout=120)
+                    node_results.append((node_dir.name, node_ok, node_output))
+
+        failed_nodes = [name for name, node_ok, _ in node_results if not node_ok]
+        if failed_nodes:
+            return False, f"ComfyUI updated, but custom node update failed: {', '.join(failed_nodes)}", node_results
+        if node_results:
+            return True, f"Updated ComfyUI and {len(node_results)} custom node repos.", node_results
+        return True, "Updated ComfyUI.", node_results
+
+    def install_custom_node(self, repo_url):
+        repo_url = (repo_url or "").strip()
+        if not repo_url:
+            return False, "Enter a custom node Git URL.", None
+        if not repo_url.startswith(("https://", "http://", "git@")):
+            return False, "Custom node URL must be an http(s) or git URL.", None
+        if not shutil.which("git"):
+            return False, "Git is not installed or not in PATH.", None
+
+        paths = self.runtime_paths()
+        if not paths["comfy_exists"]:
+            return False, f"ComfyUI main.py not found: {paths['main_py']}", None
+
+        custom_nodes = Path(paths["custom_nodes"])
+        custom_nodes.mkdir(parents=True, exist_ok=True)
+        target = custom_nodes / _repo_folder_name(repo_url)
+
+        if target.exists():
+            if not (target / ".git").exists():
+                return False, f"Target folder already exists and is not a git repo: {target}", None
+            ok, output = _run_command(["git", "pull", "--ff-only"], cwd=target, timeout=180)
+            action = "updated"
+        else:
+            ok, output = _run_command(["git", "clone", repo_url, str(target)], timeout=300)
+            action = "installed"
+
+        if not ok:
+            return False, f"Custom node {action} failed: {output}", None
+
+        requirements = target / "requirements.txt"
+        pip_output = ""
+        if requirements.exists():
+            python_exe = Path(paths["python_exe"])
+            if not python_exe.exists():
+                return False, f"Node cloned, but Python was not found for requirements install: {python_exe}", str(target)
+            pip_ok, pip_output = _run_command(
+                [str(python_exe), "-m", "pip", "install", "-r", str(requirements)],
+                cwd=target,
+                timeout=600,
+            )
+            if not pip_ok:
+                return False, f"Node cloned, but requirements install failed: {pip_output}", str(target)
+
+        detail = f" Requirements installed." if pip_output else ""
+        return True, f"Custom node {action}: {target.name}.{detail}", str(target)
+
+    def open_custom_nodes_folder(self):
+        paths = self.runtime_paths()
+        custom_nodes = Path(paths["custom_nodes"])
+        custom_nodes.mkdir(parents=True, exist_ok=True)
+        os.startfile(str(custom_nodes))
+        return True, str(custom_nodes)
 
     def stop(self, only_if_owned=True):
         state = _load_state()

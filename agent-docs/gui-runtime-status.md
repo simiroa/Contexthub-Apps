@@ -46,6 +46,7 @@ Manifested apps:
 - `simple_normal_roughness`
 - `split_exr`
 - `auto_lod`
+- `comfyui_dashboard`
 
 ### Mini GUI
 
@@ -54,7 +55,6 @@ Small confirm-shell windows with very few options and selection-summary style in
 Manifested apps:
 
 - `cad_to_obj`
-- `comfyui_dashboard`
 - `compress_audio`
 - `convert_audio`
 - `enhance_audio`

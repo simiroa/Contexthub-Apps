@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import threading
 from pathlib import Path
 
 from contexthub.ui.qt.panels import ExportFoldoutPanel
@@ -57,6 +58,7 @@ APP_SUBTITLE = qt_t(
 class ImageEnhancerWindow(QMainWindow, MultiFileInputMixin):
     log_signal = Signal(str)
     finished_signal = Signal(bool, str)
+    runtime_status_signal = Signal(str)
 
     def __init__(self, service: ImageEnhancerService, app_root: str | Path, targets: list[str] | None = None) -> None:
         super().__init__()
@@ -67,6 +69,7 @@ class ImageEnhancerWindow(QMainWindow, MultiFileInputMixin):
         self._runtime_timer = QTimer(self)
         self._runtime_timer.setInterval(2000)
         self._runtime_timer.timeout.connect(self._on_runtime_tick)
+        self._runtime_probe_pending = False
         self.is_running = False
 
         self.setWindowTitle(APP_TITLE)
@@ -363,6 +366,7 @@ class ImageEnhancerWindow(QMainWindow, MultiFileInputMixin):
         self.export_panel.toggle_requested.connect(self._toggle_export_details)
         self.log_signal.connect(self._on_log)
         self.finished_signal.connect(self._on_finished)
+        self.runtime_status_signal.connect(self._on_runtime_status)
 
     def _refresh_all(self) -> None:
         self._refresh_inputs()
@@ -459,7 +463,22 @@ class ImageEnhancerWindow(QMainWindow, MultiFileInputMixin):
         self.layer_opacity_slider.blockSignals(False)
 
     def _refresh_runtime_status(self) -> None:
-        label, _tone = self.service.probe_runtime()
+        if self._runtime_probe_pending:
+            return
+        self._runtime_probe_pending = True
+
+        def worker() -> None:
+            try:
+                label, _tone = self.service.probe_runtime()
+            except Exception:
+                label = "Runtime check failed"
+            self.runtime_status_signal.emit(label)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    @Slot(str)
+    def _on_runtime_status(self, label: str) -> None:
+        self._runtime_probe_pending = False
         self.runtime_status_badge.setText(label)
 
     def _on_runtime_tick(self) -> None:
