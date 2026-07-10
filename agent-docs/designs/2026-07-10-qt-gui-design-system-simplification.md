@@ -1,6 +1,6 @@
 > **Canonical design for Qt GUI Design System Simplification.**  
 > Phase 0 decisions locked **2026-07-10** (SSOT two-plane, Hub accent `#3A82FF`, extract Apps monolith, VideoPreviewCard delete with D1).  
-> **Implementation PRs deferred** — this session lands the design document only.  
+> **Execution handoff + agent prompt:** [`2026-07-10-qt-gui-design-handoff.md`](./2026-07-10-qt-gui-design-handoff.md)  
 > Working/temp source used during authoring: `C:/Users/HG_maison/AppData/Local/Temp/grok-design-doc-219a56b8.md` (rev. 4).  
 > Related contracts: `agent-docs/gui-runtime-contract.md`, `gui-runtime-status.md`, `qt-component-catalog.md`.
 # Design: Qt GUI Design System Simplification (Contexthub-Apps)
