@@ -9,12 +9,14 @@
 - `3d`: 메시 변환, 텍스처 추출, CAD/OBJ 변환, LOD 같은 3D 자산 처리 도구
 - `ai`: 배경 제거, 업스케일, 음성 분리, 자막 생성 등 무거운 AI 기반 도구
 - `ai_lite`: 텍스트 유틸리티처럼 상대적으로 가벼운 AI 도구
-- `audio`: 오디오 변환, 보컬/BGM 추출 등 오디오 처리 도구
+- `audio`: AI 보컬/BGM 분리 및 오디오 툴박스 (정규화·트랙 조작은 SystemC `av_toolbox`)
 - `comfyui`: ComfyUI 연동 또는 관련 워크플로용 도구
-- `document`: 문서 추출/변환/처리 도구
-- `image`: 포맷 변환, 메타데이터 조회, EXR 처리, 리사이즈 등 이미지 유틸리티
-- `utilities`: 일반 생산성 유틸리티
-- `video`: 비디오 변환, 오디오 추출, 프록시 생성 같은 영상 도구
+- `document`: 문서 변환/스캔 (PDF merge/split 은 SystemC `pdf_toolkit`)
+- `image`: EXR 채널/ORM/노멀 등 VFX·텍스처 전용 (범용 변환·Po2 는 SystemC `media_converter`)
+- `utilities`: 일반 생산성 (leave_manager 는 허브 빌트인)
+- `video`: 마켓 페이로드 없음 — 변환/AV 유틸은 SystemC `media_converter` / `av_toolbox`
+
+네이티브 흡수·제거 매트릭스는 `agent-docs/native-parity-and-removal.md` 를 본다.
 
 ## 앱의 공통 목적
 

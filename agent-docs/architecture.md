@@ -43,7 +43,7 @@
 
 앱 코드는 위 값을 직접 조합하지 말고 `runtime_bootstrap.py` 같은 공통 헬퍼를 통해 해석한다.
 
-이 구조는 `image/image_convert/main.py`, `utilities/youtube_downloader/main.py` 같은 앱에서 확인된다.
+이 구조는 `image/merge_to_exr/main.py`, `utilities/youtube_downloader/main.py` 같은 앱에서 확인된다.
 
 Qt shared runtime의 공통 계약과 템플릿 분류는 `qt-app-builder-contexthub` 스킬을 기준으로 본다.
 

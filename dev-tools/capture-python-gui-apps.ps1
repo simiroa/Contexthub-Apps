@@ -255,24 +255,7 @@ function Resolve-CaptureTargets {
 
     $key = "$Category/$AppId"
     switch ($key) {
-        "video/video_convert" {
-            $sample = Ensure-SampleVideoInput -OutputPath (Join-Path $fixturesPath "video_convert_sample.mp4")
-            if ($sample) {
-                return @($sample)
-            }
-        }
-        "video/remove_audio" {
-            $sample = Ensure-SampleVideoInput -OutputPath (Join-Path $fixturesPath "remove_audio_sample.mp4")
-            if ($sample) {
-                return @($sample)
-            }
-        }
-        "audio/normalize_volume" {
-            $sample = Ensure-SampleAudioInput -OutputPath (Join-Path $fixturesPath "normalize_volume_sample.wav")
-            if ($sample) {
-                return @($sample)
-            }
-        }
+}
     }
     return @()
 }

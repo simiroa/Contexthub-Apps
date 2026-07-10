@@ -39,6 +39,11 @@ def package_apps():
             with open(manifest_path, 'r', encoding='utf-8-sig') as f:
                 manifest = json.load(f)
 
+            # Tombstones from native SystemC parity removals (folders deleted in same PR when possible)
+            if manifest.get("removed") is True:
+                print(f"Skipping removed app: {category}/{app_folder}")
+                continue
+
             app_id = manifest.get("id", app_folder)
             version = manifest.get("version", "1.0.0")
 
