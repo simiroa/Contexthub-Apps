@@ -63,15 +63,6 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/subtitle_qc.zip"
     },
     {
-        "id": "ai_text_lab",
-        "name": "AI Text Lab",
-        "description": "Prompt workspace for translation, summarization, and structured text analysis with Gemini or Ollama.",
-        "version": "1.0.0",
-        "category": "ai_lite",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/ai_lite/ai_text_lab/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/download/marketplace-assets/ai_text_lab.zip"
-    },
-    {
         "id": "versus_up",
         "name": "VersusUp",
         "description": "Qt-based product decision support system with weighted scoring and Ollama Vision review.",

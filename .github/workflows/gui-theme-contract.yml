@@ -1,0 +1,32 @@
+name: GUI Theme Contract Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.py'
+      - 'dev-tools/runtime/Shared/**'
+      - 'dev-tools/check-gui-theme-contract.py'
+      - '**/manifest.json'
+  pull_request:
+    paths:
+      - '**/*.py'
+      - 'dev-tools/runtime/Shared/**'
+      - 'dev-tools/check-gui-theme-contract.py'
+      - '**/manifest.json'
+
+jobs:
+  check-theme-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          
+      - name: Run Theme Contract Checker
+        run: python dev-tools/check-gui-theme-contract.py

@@ -1,5 +1,6 @@
 {
   "schema_version": "1.2",
+  "removed": true,
   "id": "ai_text_lab",
   "name": "AI Text Lab",
   "description": "Prompt workspace for translation, summarization, and structured text analysis with Gemini or Ollama.",

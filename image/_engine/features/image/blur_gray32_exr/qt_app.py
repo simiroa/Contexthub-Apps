@@ -21,12 +21,12 @@ from PySide6.QtWidgets import (
 )
 
 from contexthub.ui.qt.shell import (
+    HeaderSurface,
+    apply_app_icon,
+    attach_size_grip,
     build_shell_stylesheet,
     get_shell_metrics,
-    open_manual_dialog,
     qt_t,
-    resolve_app_icon,
-    resolve_manual_path,
 )
 
 
@@ -61,10 +61,8 @@ class BlurGray32Dialog(QDialog):
         self.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
 
-        icon_path = resolve_app_icon(Path(request.app_root))
-        icon = QIcon(str(icon_path)) if icon_path else QIcon()
-        if not icon.isNull():
-            self.setWindowIcon(icon)
+        apply_app_icon(self, Path(request.app_root))
+        attach_size_grip(self)
 
         m = get_shell_metrics()
         shell = QFrame()
@@ -73,42 +71,8 @@ class BlurGray32Dialog(QDialog):
         shell_layout.setContentsMargins(m.card_padding, m.header_padding_y_top, m.card_padding, m.card_padding)
         shell_layout.setSpacing(max(8, m.section_gap - 4))
 
-        title_bar = QFrame()
-        title_bar.setObjectName("panelTopBar")
-        title_layout = QHBoxLayout(title_bar)
-        title_layout.setContentsMargins(0, 0, 0, 0)
-        title_layout.setSpacing(8)
-
-        icon_label = QLabel()
-        if not icon.isNull():
-            icon_label.setPixmap(icon.pixmap(m.header_icon_size, m.header_icon_size))
-        title_layout.addWidget(icon_label)
-
-        window_title = QLabel(request.title)
-        window_title.setObjectName("windowTitle")
-        title_layout.addWidget(window_title)
-        title_layout.addStretch(1)
-
-        self.manual_btn = QPushButton("?")
-        self.manual_btn.setObjectName("titleBtn")
-        self.manual_btn.setToolTip(qt_t("comfyui.qt_shell.manual_title", "App Manual"))
-        self.manual_btn.clicked.connect(self._show_manual)
-        self.manual_btn.setVisible(resolve_manual_path(Path(request.app_root)) is not None)
-        title_layout.addWidget(self.manual_btn)
-
-        self.min_btn = QPushButton("−")
-        self.min_btn.setObjectName("titleBtn")
-        self.min_btn.clicked.connect(self.showMinimized)
-        self.max_btn = QPushButton("□")
-        self.max_btn.setObjectName("titleBtn")
-        self.max_btn.clicked.connect(self._toggle_maximize)
-        self.close_btn = QPushButton("×")
-        self.close_btn.setObjectName("titleBtnClose")
-        self.close_btn.clicked.connect(self.reject)
-        title_layout.addWidget(self.min_btn)
-        title_layout.addWidget(self.max_btn)
-        title_layout.addWidget(self.close_btn)
-        shell_layout.addWidget(title_bar)
+        self.header_surface = HeaderSurface(self, request.title, request.subtitle, Path(request.app_root))
+        shell_layout.addWidget(self.header_surface)
 
         body = QFrame()
         body.setObjectName("card")
@@ -243,38 +207,7 @@ class BlurGray32Dialog(QDialog):
         self.selected_radius = value
         self.accept()
 
-    def _toggle_maximize(self) -> None:
-        if self.isMaximized():
-            self.showNormal()
-            self.max_btn.setText("□")
-        else:
-            self.showMaximized()
-            self.max_btn.setText("❐")
 
-    def mousePressEvent(self, event) -> None:  # noqa: N802
-        if event.button() == Qt.LeftButton:
-            self._drag_offset = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
-            event.accept()
-            return
-        super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event) -> None:  # noqa: N802
-        if self._drag_offset is not None and event.buttons() & Qt.LeftButton and not self.isMaximized():
-            self.move(event.globalPosition().toPoint() - self._drag_offset)
-            event.accept()
-            return
-        super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event) -> None:  # noqa: N802
-        self._drag_offset = None
-        super().mouseReleaseEvent(event)
-
-    def _show_manual(self) -> None:
-        open_manual_dialog(
-            self,
-            Path(self.request.app_root),
-            qt_t("comfyui.qt_shell.manual_title", "App Manual"),
-        )
 
 
 def run_blur_gray32_dialog(request: BlurGray32DialogRequest) -> dict[str, float] | None:

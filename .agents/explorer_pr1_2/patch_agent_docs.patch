@@ -1,0 +1,28 @@
+diff --git a/agent-docs/agent.md b/agent-docs/agent.md
+index d5a83bc..8b417df 100644
+--- a/agent-docs/agent.md
++++ b/agent-docs/agent.md
+@@ -39,5 +39,5 @@
+ - 루트 카테고리: `3d`, `ai`, `ai_lite`, `audio`, `comfyui`, `document`, `image`, `utilities`, `video`
+ - `ai_lite`: 텍스트 유틸리티처럼 상대적으로 가벼운 AI 도구
+-- 현재 확인된 앱 수: 총 43개
++- 현재 확인된 앱 수: 총 28개
+ - 앱 기본 단위: `{category}/{app_id}/`
+ - 공통 엔진: `{category}/_engine/`
+diff --git a/agent-docs/gui-runtime-status.md b/agent-docs/gui-runtime-status.md
+index f10b5bc..ea815f2 100644
+--- a/agent-docs/gui-runtime-status.md
++++ b/agent-docs/gui-runtime-status.md
+@@ -3,5 +3,5 @@
+ ## Scope
+ 
+ This document tracks the current Qt GUI cleanup state in `Contexthub-Apps`.
+-It is a working inventory, not a final release checklist.
++It is a working inventory representing exactly 28 active apps (excluding templates and system built-ins), classified into 4 GUI templates.
+ 
+@@ -76,5 +76,4 @@
+ 
+ These are not part of the generic Qt template pass.
+ 
+ - hub built-in SystemC apps (`leave_manager`, `pdf_toolkit`, `av_toolbox`, `media_converter`, …) — not market Python payloads
+-- categories not included in the standard capture sweep, such as `audio` and `comfyui`, when they need their own review pass

@@ -1,7 +1,10 @@
 import os
 import json
 import zipfile
-def package_apps():
+import argparse
+import sys
+
+def package_apps(sync_registry_only=False, check_only=False):
     dist_dir = "dist"
     market_file = "market.json"
     repo = os.getenv("GITHUB_REPOSITORY", "simiroa/Contexthub-Apps")
@@ -11,8 +14,9 @@ def package_apps():
     # Categories are top-level folders except for these:
     exclude_dirs = {".git", ".github", "dist", "tmp", "venv", ".gemini", "node_modules"}
     
-    if not os.path.exists(dist_dir):
-        os.makedirs(dist_dir)
+    if not sync_registry_only and not check_only:
+        if not os.path.exists(dist_dir):
+            os.makedirs(dist_dir)
 
     market_data = []
     
@@ -67,13 +71,14 @@ def package_apps():
             zip_name = f"{app_id}.zip"
             zip_path = os.path.join(dist_dir, zip_name)
 
-            print(f"Packaging {app_id} v{version}...")
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for sub_root, sub_dirs, sub_files in os.walk(app_path):
-                    for file in sub_files:
-                        file_full_path = os.path.join(sub_root, file)
-                        arcname = os.path.relpath(file_full_path, app_path)
-                        zipf.write(file_full_path, arcname)
+            if not sync_registry_only and not check_only:
+                print(f"Packaging {app_id} v{version}...")
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for sub_root, sub_dirs, sub_files in os.walk(app_path):
+                        for file in sub_files:
+                            file_full_path = os.path.join(sub_root, file)
+                            arcname = os.path.relpath(file_full_path, app_path)
+                            zipf.write(file_full_path, arcname)
 
             # 4. Registry Entry
             entry = {
@@ -87,11 +92,29 @@ def package_apps():
             }
             market_data.append(entry)
 
-    # Save market.json to root
-    with open(market_file, 'w', encoding='utf-8') as f:
-        json.dump(market_data, f, indent=4, ensure_ascii=False)
-
-    print(f"Successfully updated {market_file} with {len(market_data)} apps.")
+    # Save or Check market.json to root
+    if check_only:
+        if not os.path.exists(market_file):
+            print(f"Error: {market_file} does not exist.")
+            sys.exit(1)
+        with open(market_file, 'r', encoding='utf-8') as f:
+            existing_data = json.load(f)
+        if existing_data != market_data:
+            print(f"Error: {market_file} is out of sync with actual apps.")
+            print("Please run 'python .github/scripts/package_apps.py --sync-registry-only' and commit the changes.")
+            sys.exit(1)
+        print(f"Success: {market_file} is perfectly in sync.")
+    else:
+        with open(market_file, 'w', encoding='utf-8') as f:
+            json.dump(market_data, f, indent=4, ensure_ascii=False)
+            # Add a trailing newline to prevent diff warnings
+            f.write('\n')
+        print(f"Successfully updated {market_file} with {len(market_data)} apps.")
 
 if __name__ == "__main__":
-    package_apps()
+    parser = argparse.ArgumentParser(description="Package Apps and/or Sync Market Registry")
+    parser.add_argument("--sync-registry-only", action="store_true", help="Only update market.json without packaging ZIPs")
+    parser.add_argument("--check-only", action="store_true", help="Fail if market.json is out of sync (used for CI PR checks)")
+    args = parser.parse_args()
+    
+    package_apps(sync_registry_only=args.sync_registry_only, check_only=args.check_only)

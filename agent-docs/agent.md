@@ -19,9 +19,9 @@
 
 ## 3. 먼저 읽을 문서
 
-Qt GUI 작업이면 아래 문서와 스킬을 우선 본다.
+Qt GUI 작업이면 아래 문서를 우선 본다.
 
-1. `qt-app-builder-contexthub` 스킬의 `SKILL.md` 및 `references` 문서
+1. `agent-docs/gui-runtime-contract.md`
 2. `agent-docs/gui-runtime-status.md`
 3. 대상 앱의 `manifest.json`
 4. 대상 앱의 `main.py`
@@ -30,15 +30,16 @@ Qt GUI 작업이면 아래 문서와 스킬을 우선 본다.
 - 앱/카테고리 목적: `agent-docs/app-overview.md`
 - 운영 방식과 코드 위치: `agent-docs/architecture.md`
 - 새 앱 추가 지침: `agent-docs/new-app-guidelines.md`
-- Qt shared runtime 계약과 템플릿 분류: `qt-app-builder-contexthub` 스킬 참조
+- Qt shared runtime 계약과 템플릿 분류: `agent-docs/gui-runtime-contract.md`
 - 현재 템플릿 버킷과 위험 상태: `agent-docs/gui-runtime-status.md`
 - 안정성 제약: `agent-docs/stability-constraints.md`
 - Git 및 배포 정책: `agent-docs/git-policy.md`
 
 ## 4. 빠른 구조 요약
 
-- 루트 카테고리: `3d`, `ai`, `ai_lite`, `audio`, `comfyui`, `document`, `image`, `legacyapp`, `native`, `system`, `utilities`, `video`
+- 루트 카테고리: `3d`, `ai`, `ai_lite`, `audio`, `comfyui`, `document`, `image`, `utilities`, `video`
 - `ai_lite`: 텍스트 유틸리티처럼 상대적으로 가벼운 AI 도구
+- 현재 확인된 앱 수: 총 29개
 - 앱 기본 단위: `{category}/{app_id}/`
 - 공통 엔진: `{category}/_engine/`
 - 배포 스크립트: `.github/scripts/package_apps.py`
@@ -74,27 +75,17 @@ Qt GUI 작업이면 아래 문서와 스킬을 우선 본다.
   - 기본 모드: `prefer_conda`
   - 기본 env 이름: `contexthub-ai`
   - Conda 미설치 또는 env 미검출 시 경고 후 기존 Python으로 fallback
-- 공유 런타임을 수정했다면 실제 원본인 `C:\Users\HG\Documents\Contexthub\Runtimes\Shared` 반영 여부까지 확인한다.
-- 저장소 내부 개발 기준 경로는 `dev-tools/Runtimes` 심볼릭 링크다. `dev-tools/runtime_Old`는 레거시 수동 미러로만 취급하고, 참조가 모두 정리되기 전까지 제거하지 않는다.
-- shared Qt runtime은 `dev-tools/Runtimes/Shared/contexthub/ui/qt`를 기준으로 작게 나뉜 모듈 구조를 유지하되, 기존 앱 호환용 별칭과 래퍼는 캡처로 검증되기 전까지 유지한다.
-- 공유 이름을 제거할 때는 관련 앱을 다시 캡처해서 실제 실행이 살아 있는지 먼저 확인한다.
-- `legacyapp/ai/qwen3_tts`, `legacyapp/ai/whisper_subtitle`는 이름과 달리 아직 활성 앱 루트다. 이번 단계에서는 삭제 대상이 아니라 보관 대상이다.
+- 공유 런타임을 수정했다면 `Contexthub\Runtimes\Shared` 원본 반영 여부까지 확인한다.
 
-## 9. 로컬 개발 환경 vs 허브 런타임 환경 (Local Dev vs Hub Runtime)
+## 9. 공유 런타임 동기화 및 릴리즈 규칙 (Two-Plane SSOT)
 
-앱 개발 및 디버깅 시 파이썬 환경의 차이를 명확히 인지해야 한다. 에이전트가 에러의 원인을 오판하지 않도록 주의한다.
+공유 런타임(Shared Runtime) 소스 코드의 동기화 및 릴리즈 구조는 다음 **Two-Plane SSOT (단일 진실 공급원)** 개념을 철저히 따른다.
 
-- **허브 런타임 (배포 환경)**:
-  사용자가 허브에서 앱을 실행할 때, 허브 코어가 해당 카테고리 전용 가상환경(env)을 만들고 `{category}/requirements.txt`에 명시된 패키지(예: `PySide6`)를 자동 설치해 준다.
-- **로컬 개발 (IDE 환경)**:
-  이 저장소 자체는 파이썬 의존성을 격리해 들고 있지 않다. `main.py`를 직접 실행할 때 `ModuleNotFoundError: No module named 'PySide6'` 에러가 발생한다면, **코드 경로 버그가 아니라 현재 로컬 인터프리터에 패키지가 없는 것**이다. 로컬 터미널에서 수동으로 패키지를 설치해야 앱 윈도우를 띄울 수 있다.
-- **런타임 소스코드 결합 (Bootstrapping)**:
-  `shared/_engine` 이나 공용 템플릿 컴포넌트(`shared/_engine/components`) 파일들을 파이썬이 찾는 과정은 전적으로 앱의 `main.py` 초기 설정에 달렸다. 따라서 `main.py` 최상단에서 의존성 모듈을 바로 임포트하지 말고, `runtime_bootstrap.py`를 통해 `sys.path` 조립이 완전히 끝난 이후에 **지연 임포트(Lazy Import)** 방식으로 UI를 로드해야 환경에 관계없이 안전하게 코드를 찾는다.
-
-## 10. GUI 테스트 및 검증 원칙 (에이전트 행동 지침)
-
-AI 에이전트가 리팩토링이나 코드 수정을 완료한 후, 터미널 환경에서 스스로 테스트하기 위해 낭비하는 시간을 줄이기 위해 다음 사항을 철저히 지킨다.
-
-- **로컬에서 직접 스크립트 실행 금지**: 에이전트는 `run_command` 도구를 사용하여 UI 파일(`.py`)을 터미널에서 직접 실행하거나 팝업을 띄우는 테스트를 시도해서는 안 된다. 
-- **`contexthub` 모듈 경로 탐색 금지**: 터미널 기반 실행 시 `ModuleNotFoundError: No module named 'contexthub'` 등의 프레임워크 래퍼 모듈 누락 에러가 발생하더라도, 이는 에이전트의 워크스페이스 터미널의 `PYTHONPATH` 문제일 뿐 실제 오류가 아니다. 불필요한 경로(Path) 탐색 명령이나 환경 변수 수정을 통해 파헤치려 시도해선 안 된다.
-- **테스트는 사용자에게 위임**: 코드가 논리적으로 완성되었다고 판단되면, 에이전트 환경에서 억지로 작동시키려 하지 말고 사용자에게 "외부 런타임(Contexthub 앱 환경)을 통해 GUI 테스트를 직접 수행해 달라"고 요청하라.
+1. **Product Shared runtime original** = `Hub Runtimes/Shared`
+   - 실제 서비스 환경에서 구동되는 프로덕션 런타임 소스의 원본(Original)이다.
+2. **Dev Shared mirror original** = Apps `dev-tools/runtime/Shared`
+   - 앱 개발 환경 및 패키징 시 검증에 사용되는 개발용 미러 원본(Mirror Original)이다.
+3. **Market ZIP never contains Shared runtime code.**
+   - 배포 마켓에 업로드되는 각 개별 앱의 ZIP 파일은 어떠한 경우에도 Shared runtime 코드를 내장하거나 포함해서는 안 된다. Shared runtime은 플랫폼 서비스(Hub)에서 공통으로 로드하고 제공한다.
+4. **Release Gate (K13) requirement:**
+   - 임의로 `dev-tools/runtime/Shared` 코드를 수정하여 배포해서는 안 된다. Shared runtime의 동작이나 코드를 변경할 때는 반드시 **연관된 Hub의 커밋/PR을 명시하거나 동기화(sync) 계획**을 함께 릴리즈 게이트 문서에 기재해야 한다.

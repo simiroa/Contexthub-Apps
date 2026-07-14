@@ -13,8 +13,20 @@ HEX_COLOR_RE = re.compile(r"#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})\b")
 RGB_COLOR_RE = re.compile(r"\brgba?\s*\(")
 
 ALLOWED_COLOR_OWNERS = {
-    Path("dev-tools/Runtimes/Shared/contexthub/ui/qt/shell.py"),
+    Path("dev-tools/runtime/Shared/contexthub/ui/qt/shell.py"),
+    Path("dev-tools/runtime/Shared/contexthub/ui/qt/theme_palette.py"),
 }
+
+BANNED_PANELS = [
+    "ExportRunPanel",
+    "PresetParameterPanel",
+    "ParameterControlsPanel",
+    "QueueManagerPanel",
+    "ResultInspectorPanel",
+    "VideoPreviewCard",
+]
+BANNED_PANELS_RE = re.compile(r"\b(?:" + "|".join(BANNED_PANELS) + r")\b")
+
 
 EXEMPT_COLOR_OWNERS = {
     Path("ai_lite/_engine/features/tools/ai_text_lab_qt_app.py"): "approved legacy exception; kept separate from the shared theme contract",
@@ -47,7 +59,8 @@ def _iter_python_paths() -> list[Path]:
     paths: list[Path] = []
     for path in REPO_ROOT.rglob("*.py"):
         rel = path.relative_to(REPO_ROOT)
-        if any(part in SKIP_PARTS for part in rel.parts):
+        is_shared_qt = len(rel.parts) >= 6 and rel.parts[:6] == ("dev-tools", "runtime", "Shared", "contexthub", "ui", "qt")
+        if not is_shared_qt and any(part in SKIP_PARTS for part in rel.parts):
             continue
         paths.append(path)
     return sorted(paths)
@@ -85,7 +98,9 @@ def check_raw_color_drift() -> list[CheckMessage]:
             continue
 
         text = path.read_text(encoding="utf-8", errors="ignore")
-        if "setStyleSheet(" not in text:
+        is_shared_qt = len(rel.parts) >= 6 and rel.parts[:6] == ("dev-tools", "runtime", "Shared", "contexthub", "ui", "qt")
+        
+        if not is_shared_qt and "setStyleSheet(" not in text:
             continue
 
         exempt_reason = EXEMPT_COLOR_OWNERS.get(rel)
@@ -112,24 +127,37 @@ def check_raw_color_drift() -> list[CheckMessage]:
                 continue
             if HEX_COLOR_RE.search(line):
                 color = HEX_COLOR_RE.search(line).group(0)
+                level = "ERROR" if is_shared_qt else "WARN"
                 messages.append(
                     CheckMessage(
-                        "WARN",
+                        level,
                         rel,
                         line_no,
-                        f"raw hex color inside stylesheet-heavy file: {color}",
+                        f"raw hex color inside {'shared qt' if is_shared_qt else 'stylesheet-heavy'} file: {color}",
                     )
                 )
             if RGB_COLOR_RE.search(line):
                 token = RGB_COLOR_RE.search(line).group(0).strip()
+                level = "ERROR" if is_shared_qt else "WARN"
                 messages.append(
                     CheckMessage(
-                        "WARN",
+                        level,
                         rel,
                         line_no,
-                        f"raw rgb/rgba color inside stylesheet-heavy file: {token}",
+                        f"raw rgb/rgba color inside {'shared qt' if is_shared_qt else 'stylesheet-heavy'} file: {token}",
                     )
                 )
+    return messages
+
+def check_deleted_panels() -> list[CheckMessage]:
+    messages: list[CheckMessage] = []
+    for path in _iter_python_paths():
+        rel = path.relative_to(REPO_ROOT)
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for line_no, line in enumerate(text.splitlines(), start=1):
+            match = BANNED_PANELS_RE.search(line)
+            if match:
+                messages.append(CheckMessage("ERROR", rel, line_no, f"usage of deleted panel: {match.group(0)}"))
     return messages
 
 
@@ -148,6 +176,7 @@ def main() -> int:
     args = parser.parse_args()
 
     errors = check_manifest_shared_theme()
+    errors.extend(check_deleted_panels())
     warnings = check_raw_color_drift()
 
     for msg in errors + warnings:

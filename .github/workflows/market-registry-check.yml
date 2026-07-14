@@ -1,0 +1,35 @@
+name: Market Registry Check
+
+on:
+  pull_request:
+    paths:
+      - "3d/**"
+      - "ai/**"
+      - "ai_lite/**"
+      - "audio/**"
+      - "comfyui/**"
+      - "document/**"
+      - "image/**"
+      - "native/**"
+      - "system/**"
+      - "utilities/**"
+      - "video/**"
+      - "market.json"
+      - ".github/scripts/package_apps.py"
+
+jobs:
+  check-registry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Verify market.json is in sync
+        run: |
+          python3 .github/scripts/package_apps.py --check-only
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}

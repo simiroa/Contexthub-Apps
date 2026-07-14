@@ -2,12 +2,12 @@
 
 ## Scope
 
-This document tracks the current Qt GUI template inventory in `Contexthub-Apps`.
-Keep it aligned with `manifest.json` `ui.template` declarations and the latest capture state only.
+This document tracks the current Qt GUI cleanup state across the exactly 29 active apps in `Contexthub-Apps`.
+It is a working inventory, not a final release checklist.
 
 Use it together with:
 
-- `qt-app-builder-contexthub` 스킬 문서
+- `agent-docs/gui-runtime-contract.md`
 - `agent-docs/gui-cleanup-backlog.md`
 - `Diagnostics/gui_capture_log.md`
 - `Diagnostics/gui_captures/`
@@ -15,26 +15,26 @@ Use it together with:
 ## Template Buckets
 
 `ui.template`가 manifest에 있으면 이를 우선 사용한다.
-없을 때만 shared runtime과 캡처 결과로 추론한다.
+일반적으로 `ui.template`는 메타데이터 태그이며, 런타임 클래스 로더가 아닌 분류/스윕용 식별자로 사용된다.
 
-### Full GUI
+### Full GUI (10 Apps)
 
 Apps that use the shared Qt shell plus dense panels, previews, and long-form parameter blocks.
 
 Manifested apps:
 
+- `ai_upscaler`
 - `audio_toolbox`
-- `doc_scan`
-- `merge_to_exr`
-- `image_resizer`
-- `rigreader_vectorizer`
-- `video_convert`
-- `image_compare`
 - `creative_studio_advanced`
 - `creative_studio_z`
+- `doc_scan`
+- `image_compare`
+- `image_enhancer`
 - `marigold_pbr`
+- `merge_to_exr`
+- `rigreader_vectorizer`
 
-### Compact GUI
+### Compact GUI (5 Apps)
 
 Apps with no multi-input list, only one main preview-or-list surface, and a small set of immediately understandable options.
 
@@ -42,69 +42,59 @@ Manifested apps:
 
 - `blur_gray32_exr`
 - `doc_convert`
-- `pdf_merge`
 - `simple_normal_roughness`
 - `split_exr`
 - `auto_lod`
-- `comfyui_dashboard`
 
-### Mini GUI
+### Mini GUI (8 Apps)
 
 Small confirm-shell windows with very few options and selection-summary style input.
 
 Manifested apps:
 
 - `cad_to_obj`
-- `compress_audio`
+- `comfyui_dashboard`
 - `convert_audio`
 - `enhance_audio`
-- `extract_bgm`
-- `extract_audio`
 - `extract_textures`
-- `extract_voice`
-- `image_convert`
-- `interpolate_30fps`
 - `mesh_convert`
 - `normal_flip_green`
-- `normalize_volume`
 - `open_with_mayo`
-- `pdf_split`
-- `remove_audio`
 
-### Special GUI
+### Special GUI (6 Apps)
 
 Apps that are still Qt-based but should be treated as their own interaction class.
 
 Manifested apps:
 
 - `ai_text_lab`
-- `qwen3_tts`
+- `inpainting`
 - `subtitle_qc`
 - `texture_packer_orm`
-- `youtube_downloader`
 - `versus_up`
-- `whisper_subtitle`
+- `youtube_downloader`
 
 ### Out of Scope
 
 These are not part of the generic Qt template pass.
 
-- native apps (별도 구축된 앱 등)
-- category-specific review passes only when they still need bespoke shell behavior
+- hub built-in SystemC apps (`leave_manager`, `pdf_toolkit`, `av_toolbox`, `media_converter`, …) — not market Python payloads
 
 ## Low-Risk Cleanup Order
 
 1. Keep the shared runtime compatibility layer stable.
-2. Preserve `ConfirmDialog`, `HeaderSurface.manual_btn`, `PreviewListPanel.set_comparative_mode`, `AssetWorkspacePanel`, `ExportFoldoutPanel`, and the common palette/metrics fields until no caller depends on them.
+2. Preserve `ConfirmDialog`, `HeaderSurface.manual_btn`, `PreviewListPanel.set_comparative_mode`, and the common palette/metrics fields until no caller depends on them.
 3. Verify the low-risk full/compact apps first.
 4. Move only the proven mini/special apps after the common template contract is stable.
 5. Mirror any shared-runtime changes to `Contexthub\Runtimes\Shared`.
 
 ## Current Risks
 
-- `special` apps should not be forced into a generic template before their panel model is understood.
-- Shared runtime compatibility aliases should stay in place until the dependent apps are recaptured.
-- Bucket ownership should be declared in `manifest.json` whenever an app is structurally special or recently refactored.
+- Some apps still call legacy shared-runtime names that need aliases.
+- Some apps use `field_bg`, `surface_subtle`, or `preview_min_height` directly, so removing those names too early will break them.
+- `special` apps should not be forced into a single generic template before their panel model is understood.
+- `ui.template` should be filled on the apps we consider structurally special so the bucket is declared in manifest, not inferred from file names.
+- **BaseAppWindow alignment**: Remote commits have migrated 17 apps to `BaseAppWindow` to consolidate boilerplate window logic, which is now accepted and standardized in the design documents.
 
 ## Theme Drift
 
@@ -125,8 +115,6 @@ These are not part of the generic Qt template pass.
 - Qt 앱의 공용 테마 계약은 `contexthub` 하나로 고정한다.
 - 앱은 컴포넌트 구조를 다르게 가져갈 수 있지만, raw color stylesheet를 새로 늘리지 않는다.
 - 다음 정리 패스는 개별 앱 색 수정이 아니라 shared shell role/tone API 도입 후, 상위 offender 앱을 그 API로 옮기는 방식으로 진행한다.
-- shared runtime은 작은 모듈로 분해한 상태를 유지하되, 기존 앱이 의존하는 compatibility alias는 캡처 재검증 전까지 유지한다.
-- audio 앱은 `full`과 `mini` 버킷을 명시적으로 선언하고, `compress_audio` / `convert_audio` / `enhance_audio` 같은 단일 작업 앱도 mini shell로 다룬다.
 
 ## Validation
 
@@ -134,11 +122,12 @@ These are not part of the generic Qt template pass.
 
 - `python dev-tools/check-gui-theme-contract.py`
 
-2026-04-23 기준 최신 베이스라인은 다음과 같다.
+2026-03-29 기준 초기 베이스라인은 다음과 같다.
 
 - manifest 계약 오류: 0
-- theme contract 경고: 0
-- 예외 목록: 3
+- raw color drift 경고: 73
+
+이 경고 수는 이후 앱 정리 패스에서 줄여 나가는 추적 지표로 본다.
 
 ## Working Rule
 
