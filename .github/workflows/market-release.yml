@@ -50,19 +50,22 @@ jobs:
           git commit -m "chore: update market.json registry [skip ci]" || echo "No changes to commit"
           git push
 
-      - name: Create/Update Release
+      - name: Create Release (immutable-safe, unique tag)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh release view marketplace-assets >/dev/null 2>&1; then
-            gh release upload marketplace-assets dist/*.zip --clobber
-            gh release edit marketplace-assets \
-              --title "Marketplace Assets (Latest)" \
-              --notes "Auto-generated marketplace bundles. Updated on ${{ github.event.head_commit.timestamp }}" \
-              --latest
-          else
-            gh release create marketplace-assets dist/*.zip \
-              --title "Marketplace Assets (Latest)" \
-              --notes "Auto-generated marketplace bundles. Updated on ${{ github.event.head_commit.timestamp }}" \
-              --latest
-          fi
+          TAG="assets-${{ github.run_number }}"
+          gh release create "$TAG" dist/*.zip \
+            --title "Marketplace Assets ($TAG)" \
+            --notes "Auto-generated marketplace bundles (run ${{ github.run_number }}, ${{ github.sha }})." \
+            --latest
+
+      - name: Prune old asset releases (keep newest 5)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release list --limit 100 --json tagName,createdAt \
+            --jq '[.[] | select(.tagName | startswith("assets-"))] | sort_by(.createdAt) | reverse | .[5:] | .[].tagName' \
+          | while read -r tag; do
+              [ -n "$tag" ] && gh release delete "$tag" --yes || true
+            done

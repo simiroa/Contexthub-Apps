@@ -4,12 +4,34 @@ import zipfile
 import argparse
 import sys
 
+def _read_requirement_lines(path):
+    lines = []
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8-sig') as rf:
+            for raw in rf:
+                s = raw.strip()
+                if s and not s.startswith('#'):
+                    lines.append(s)
+    return lines
+
+def _merged_requirements(category_path, app_path):
+    """Category requirements first, then app-specific, de-duplicated (case-insensitive)."""
+    merged, seen = [], set()
+    for req in (os.path.join(category_path, 'requirements.txt'),
+                os.path.join(app_path, 'requirements.txt')):
+        for line in _read_requirement_lines(req):
+            key = line.lower()
+            if key not in seen:
+                seen.add(key)
+                merged.append(line)
+    return merged
+
 def package_apps(sync_registry_only=False, check_only=False):
     dist_dir = "dist"
     market_file = "market.json"
     repo = os.getenv("GITHUB_REPOSITORY", "simiroa/Contexthub-Apps")
     base_url = f"https://raw.githubusercontent.com/{repo}/main"
-    release_url = f"https://github.com/{repo}/releases/download/marketplace-assets"
+    release_url = f"https://github.com/{repo}/releases/latest/download"
 
     # Categories are top-level folders except for these:
     exclude_dirs = {".git", ".github", "dist", "tmp", "venv", ".gemini", "node_modules"}
@@ -73,12 +95,25 @@ def package_apps(sync_registry_only=False, check_only=False):
 
             if not sync_registry_only and not check_only:
                 print(f"Packaging {app_id} v{version}...")
+                merged_reqs = _merged_requirements(category_path, app_path)
+                app_pyver = os.path.join(app_path, "python_version.txt")
+                cat_pyver = os.path.join(category_path, "python_version.txt")
                 with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                     for sub_root, sub_dirs, sub_files in os.walk(app_path):
                         for file in sub_files:
+                            # Skip the app's own requirements.txt; we write a merged one below.
+                            if sub_root == app_path and file == "requirements.txt":
+                                continue
                             file_full_path = os.path.join(sub_root, file)
                             arcname = os.path.relpath(file_full_path, app_path)
                             zipf.write(file_full_path, arcname)
+                    # Merged requirements (category + app) so source-less installs get category packages.
+                    if merged_reqs:
+                        zipf.writestr("requirements.txt", "\n".join(merged_reqs) + "\n")
+                    # If the app has no python_version.txt, fall back to the category's.
+                    if not os.path.exists(app_pyver) and os.path.exists(cat_pyver):
+                        with open(cat_pyver, 'r', encoding='utf-8-sig') as pf:
+                            zipf.writestr("python_version.txt", pf.read())
 
             # 4. Registry Entry
             entry = {
