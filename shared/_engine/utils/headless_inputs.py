@@ -27,9 +27,7 @@ from pathlib import Path
 # 3d) should be moved into the right set here, not patched in a local
 # fork.
 IMAGE_IDS: set[str] = {
-    "image_convert",
     "merge_to_exr",
-    "image_resizer",
     "split_exr",
     "texture_packer_orm",
     "image_compare",
@@ -44,26 +42,15 @@ IMAGE_IDS: set[str] = {
 }
 
 AUDIO_IDS: set[str] = {
-    "extract_bgm",
-    "extract_voice",
-    "normalize_volume",
-    "demucs_stems",
     "audio_toolbox",        # was in audio-only fork
-    "audio_convert",        # was in 3d's fork (probable miscategorisation)
 }
 
 VIDEO_IDS: set[str] = {
-    "video_convert",
-    "remove_audio",
-    "interpolate_30fps",
-    "extract_audio",
     "sequence_to_video",
 }
 
 DOC_IDS: set[str] = {
     "doc_convert",
-    "pdf_merge",
-    "pdf_split",
 }
 
 SEQUENCE_IDS: set[str] = {

@@ -47,8 +47,6 @@ def main():
     
     apps = [
         ("doc_convert", apps_root / "doc_convert" / "main.py"),
-        ("pdf_merge", apps_root / "pdf_merge" / "main.py"),
-        ("pdf_split", apps_root / "pdf_split" / "main.py")
     ]
     
     for name, path in apps:

@@ -29,7 +29,6 @@ BANNED_PANELS_RE = re.compile(r"\b(?:" + "|".join(BANNED_PANELS) + r")\b")
 
 
 EXEMPT_COLOR_OWNERS = {
-    Path("ai_lite/_engine/features/tools/ai_text_lab_qt_app.py"): "approved legacy exception; kept separate from the shared theme contract",
     Path("ai/_engine/features/ai/subtitle_qc_qt_app.py"): "needs a near-full rewrite; keep as approved exception until rebuilt",
     Path("ai_lite/_engine/features/versus_up/versus_up_qt_widgets.py"): "needs a near-full rewrite; keep as approved exception until rebuilt",
 }

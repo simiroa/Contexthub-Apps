@@ -78,22 +78,6 @@
     "failed": "실패",
     "retry": "재시도"
   },
-  "audio_separate_gui": {
-    "header_sep": "{}개 오디오 파일 분리 중",
-    "header_default": "오디오 스템 분리 도구",
-    "select_files": "오디오 파일 선택",
-    "extraction_settings": "추출 설정",
-    "model": "분리 모델",
-    "output_format": "출력 형식",
-    "separation_mode": "분리 모드",
-    "start_separation": "분리 시작",
-    "processing": "처리 중: {}...",
-    "all_completed": "모든 작업이 완료되었습니다.",
-    "cancelled": "취소됨",
-    "title": "오디오 스템 분리 도구",
-    "no_files_title": "파일 없음",
-    "no_files_body": "선택된 파일이 없습니다."
-  },
   "upscale_gui": {
     "header": "AI 이미지 업스케일러",
     "images_count": "({}개 이미지)",

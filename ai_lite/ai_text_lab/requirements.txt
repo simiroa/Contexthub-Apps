@@ -1,3 +1,0 @@
-deep-translator
-google-generativeai
-ollama

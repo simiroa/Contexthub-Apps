@@ -54,20 +54,17 @@ Manifested apps:
 
 - `cad_to_obj`
 - `comfyui_dashboard`
-- `convert_audio`
-- `enhance_audio`
 - `extract_textures`
 - `mesh_convert`
 - `normal_flip_green`
 - `open_with_mayo`
 
-### Special GUI (6 Apps)
+### Special GUI (5 Apps)
 
 Apps that are still Qt-based but should be treated as their own interaction class.
 
 Manifested apps:
 
-- `ai_text_lab`
 - `inpainting`
 - `subtitle_qc`
 - `texture_packer_orm`

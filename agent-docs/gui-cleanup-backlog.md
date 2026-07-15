@@ -38,7 +38,6 @@
 | `video_convert` | full | P0 | 남은 부제목 제거, queue 액션 상단 이동, 폭 축소, 출력 UI 기준화. |
 | `whisper_subtitle` | special | P1 | 실사용 검증 후 구조 재판단. 현재는 구색 위주라 재정의 필요. |
 | `youtube_downloader` | special | P1 | 다운로더 특화 상호작용형 앱으로 보고 compact 대신 special 축에서 정리한다. |
-| `ai_text_lab` | special | P1 | 실 기능과 연결을 다시 맞추고 실행 중 단축키 점유형 `clipup` 흐름을 검토한다. |
 | `auto_lod` | compact | P1 | 버튼 정리, 실행 영역 정리, 텍스트 압축이 필요하다. |
 | `blur_gray32_exr` | compact | P1 | 앱 이름 재검토, 프리뷰를 추가한 compact 흐름으로 재구성하고 장문 설명을 툴팁 중심으로 전환한다. |
 | `cad_to_obj` | mini | Hold | 현재는 큰 구조 변경보다 유지 판단. |

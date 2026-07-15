@@ -143,9 +143,7 @@ def build_handler_map():
     
     return {
         # === Image ===
-        "image_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "image_convert")), *([str(i) for i in s] if s else [str(p)])]),
         "merge_to_exr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "merge_to_exr")), *([str(i) for i in s] if s else [str(p)])]),
-        "image_resizer": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "image_resizer")), *([str(i) for i in s] if s else [str(p)])]),
         "split_exr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "split_exr")), *([str(i) for i in s] if s else [str(p)])]),
         "texture_packer_orm": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "texture_packer_orm")), *([str(i) for i in s] if s else [str(p)])]),
         "normal_flip_green": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "normal_flip_green")), *([str(i) for i in s] if s else [str(p)])]),
@@ -155,18 +153,10 @@ def build_handler_map():
         "noise_master": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "tools" / "noise_master" / "main.py")]),
 
         # === AI ===
-        "whisper_subtitle": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "whisper_subtitle")), *([str(i) for i in s] if s else [str(p)])]),
-        "esrgan_upscale": lambda p, s=None: _lazy("features.ai.upscale_qt_app", "start_app")([str(i) for i in s] if s else [str(p)]),
-        "rmbg_background": lambda p, s=None: _lazy("features.ai.bg_removal_qt_app", "start_app")([str(i) for i in s] if s else [str(p)]),
         "marigold_pbr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "marigold_pbr")), *([str(i) for i in s] if s else [str(p)])]),
         "gemini_image_tool": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "ai" / "standalone" / "gemini_img_tools.py"), *([str(i) for i in s] if s else [str(p)])]),
-        "demucs_stems": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai", "demucs_stems")), *([str(i) for i in s] if s else [str(p)])]),
 
         # === Video ===
-        "video_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("video", "video_convert")), *([str(i) for i in s] if s else [str(p)])]),
-        "extract_audio": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("video", "extract_audio")), *([str(i) for i in s] if s else [str(p)])]),
-        "interpolate_30fps": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("video", "interpolate_30fps")), *([str(i) for i in s] if s else [str(p)])]),
-        "remove_audio": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("video", "remove_audio")), *([str(i) for i in s] if s else [str(p)])]),
 
         # === Sequence ===
         "sequence_arrange": _lazy("features.sequence.tools", "arrange_sequences"),
@@ -176,9 +166,6 @@ def build_handler_map():
         "sequence_renumber": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "system" / "rename.py"), "renumber", *([str(i) for i in s] if s else [str(p)])]),
 
         # === Audio ===
-        "extract_bgm": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("audio", "extract_bgm")), *([str(i) for i in s] if s else [str(p)])]),
-        "extract_voice": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("audio", "extract_voice")), *([str(i) for i in s] if s else [str(p)])]),
-        "normalize_volume": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("audio", "normalize_volume")), *([str(i) for i in s] if s else [str(p)])]),
 
         # === System ===
         "unwrap_folder": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "system" / "unwrap_folder_gui.py"), str(p)]),
@@ -201,15 +188,12 @@ def build_handler_map():
 
         # === Document ===
         "doc_convert": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("document", "doc_convert")), *([str(i) for i in s] if s else [str(p)])]),
-        "pdf_merge": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("document", "pdf_merge")), *([str(i) for i in s] if s else [str(p)])]),
-        "pdf_split": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("document", "pdf_split")), *([str(i) for i in s] if s else [str(p)])]),
 
         # === Rename ===
         "batch_rename": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "system" / "rename.py"), "rename", *([str(i) for i in s] if s else [str(p)])]),
 
         # === Tools ===
         "youtube_downloader": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("utilities", "youtube_downloader"))]),
-        "ai_text_lab": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("ai_lite", "ai_text_lab"))]),
         "context_flow": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "tools" / "context_flow" / "gui.py")]),
 
         # === ComfyUI ===

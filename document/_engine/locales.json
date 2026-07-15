@@ -17,25 +17,6 @@
     "fmt_images": "이미지 추출 (Embedded)",
     "fmt_pdf": "PDF 문서"
   },
-  "pdf_merge": {
-    "title": "PDF 파일 합치기",
-    "header": "PDF 병합 도구",
-    "merge_btn": "병합 시작",
-    "select_min_2": "최소 2개 이상의 PDF 파일을 선택해주세요.",
-    "success_fmt": "{count}개의 PDF 파일을 {dest} 파일로 합쳤습니다."
-  },
-  "pdf_split": {
-    "title": "PDF 파일 분할",
-    "split_title": "PDF 분할",
-    "header": "PDF 분할 도구",
-    "split_btn": "분할 시작",
-    "mode_pdf": "PDF (분할)",
-    "mode_png": "이미지 (PNG)",
-    "mode_jpg": "이미지 (JPG)",
-    "no_files": "선택된 PDF 파일이 없습니다.",
-    "ask_mode_fmt": "{count}개 파일 작업 모드 선택: 'pdf' (분할) 또는 'png' (이미지 변환):",
-    "success_fmt": "{count}개의 PDF 파일을 처리했습니다."
-  },
   "doc_scan": {
     "title": "문서 스캐너",
     "header": "문서 다중 스크랩 및 스캔",
