@@ -146,8 +146,6 @@ def build_handler_map():
         "merge_to_exr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "merge_to_exr")), *([str(i) for i in s] if s else [str(p)])]),
         "split_exr": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "split_exr")), *([str(i) for i in s] if s else [str(p)])]),
         "texture_packer_orm": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "texture_packer_orm")), *([str(i) for i in s] if s else [str(p)])]),
-        "normal_flip_green": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "normal_flip_green")), *([str(i) for i in s] if s else [str(p)])]),
-        "simple_normal_roughness": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "simple_normal_roughness")), *([str(i) for i in s] if s else [str(p)])]),
         "image_compare": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "image_compare")), *([str(i) for i in s] if s else [str(p)])]),
         "rigreader_vectorizer": lambda p, s=None: gui_popen([PYTHONW_EXE, str(_app_main("image", "rigreader_vectorizer")), *([str(i) for i in s] if s else [str(p)])]),
         "noise_master": lambda p, s=None: gui_popen([PYTHONW_EXE, str(src_dir / "features" / "tools" / "noise_master" / "main.py")]),

@@ -34,7 +34,7 @@ Manifested apps:
 - `merge_to_exr`
 - `rigreader_vectorizer`
 
-### Compact GUI (5 Apps)
+### Compact GUI (4 Apps)
 
 Apps with no multi-input list, only one main preview-or-list surface, and a small set of immediately understandable options.
 
@@ -42,11 +42,10 @@ Manifested apps:
 
 - `blur_gray32_exr`
 - `doc_convert`
-- `simple_normal_roughness`
 - `split_exr`
 - `auto_lod`
 
-### Mini GUI (8 Apps)
+### Mini GUI (7 Apps)
 
 Small confirm-shell windows with very few options and selection-summary style input.
 
@@ -56,7 +55,6 @@ Manifested apps:
 - `comfyui_dashboard`
 - `extract_textures`
 - `mesh_convert`
-- `normal_flip_green`
 - `open_with_mayo`
 
 ### Special GUI (5 Apps)

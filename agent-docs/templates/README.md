@@ -29,7 +29,7 @@ GUI 앱은 이 폴더의 정적 템플릿보다, 가장 가까운 기존 앱과 
 1. 가장 가까운 기존 앱과 계약 문서를 비교해 시작점 결정
    - **Market Golden Recipes**:
      - `mini`: `extract_textures`, `extract_bgm`, `cad_to_obj`
-     - `compact`: `auto_lod`, `doc_convert`, `simple_normal_roughness` (`auto_lod_qt_window.py` 등)
+     - `compact`: `auto_lod`, `doc_convert` (`auto_lod_qt_window.py` 등)
      - `full`: `audio_toolbox`, `doc_scan`, `merge_to_exr`, `image_compare` (`upscale_qt_app.py`, `bg_removal_qt_app.py` 등)
      - `special`: `versus_up`, `qwen3_tts`
 2. Qt면 skill을 먼저, non-Qt legacy wrapper면 이 폴더 템플릿을 검토

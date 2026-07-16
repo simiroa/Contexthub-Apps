@@ -31,7 +31,6 @@
 | `remove_audio` | mini | Hold | 현 상태 유지 가능. |
 | `image_resizer` | full | Keep | 현재 표준 UI 후보로 유지하고 공통 기준 샘플로 삼는다. |
 | `rigreader_vectorizer` | full | P0 | 입력 리스트 대신 채널 리스트 중심으로 재작성하고 병렬 배치 UX를 넣는다. |
-| `simple_normal_roughness` | compact | P0 | 단일 input + 실시간 preview 중심의 compact 흐름으로 단순화한다. |
 | `split_exr` | compact | P1 | `split_channel` 방향으로 정리하고 채널 이름 preset을 넣는다. |
 | `texture_packer_orm` | special | P1 | 단순 full 대신 특수 상호작용형 도구로 보고 그리드 중심 UX를 재정리한다. |
 | `versus_up` | special | P0 | 좌측 히스토리를 팝업 분리하고 상단 표, 하단 비교 자료 구조로 재편한다. |
@@ -56,7 +55,6 @@
 | `marigold_pbr` | full | P1 | export 통일과 헤더 모델 체크 표현 정리가 필요하다. |
 | `merge_to_exr` | full | P1 | 캡처 문제와 채널 매핑 구조 정리가 필요하다. |
 | `mesh_convert` | mini | P1 | `image_convert`처럼 더 단순한 mini confirm/tool shell 흐름으로 재정리한다. |
-| `normal_flip_green` | mini | Hold | 현 상태 유지 가능. |
 | `normalize_volume` | mini | P1 | 독립 앱보다 오디오 도구군 편입 방향을 우선 검토한다. |
 | `open_with_mayo` | mini | Hold | 현 상태 유지 가능. |
 | `pdf_merge` | compact | P1 | 캡처 잘림 보정과 export UI 단순화가 필요하다. |

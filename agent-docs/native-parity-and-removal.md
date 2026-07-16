@@ -16,7 +16,9 @@
 | `resize_power_of_2` | `media_converter` Po2 | Standard Po2/force-square. **잔여: Real-ESRGAN AI 모드 없음** | **REMOVED** r2 |
 | `video_convert` | `media_converter` + `MediaVideoEncode` | H.264 High/Proxy/NVENC, ProRes, DNxHR, copy, GIF, CRF/scale, delete-original (5d53ae1 계열) | **REMOVED** r2 |
 | `audio_toolbox` / `extract_bgm` / `extract_voice` | (없음) | Demucs AI stem — 네이티브 미흡수 | **KEEP** |
-| `merge_to_exr` 등 VFX 단품 | (없음) | multi-layer EXR / ORM / normal | **KEEP** |
+| `merge_to_exr` 등 VFX 단품 | (없음) | multi-layer EXR / ORM | **KEEP** |
+| `simple_normal_roughness` | `TextureToolkit` (Normal/Roughness 모드) | 탄젠트 노멀 생성 + 러프니스 파생, FloatRGBA 브리지 | **REMOVED** r3 |
+| `normal_flip_green` | `TextureToolkit` (FlipGreen 모드) | 노멀맵 그린채널 반전 (OpenGL↔DirectX) | **REMOVED** r3 |
 | AI / 3D / Comfy / youtube 등 | (없음) | — | **KEEP** |
 
 ## 2. Round-2 제거 단위 (실행됨)
@@ -40,7 +42,8 @@
 ## 3. 의도적 유지
 
 - **AI 오디오**: `audio_toolbox`, `extract_bgm`, `extract_voice` (Demucs/UVR — SystemC 없음)
-- **VFX 이미지**: `merge_to_exr`, `split_exr`, `texture_packer_orm`, normal/roughness 계열
+- **VFX 이미지**: `merge_to_exr`, `split_exr`, `texture_packer_orm` (EXR/ORM — 네이티브 `TextureToolkit` 미흡수)
+  - **주의**: normal/roughness/flip-green 계열은 r3에서 `TextureToolkit`로 흡수·제거됨 (아래 §1, §5)
 - **Host `*_C` alias**: 허브 config 마이그레이션 (Apps 레포 밖)
 
 ## 4. 잔여 소실 (문서화)
@@ -60,4 +63,13 @@
 - [x] `video_convert`, `image_convert`, `resize_power_of_2` 물리 삭제
 - [x] menu / headless / market / dist / Diagnostics
 - [x] agent-docs 갱신
-- 현재 마켓: **28** apps (manifest / market.json / dist 정합)
+- 당시 마켓: **28** apps (manifest / market.json / dist 정합)
+
+### Round-3 (네이티브 `TextureToolkit`)
+네이티브 정본: `src/ContextHub.SystemC/Utils/TextureToolkitLogic.cs` (모드: FlipGreen / Normal / Roughness / Resize)
+- [x] `simple_normal_roughness`, `normal_flip_green` payload 물리 삭제
+- [x] 엔진: `_engine/features/image/simple_normal_roughness_{qt_app,service,state}.py` + `normal_flip_green_console.py` + 두 패키지 디렉터리(`simple_normal_roughness/`, `normal_flip_green/`)
+- [x] menu.py ×9 / `headless_inputs.py` / `market.json` / `dist/*.zip`
+- [x] `APP_TEST_LIST.md` / `Diagnostics/image_feature_smoke.py`(라이브 import 프루닝) / `gui-runtime-status`(Compact 5→4, Mini 8→7) / `gui-cleanup-backlog` / `new-app-guidelines` / `templates/README`
+- 프리즈 유지: `.agents/**`, `agent-docs/designs/2026-07-10-*`, `agent-docs/prompts/*`, `Diagnostics/gui_capture_log.md`(런타임 생성)
+- 현재 마켓: **24** apps

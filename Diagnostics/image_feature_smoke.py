@@ -19,8 +19,6 @@ import sys
 os.environ["CTX_SHARED_ROOT"] = str(SHARED)
 sys.path.insert(0, str(ENGINE))
 
-from features.image.normal_flip_green.service import NormalFlipService
-from features.image.simple_normal_roughness.service import SimplePbrService
 from features.image.texture_packer_orm.service import TexturePackerService
 from features.image.merge_to_exr.service import ExrMergeService
 from features.image.merge_to_exr.state import ChannelConfig
@@ -38,61 +36,6 @@ def make_test_images() -> dict[str, Path]:
     Image.new("L", (128, 96), 80).save(g)
     Image.new("L", (128, 96), 140).save(b)
     return {"base": base, "r": r, "g": g, "b": b}
-
-
-def run_normal_flip(path: Path) -> dict:
-    service = NormalFlipService()
-    done = threading.Event()
-    result = {"ok": False, "errors": []}
-
-    def on_progress(_p, _s):
-        return
-
-    def on_complete(count, errors):
-        result["ok"] = count > 0 and not errors
-        result["errors"] = errors
-        done.set()
-
-    service.flip_green_batch([path], on_progress=on_progress, on_complete=on_complete)
-    done.wait(15)
-    out = path.parent / f"{path.stem}_flipped{path.suffix}"
-    result["output"] = str(out)
-    result["exists"] = out.exists()
-    result["ok"] = result["ok"] and result["exists"]
-    return result
-
-
-def run_simple_pbr(path: Path) -> dict:
-    service = SimplePbrService()
-    done = threading.Event()
-    result = {"ok": False, "errors": []}
-
-    def on_progress(_p, _s):
-        return
-
-    def on_complete(count, errors):
-        result["ok"] = count > 0 and not errors
-        result["errors"] = errors
-        done.set()
-
-    service.run_batch_save(
-        files=[path],
-        params={
-            "normal_strength": 1.0,
-            "normal_flip_g": False,
-            "roughness_contrast": 1.0,
-            "roughness_invert": False,
-        },
-        mode="Normal",
-        on_progress=on_progress,
-        on_complete=on_complete,
-    )
-    done.wait(20)
-    out = path.parent / f"{path.stem}_normal.png"
-    result["output"] = str(out)
-    result["exists"] = out.exists()
-    result["ok"] = result["ok"] and result["exists"]
-    return result
 
 
 def run_texture_packer(paths: dict[str, Path]) -> dict:
@@ -198,8 +141,6 @@ def run_vectorizer(path: Path) -> dict:
 def main():
     paths = make_test_images()
     report = {
-        "normal_flip_green": run_normal_flip(paths["base"]),
-        "simple_normal_roughness": run_simple_pbr(paths["base"]),
         "texture_packer_orm": run_texture_packer(paths),
         "merge_to_exr": run_merge_to_exr(paths),
         "rigreader_vectorizer": run_vectorizer(paths["base"]),

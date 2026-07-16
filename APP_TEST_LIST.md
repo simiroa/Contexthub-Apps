@@ -56,9 +56,7 @@
 | [Blur To Gray32 EXR](file:///c:/Users/HG/Documents/Contexthub-Apps/image/blur_gray32_exr) (`blur_gray32_exr`) | GUI (Mini) | 이미지를 그레이스케일 Float32 EXR로 변환 | [ ] |
 | [Compare Images](file:///c:/Users/HG/Documents/Contexthub-Apps/image/image_compare) (`image_compare`) | GUI | 이미지 전후 비교 및 차이점 검사 | [ ] |
 | [Merge to EXR](file:///c:/Users/HG/Documents/Contexthub-Apps/image/merge_to_exr) (`merge_to_exr`) | GUI | 이미지 채널 결합 및 EXR 내보내기 | [ ] |
-| [Normal Flip Green](file:///c:/Users/HG/Documents/Contexthub-Apps/image/normal_flip_green) (`normal_flip_green`) | GUI (Mini) | 노멀맵의 그린 채널 반전 | [ ] |
 | [RigReady Vectorizer](file:///c:/Users/HG/Documents/Contexthub-Apps/image/rigreader_vectorizer) (`rigreader_vectorizer`) | GUI | 이미지에서 클린 라인/마스크 셰이프 추출(벡터화) | [ ] |
-| [Simple Normal Roughness](file:///c:/Users/HG/Documents/Contexthub-Apps/image/simple_normal_roughness) (`simple_normal_roughness`) | GUI (Mini) | 이미지를 노멀/러프니스 맵으로 변환 | [ ] |
 | [Split EXR](file:///c:/Users/HG/Documents/Contexthub-Apps/image/split_exr) (`split_exr`) | GUI (Mini) | EXR 레이어 분리 저장 | [ ] |
 | [Texture Packer ORM](file:///c:/Users/HG/Documents/Contexthub-Apps/image/texture_packer_orm) (`texture_packer_orm`) | GUI | ORM(Occlusion, Roughness, Metallic) 텍스처 패킹 | [ ] |
 

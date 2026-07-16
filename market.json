@@ -153,24 +153,6 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/latest/download/split_exr.zip"
     },
     {
-        "id": "simple_normal_roughness",
-        "name": "simple_normal_roughness",
-        "description": "Convert images to Normal/Roughness maps (Compact UI).",
-        "version": "1.1.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/simple_normal_roughness/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/latest/download/simple_normal_roughness.zip"
-    },
-    {
-        "id": "normal_flip_green",
-        "name": "Normal Flip Green",
-        "description": "Confirm selected images in a mini confirm Qt shell, then flip green channels in a console flow.",
-        "version": "1.1.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/normal_flip_green/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/latest/download/normal_flip_green.zip"
-    },
-    {
         "id": "image_compare",
         "name": "Compare Images",
         "description": "Full Qt image comparison workspace for before-after review and difference inspection.",

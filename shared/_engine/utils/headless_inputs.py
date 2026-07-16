@@ -32,8 +32,6 @@ IMAGE_IDS: set[str] = {
     "texture_packer_orm",
     "image_compare",
     "rigreader_vectorizer",
-    "normal_flip_green",
-    "simple_normal_roughness",
     "rmbg_background",
     "esrgan_upscale",
     "marigold_pbr",
