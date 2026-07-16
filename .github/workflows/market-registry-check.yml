@@ -28,6 +28,9 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Validate apps
+        run: python .github/scripts/validate_apps.py
+
       - name: Verify market.json is in sync
         run: |
           python3 .github/scripts/package_apps.py --check-only

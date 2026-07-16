@@ -98,3 +98,9 @@ outputs/
 checkpoints/
 weights/
 .gstack/
+
+# Bootstrap junk dirs the host launcher may recreate at the repo root
+# (they only ever contain a .gitkeep; safe to delete, will reappear).
+/ai_light/
+/native/
+/system/

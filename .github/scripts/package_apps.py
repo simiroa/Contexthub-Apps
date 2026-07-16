@@ -127,6 +127,10 @@ def package_apps(sync_registry_only=False, check_only=False):
             }
             market_data.append(entry)
 
+    # Sort deterministically: os.listdir() order is filesystem-dependent, which made
+    # --check-only fail spuriously when local and CI runs enumerated apps differently.
+    market_data.sort(key=lambda e: (e["category"], e["id"]))
+
     # Save or Check market.json to root
     if check_only:
         if not os.path.exists(market_file):

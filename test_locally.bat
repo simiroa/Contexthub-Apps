@@ -1,4 +1,13 @@
 @echo off
+echo Validating apps...
+python .github/scripts/validate_apps.py
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo Error: validate_apps.py found blocking issues. Aborting.
+    pause
+    exit /b 1
+)
+
 echo Testing Market Registry Generation...
 python .github/scripts/package_apps.py
 if %ERRORLEVEL% EQU 0 (
