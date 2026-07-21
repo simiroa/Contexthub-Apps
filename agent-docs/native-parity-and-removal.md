@@ -19,6 +19,7 @@
 | `merge_to_exr` 등 VFX 단품 | (없음) | multi-layer EXR / ORM | **KEEP** |
 | `simple_normal_roughness` | `TextureToolkit` (Normal/Roughness 모드) | 탄젠트 노멀 생성 + 러프니스 파생, FloatRGBA 브리지 | **REMOVED** r3 |
 | `normal_flip_green` | `TextureToolkit` (FlipGreen 모드) | 노멀맵 그린채널 반전 (OpenGL↔DirectX) | **REMOVED** r3 |
+| `blur_gray32_exr` | `TextureToolkit` (Gray32 블러 모드) | 스무딩 반경 포함 그레이스케일 float32 EXR 변환 | **REMOVED** r4 |
 | AI / 3D / Comfy / youtube 등 | (없음) | — | **KEEP** |
 
 ## 2. Round-2 제거 단위 (실행됨)
@@ -43,7 +44,7 @@
 
 - **AI 오디오**: `audio_toolbox`, `extract_bgm`, `extract_voice` (Demucs/UVR — SystemC 없음)
 - **VFX 이미지**: `merge_to_exr`, `split_exr`, `texture_packer_orm` (EXR/ORM — 네이티브 `TextureToolkit` 미흡수)
-  - **주의**: normal/roughness/flip-green 계열은 r3에서 `TextureToolkit`로 흡수·제거됨 (아래 §1, §5)
+  - **주의**: normal/roughness/flip-green/gray32-blur 계열은 r3~r4에서 `TextureToolkit`로 흡수·제거됨 (아래 §1, §5)
 - **Host `*_C` alias**: 허브 config 마이그레이션 (Apps 레포 밖)
 
 ## 4. 잔여 소실 (문서화)
@@ -73,3 +74,12 @@
 - [x] `APP_TEST_LIST.md` / `Diagnostics/image_feature_smoke.py`(라이브 import 프루닝) / `gui-runtime-status`(Compact 5→4, Mini 8→7) / `gui-cleanup-backlog` / `new-app-guidelines` / `templates/README`
 - 프리즈 유지: `.agents/**`, `agent-docs/designs/2026-07-10-*`, `agent-docs/prompts/*`, `Diagnostics/gui_capture_log.md`(런타임 생성)
 - 현재 마켓: **24** apps
+
+### Round-4 (네이티브 `TextureToolkit` Gray32 블러 모드)
+- [x] `blur_gray32_exr` payload 물리 삭제
+- [x] 엔진: `_engine/features/image/blur_gray32_exr/` 패키지 디렉터리(`__init__.py`, `console.py`, `qt_app.py`, `service.py`)
+- [x] `market.json`(24→23) / `APP_TEST_LIST.md`
+- [x] `gui-runtime-status`(Compact 4→3) / `gui-cleanup-backlog`
+- 참고: 9x `menu.py` / `headless_inputs.py` / `Diagnostics/image_feature_smoke.py` / `new-app-guidelines` / `templates/README`에는 애초에 `blur_gray32_exr` 참조가 없어 변경 불필요(확인 완료)
+- 프리즈 유지: `.agents/**`, `agent-docs/designs/2026-07-10-*`, `agent-docs/prompts/*`, `Diagnostics/gui_capture_log.md`(런타임 생성)
+- 현재 마켓: **23** apps

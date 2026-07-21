@@ -153,15 +153,6 @@
         "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/latest/download/doc_scan.zip"
     },
     {
-        "id": "blur_gray32_exr",
-        "name": "Blur To Gray32 EXR",
-        "description": "Confirm selected images, set a smoothing radius, then convert each image to grayscale float32 EXR.",
-        "version": "1.0.0",
-        "category": "image",
-        "icon_url": "https://raw.githubusercontent.com/simiroa/Contexthub-Apps/main/image/blur_gray32_exr/icon.png",
-        "zip_url": "https://github.com/simiroa/Contexthub-Apps/releases/latest/download/blur_gray32_exr.zip"
-    },
-    {
         "id": "image_compare",
         "name": "Compare Images",
         "description": "Full Qt image comparison workspace for before-after review and difference inspection.",

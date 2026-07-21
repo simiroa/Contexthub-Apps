@@ -34,13 +34,12 @@ Manifested apps:
 - `merge_to_exr`
 - `rigreader_vectorizer`
 
-### Compact GUI (4 Apps)
+### Compact GUI (3 Apps)
 
 Apps with no multi-input list, only one main preview-or-list surface, and a small set of immediately understandable options.
 
 Manifested apps:
 
-- `blur_gray32_exr`
 - `doc_convert`
 - `split_exr`
 - `auto_lod`

@@ -53,7 +53,6 @@
 ## 🖼️ Image Tools (image)
 | 앱 이름 (ID) | 실행 모드 | 설명 | 상태 |
 | :--- | :--- | :--- | :--- |
-| [Blur To Gray32 EXR](file:///c:/Users/HG/Documents/Contexthub-Apps/image/blur_gray32_exr) (`blur_gray32_exr`) | GUI (Mini) | 이미지를 그레이스케일 Float32 EXR로 변환 | [ ] |
 | [Compare Images](file:///c:/Users/HG/Documents/Contexthub-Apps/image/image_compare) (`image_compare`) | GUI | 이미지 전후 비교 및 차이점 검사 | [ ] |
 | [Merge to EXR](file:///c:/Users/HG/Documents/Contexthub-Apps/image/merge_to_exr) (`merge_to_exr`) | GUI | 이미지 채널 결합 및 EXR 내보내기 | [ ] |
 | [RigReady Vectorizer](file:///c:/Users/HG/Documents/Contexthub-Apps/image/rigreader_vectorizer) (`rigreader_vectorizer`) | GUI | 이미지에서 클린 라인/마스크 셰이프 추출(벡터화) | [ ] |
